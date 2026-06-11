@@ -43,3 +43,4 @@ env.local
 next-env.d.ts
 data/
 .playwright-mcp
+benchmarks/results/
