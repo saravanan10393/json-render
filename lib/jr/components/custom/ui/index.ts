@@ -21,6 +21,7 @@ import * as AspectRatio from "./AspectRatio"
 import * as AvatarGroup from "./AvatarGroup"
 import * as Breadcrumb from "./Breadcrumb"
 import * as Calendar from "./Calendar"
+import * as Chart from "./Chart"
 import * as Combobox from "./Combobox"
 import * as Command from "./Command"
 import * as ContextMenu from "./ContextMenu"
@@ -52,6 +53,7 @@ export const uiComponentDefinitions = {
 	AvatarGroup: AvatarGroup.definition,
 	Breadcrumb: Breadcrumb.definition,
 	Calendar: Calendar.definition,
+	Chart: Chart.definition,
 	Combobox: Combobox.definition,
 	Command: Command.definition,
 	ContextMenu: ContextMenu.definition,
@@ -84,6 +86,7 @@ export const uiComponents = {
 	AvatarGroup: AvatarGroup.component,
 	Breadcrumb: Breadcrumb.component,
 	Calendar: Calendar.component,
+	Chart: Chart.component,
 	Combobox: Combobox.component,
 	Command: Command.component,
 	ContextMenu: ContextMenu.component,
