@@ -24,7 +24,8 @@ Two sub-projects, built in this order:
 | Metrics | Wall-clock (per app + per page) + LLM tokens + validation repair retries |
 | Harness style | Headless CLI (`bun scripts/benchmark.ts`), real OpenRouter calls |
 | Agent invocation | In-process via a shared runner extracted from the chat route |
-| Fragment library shape | Generic widget kit (entity + field ids as params), not domain bundles |
+| Fragment library shape | Generic widget kit (entity + field ids as params), not domain bundles; roster mapped from the rapp widget library (`rapp-page-templates-web/src/widgets`) |
+| Charts | Add one recharts-based `Chart` catalog component (bar/line/area/donut/pie) |
 | Suite size | 3 prompts × 2 modes × 2 reps = 12 runs |
 
 ## Part 1 — Benchmark harness
@@ -109,23 +110,87 @@ the kit is built; fragments mode (6 runs) after.
 
 ## Part 2 — Generic widget kit (`fragments/generic/`)
 
+The kit is modeled on the rapp widget library
+(`rapp/frontend/rapp-page-templates-web/src/widgets`, ~92 widgets). Mapping
+rule: rapp's data-bound, section-level widgets become fragments; its field
+inputs, field displays, and filter inputs become *param kinds* of those
+fragments (`input:`, `display:`, `kind:` enums); pure layout widgets stay
+hand-built by the LLM from catalog primitives.
+
 All fragments are entity-agnostic: entity name and field ids arrive as params.
 Same authoring contract as the ecommerce bundle: ns-prefix invariant
 (`assertNsInvariants`), state seeds under the instance ns, descriptions carry
 the pairing rules (they are auto-enumerated into the agent prompt).
 
-| Fragment | Category | Stamps out | Datasources |
+### New catalog component: `Chart`
+
+One new custom-kit component built on **recharts** (new dependency):
+`kind: bar | line | area | donut | pie`, props for series data
+(label/value pairs from a `bdo.metric` GroupBy result), title-less (fragments
+wrap it in Cards). Registered in `lib/jr/components/custom`, catalog entry +
+`bun run gen:docs` regeneration. Covers rapp's ChartLine/Bar/Area/Donut/Pie.
+
+### Fragment roster (16)
+
+**Dashboard (5)** — covers KpiTile, the 5 chart widgets, Leaderboard,
+ProgressTracker, RecentList/ActivityFeed:
+
+| Fragment | rapp equivalent | Stamps out | Datasources |
 |---|---|---|---|
-| StatsRow | display | Grid of KPI cards from `stats[]{label,type,field?,filter?}` | one `bdo.metric` per stat |
-| DataTable | display | Table w/ columns from params, search, paging, edit/delete row actions (delete w/ confirm) | `<ns>-list`, `<ns>-delete` |
-| RecordFormDialog | form | Create/edit dialog; `fields[]{field,label,inputType,options?}`; opens via `/ui/<ns>/open`; edit prefill via `/ui/<ns>/editId` | `<ns>-save`, `<ns>-prefill` (`bdo.get`, oneShot) |
-| FilterBar | browse | Search + Select filters writing `/filters/<targetNs>/*` | none |
-| CardList | display | Repeat cards (title/subtitle/badge/meta fields) | `<ns>-list` |
-| DetailPanel | display | Field/value view of one record from an id in state | `<ns>-get` |
-| KanbanBoard | display | One column per `statusOptions[]`, ←/→ move buttons via status save | per-column `bdo.list` + `<ns>-move` |
-| MetricBreakdown | display | Grouped metric as label + Progress rows (catalog has no chart component) | `<ns>-metric` (GroupBy) |
-| ActivityTimeline | display | Timeline of recent records by date field | `<ns>-list` (DESC, limited) |
-| PageHeader | layout | Title + subtitle + action buttons (navigate / open dialog ns) | none |
+| StatsRow | KpiTile(s) | Grid of KPI tiles from `stats[]{label, type, field?, format: plain\|currency\|percent, filter?}` | one `bdo.metric` per stat |
+| ChartCard | Chart* ×5 | Card + Chart; `entity, kind, metricType, field?, groupBy, filter?` | `<ns>-metric` (GroupBy) |
+| Leaderboard | Leaderboard | Ranked top-N rows (rank badge + label + value) from a grouped metric | `<ns>-metric` (GroupBy) |
+| ProgressTracker | ProgressTracker | Metric vs `target`: Progress bar + value/target text | `<ns>-metric` |
+| RecentList | RecentList | Top-N records by date field DESC; `titleField, sublabelField`, optional navigate | `<ns>-list` |
+
+**Data views (5)** — covers Table, Cards, Gallery, Kanban, Timeline,
+RelatedList (Tree/Pivot/Gantt fall back to Table in rapp itself — DataTable
+covers them):
+
+| Fragment | rapp equivalent | Stamps out | Datasources |
+|---|---|---|---|
+| DataTable | Table | Table; `columns[]{field, label, display: text\|money\|date\|badge\|boolean\|rating\|progress}`, search, paging, `rowActions` view/edit/delete (confirm), `baseFilter?`, `formDialogNs?` | `<ns>-list`, `<ns>-delete` |
+| CardGrid | Cards, Gallery | Card grid; `titleField, subtitleFields[], imageField?, badgeField?`, click → navigate or detail select | `<ns>-list` |
+| KanbanBoard | Kanban | One column per `statusOptions[]`, ←/→ move buttons via status save | per-column `bdo.list` + `<ns>-move` |
+| ActivityTimeline | ActivityFeed | Timeline of recent records by date field | `<ns>-list` (DESC, limited) |
+| RelatedList | RelatedList | DataTable scoped by `parentField EQ` an id read from state (`parentIdPath`) — for detail pages | `<ns>-list` |
+
+**Detail (2)** — covers DetailHeader, RecordView + the 12 display widgets as
+`display` kinds:
+
+| Fragment | Stamps out | Datasources |
+|---|---|---|
+| DetailHeader | Title/subtitle from record fields, status badge, facts row, action buttons; record id from `idPath` | `<ns>-get` |
+| RecordView | Field/value body; `fields[]{field, label, display}` | `<ns>-get` |
+
+**Forms (2)** — covers Form + the 13 field-input widgets as `input` kinds:
+
+| Fragment | Stamps out | Datasources |
+|---|---|---|
+| RecordFormDialog | Create/edit Dialog; `fields[]{field, label, input: text\|textarea\|number\|date\|boolean\|select\|reference, options?, lookupEntity?, lookupDisplayField?}`; opens via `/ui/<ns>/open`, edit prefill via `/ui/<ns>/editId` | `<ns>-save`, `<ns>-prefill` (oneShot), per-reference-field lookup `bdo.list` |
+| FormCard | Page-level Card form, same field model + cancel/submit, `successTarget?` | same as RecordFormDialog |
+
+`reference` inputs render a Combobox fed by a lookup-entity `bdo.list`.
+
+**Filters & shell (2)**:
+
+| Fragment | Stamps out |
+|---|---|
+| FilterBar | `layout: toolbar\|sidebar` (sidebar covers FacetedSidebar); `filters[]{field, label, kind: search\|select\|boolean\|numberRange\|dateRange\|reference, options?, lookupEntity?}` writing `/filters/<targetNs>/*` |
+| PageHeader | Title + subtitle + action buttons (navigate / open dialog ns) |
+
+### Excluded (and why)
+
+- **Workflow widgets** (TaskInbox, WorkflowList, workflow-mode Form,
+  WorkflowActionButton…): this repo's datasource executor stubs
+  `activity.list/get` (empty) and 501s `activity.submit`/`workflow.start` —
+  they would render dead locally.
+- **File/geo/richtext/phone inputs**: no upload backend or map/RTF components;
+  they degrade to `text` inputs.
+- **StatComparison**: needs relative-date-window computation at runtime;
+  deferred.
+- **Heatmap**: needs 2D aggregation the metric engine lacks (deprecated in
+  rapp too).
 
 ### Wiring conventions
 
@@ -148,8 +213,8 @@ e-commerce entity contracts; fragment-specific rules live in each fragment's
 ### Registration & testing
 
 - Export from `fragments/generic/index.ts`, merge into `fragmentRegistry`.
-- Extend `scripts/test-fragment-expansion.ts` with a kitchen-sink page using
-  all 10 generic fragments against a sample entity: expansion, ns invariants,
+- Extend `scripts/test-fragment-expansion.ts` with kitchen-sink pages using
+  all 16 generic fragments against sample entities: expansion, ns invariants,
   and spec validators must all pass.
 - `bunx tsc --noEmit` clean; manual run of one generated app in the browser.
 
@@ -157,13 +222,14 @@ e-commerce entity contracts; fragment-specific rules live in each fragment's
 
 1. Build harness (shared runner, switch, CLI, report).
 2. Run baseline: `--mode baseline` (6 runs).
-3. Build the generic kit + instructions update + tests.
+3. Build the Chart catalog component, then the generic kit + instructions
+   update + tests.
 4. Run `--mode fragments` (6 runs).
 5. Generate `benchmarks/REPORT.md` comparison.
 
 ## Out of scope
 
-- Real chart components (would require adding a charting library to the catalog).
 - Domain bundles beyond the existing ecommerce one.
+- Workflow/activity support in the local runtime (see kit exclusions).
 - Statistical machinery beyond median/mean over 2 reps.
 - Benchmarking the edit flow (only fresh app builds are measured).
