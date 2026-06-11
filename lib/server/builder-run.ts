@@ -46,6 +46,7 @@ export interface RunBuilderTurnOptions {
    * The benchmark passes false for BOTH modes so baseline and fragments runs
    * are symmetric — the registered agent carries tracing overhead the
    * factory-built one doesn't.
+   * Only takes effect when fragments=true — there is no registered no-fragments agent, so traced is silently ignored otherwise.
    */
   traced?: boolean; // default true
   maxSteps?: number; // default 40
@@ -65,11 +66,12 @@ export async function runBuilderTurn({
 }: RunBuilderTurnOptions) {
   const agent = traced && fragments ? appBuilderAgent : makeAppBuilderAgent({ fragments });
   return agent.stream(
+    // UIMessage and Mastra's stream input are runtime-compatible but not assignable.
     messages as unknown as Parameters<typeof agent.stream>[0],
     {
       maxSteps,
       requestContext: new RequestContext([["appId", appId]]),
-      // Tag Langfuse traces so runs are filterable per app.
+      // Tags Langfuse traces per app (no-op for factory-built agents; kept for symmetry).
       tracingOptions: { metadata: { appId, appName } },
       context: [{ role: "system", content: buildAppContext(appId, appName) }],
     },
