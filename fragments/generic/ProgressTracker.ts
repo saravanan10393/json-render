@@ -9,7 +9,7 @@ const Params = z
     title: z.string(),
     metricType: z.enum(["COUNT", "SUM", "AVG"]).default("COUNT"),
     field: z.string().optional(),
-    target: z.number().describe("The goal — Progress maxes out here."),
+    target: z.number().positive().describe("The goal — Progress maxes out here."),
     filter: z.array(FilterPair).optional(),
   })
   .refine((p) => p.metricType === "COUNT" || Boolean(p.field), {
