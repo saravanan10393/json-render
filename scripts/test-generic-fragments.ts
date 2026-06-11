@@ -83,7 +83,25 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Tasks: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: [] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table"] },
+      table: {
+        $fragment: "DataTable",
+        params: {
+          entity: "Task",
+          columns: [
+            { field: "Title", label: "Title", display: "text" },
+            { field: "Status", label: "Status", display: "badge" },
+            { field: "Estimate", label: "Estimate", display: "money" },
+            { field: "Done", label: "Done", display: "boolean" },
+            { field: "DueDate", label: "Due", display: "date" },
+          ],
+          searchable: true,
+          pageSize: 10,
+          filterBindings: [{ field: "Status", operator: "EQ" }],
+          rowActions: ["edit", "delete"],
+          formDialogNs: "task-form",
+        },
+      },
     },
   },
   "Task Detail": {
