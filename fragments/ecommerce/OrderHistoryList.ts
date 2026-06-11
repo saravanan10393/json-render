@@ -23,6 +23,8 @@ export const OrderHistoryList: Fragment<P> = {
   version: "1.0.0",
   description:
     "Paginated order history with status filter and color-coded badges. Requires Order fields: CustomerName, Status, Total; PlacedAt (date) recommended for ordering.",
+  whenToUse:
+    "Use for 'my orders' / order-tracking pages: list of past orders with status filter, color-coded status badges, totals, and dates.",
   category: "account",
   params: Params as z.ZodType<P>,
   build: ({ orderBdo, statuses, showStatusFilter, pageSize, title }, ns) => {

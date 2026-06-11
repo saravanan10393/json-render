@@ -41,6 +41,8 @@ export const ProductGrid: Fragment<P> = {
   version: "1.0.0",
   description:
     "Product card grid over bdo.list with image, name, category, price, rating, add-to-cart, and optional detail Sheet. Filterable via /filters/<ns>/* (pair with ProductFilters/CategoryNav). Requires Product fields: Name, Description, Price, Category, ImageUrl, Rating. Cart entity fields: ProductId, Name, Price, Quantity, LineTotal.",
+  whenToUse:
+    "Use whenever the user wants to browse, search, or display a catalog of products as cards with images, prices, ratings, add-to-cart buttons, and a product-detail view.",
   category: "product-display",
   params: Params as z.ZodType<P>,
   build: (params, ns) => {

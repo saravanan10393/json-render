@@ -31,7 +31,13 @@ export const CategoryNav: Fragment<P> = {
   version: "1.0.0",
   description:
     "Horizontal category pill bar. Writes the picked category to /filters/<targetGridNs>/category so the target ProductGrid auto-refilters. Requires the grid's Product entity to have a Category field.",
+  whenToUse:
+    "Use when products should be browsable by category with one-click pills above a product grid (electronics departments, clothing types, menu sections).",
   category: "browse",
+  previewParams: {
+    targetGridNs: "products-grid",
+    categories: ["Audio", "Wearables", "Accessories"],
+  },
   params: Params as z.ZodType<P>,
   build: ({ targetGridNs, categories, includeAll }, ns) => ({
     root: ns,

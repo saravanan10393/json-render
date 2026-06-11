@@ -3,11 +3,13 @@ import { Agent } from "@mastra/core/agent";
 import { LangfuseExporter } from "@mastra/langfuse";
 import { Observability } from "@mastra/observability";
 import { AGENT_INSTRUCTIONS } from "./instructions";
+import { fragmentAuthorAgent } from "./studio-agent";
 import {
   defineEntity,
   deletePage,
   saveAppIndex,
   savePage,
+  searchFragments,
   seedRecords,
 } from "./tools";
 
@@ -20,7 +22,7 @@ export const appBuilderAgent = new Agent({
   instructions: AGENT_INSTRUCTIONS,
   // Mastra model-router string: routes through OpenRouter using OPENROUTER_API_KEY.
   model: `openrouter/${OPENROUTER_MODEL}`,
-  tools: { defineEntity, seedRecords, savePage, deletePage, saveAppIndex },
+  tools: { searchFragments, defineEntity, seedRecords, savePage, deletePage, saveAppIndex },
 });
 
 // Langfuse AI tracing — every agent run (LLM calls, tool calls, params,
@@ -30,7 +32,7 @@ const langfuseConfigured =
   !!process.env.LANGFUSE_PUBLIC_KEY && !!process.env.LANGFUSE_SECRET_KEY;
 
 export const mastra = new Mastra({
-  agents: { appBuilderAgent },
+  agents: { appBuilderAgent, fragmentAuthorAgent },
   ...(langfuseConfigured
     ? {
         observability: new Observability({

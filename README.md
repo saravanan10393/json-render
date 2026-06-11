@@ -54,6 +54,23 @@ any `$state` ref in their params changes (debounced); results land in a
   OrderHistoryList, SalesStats) wired by instance id and built on standard
   Product/CartItem/Order entity contracts — a 4-page store assembles from
   ~10 fragment refs. Smoke test: `bun scripts/test-fragment-expansion.ts`.
+- **Fragment retrieval (RAG)**: fragment docs are NOT in the agent prompt.
+  They're embedded (OpenRouter `text-embedding-3-small`) into a
+  [sqlite-vector](https://github.com/sqliteai/sqlite-vector) index inside
+  `builder.db` (`lib/server/fragment-index.ts`; the platform extension
+  auto-downloads to `vendor/`). The agent calls the `searchFragments` tool and
+  gets back every fragment within 80% of the best match (absolute-floor
+  guarded — off-topic queries return one `belowThreshold` hit). The index
+  self-syncs (hash-guarded) on every search, and the pipeline keeps it fresh:
+  `bun run fragment:new <category> <Name>` scaffolds + registers + indexes a
+  new fragment; `bun run fragment:index` re-syncs manually. **Authoring,
+  testing, and migration guide: [`fragments/README.md`](fragments/README.md).**
+- **Fragment Studio** (`/studio`): visual fragment authoring — a chat agent
+  writes the fragment TypeScript, each draft save is evaluated in a sandboxed
+  bun subprocess (expansion + full validators) and rendered live against a
+  reserved sandbox app with seeded data; iterate via chat, a params
+  playground, or direct source edits, then approve into the category — which
+  registers and vector-indexes it in one click.
 
 ## Setup
 

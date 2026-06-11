@@ -23,7 +23,7 @@ export interface AppRow {
 
 export function listApps(): AppRow[] {
   const rows = db
-    .prepare("SELECT * FROM apps ORDER BY updated_at DESC")
+    .prepare("SELECT * FROM apps WHERE status != 'studio' ORDER BY updated_at DESC")
     .all() as Array<Record<string, string>>;
   return rows.map((row) => ({
     id: row.id,

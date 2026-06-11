@@ -7,6 +7,7 @@ import {
   SHELL_VARIANTS,
 } from "@/lib/jr/schema";
 import { expandFragments } from "@/lib/server/fragment-expander";
+import { searchFragments as searchFragmentIndex } from "@/lib/server/fragment-index";
 import {
   deletePage as deletePageFile,
   listPageIds,
@@ -111,6 +112,45 @@ export const seedRecords = createTool({
       ok: true,
       inserted: input.records.length,
       totalRecords: countRecords(appId, input.entity),
+    };
+  },
+});
+
+// ── Fragment retrieval ────────────────────────────────────────────────────
+
+export const searchFragments = createTool({
+  id: "searchFragments",
+  description:
+    "Semantic search over the prebuilt fragment library. Returns every fragment relevant to the need (no fixed limit) with its full params schema and usage notes. ALWAYS call this before designing pages.",
+  inputSchema: z.object({
+    query: z
+      .string()
+      .min(3)
+      .describe(
+        "What you're building, e.g. 'browse products with filters and add to cart' or 'list of past orders'.",
+      ),
+  }),
+  outputSchema: z.object({
+    matches: z.array(
+      z.object({
+        name: z.string(),
+        category: z.string(),
+        doc: z.string(),
+        score: z.number(),
+        belowThreshold: z.boolean().nullable(),
+      }),
+    ),
+  }),
+  execute: async (input) => {
+    const matches = await searchFragmentIndex(fragmentRegistry, input.query);
+    return {
+      matches: matches.map((m) => ({
+        name: m.name,
+        category: m.category,
+        doc: m.doc,
+        score: m.score,
+        belowThreshold: m.belowThreshold ?? null,
+      })),
     };
   },
 });

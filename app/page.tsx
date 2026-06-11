@@ -17,7 +17,13 @@ export default function HomePage() {
         <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           chat → json → app
         </span>
-        <span className="ml-auto font-mono text-xs text-muted-foreground">
+        <Link
+          href="/studio"
+          className="ml-auto rounded-md border border-border px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:border-amber-500/50 hover:text-foreground"
+        >
+          fragment studio
+        </Link>
+        <span className="font-mono text-xs text-muted-foreground">
           {apps.length} app{apps.length === 1 ? "" : "s"}
         </span>
       </header>

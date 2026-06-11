@@ -91,6 +91,17 @@ export interface Fragment<P> {
   version: string;
   /** Human-readable; appears in the LLM system-prompt registry enumeration. */
   description: string;
+  /**
+   * Retrieval hint for the semantic fragment index ("Use when the user
+   * wants…"). Embedded together with the description; optional.
+   */
+  whenToUse?: string;
+  /**
+   * Sample params for previews/tests. REQUIRED when `params` has required
+   * fields without defaults — the studio preview, test harness, and promote
+   * gate evaluate with these when no explicit params are given.
+   */
+  previewParams?: Record<string, unknown>;
   /** Coarse grouping for the LLM prompt + telemetry. */
   category:
     | "product-display"

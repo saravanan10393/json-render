@@ -197,6 +197,20 @@ function BuildStep({ part }: { part: ToolPartLike }) {
       icon = <Trash2 className="size-3.5" />;
       label = `Removed page ${(input.id as string) ?? ""}`;
       break;
+    case "tool-searchFragments":
+      icon = <Sparkles className="size-3.5" />;
+      label = `Fragments: "${((input.query as string) ?? "").slice(0, 48)}"`;
+      break;
+    case "tool-saveDraft":
+      icon = <FileCode2 className="size-3.5" />;
+      label = running
+        ? `Drafting ${(input.name as string) ?? "fragment"}`
+        : `Draft: ${(input.name as string) ?? "fragment"}`;
+      break;
+    case "tool-readFragment":
+      icon = <FileCode2 className="size-3.5" />;
+      label = `Read ${(input.name as string) ?? ""} source`;
+      break;
     default:
       icon = <Sparkles className="size-3.5" />;
       label = part.type.replace("tool-", "");

@@ -32,7 +32,13 @@ export const ProductFilters: Fragment<P> = {
   version: "1.0.0",
   description:
     "Faceted filter panel (search, category, min/max price) for a sibling ProductGrid — writes to /filters/<targetGridNs>/*. Place in a sidebar column next to the grid. Requires Product fields: Category (when categories given), Price.",
+  whenToUse:
+    "Use when a product listing needs faceted filtering: text search, category dropdown, min/max price range. Place beside or above a ProductGrid.",
   category: "browse",
+  previewParams: {
+    targetGridNs: "products-grid",
+    categories: ["Audio", "Wearables", "Accessories"],
+  },
   params: Params as z.ZodType<P>,
   build: ({ targetGridNs, categories, showSearch, showPriceRange, title }, ns) => {
     const filters = `/filters/${targetGridNs}`;

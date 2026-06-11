@@ -36,6 +36,16 @@ db.exec(`
     PRIMARY KEY (app_id, name)
   );
 
+  CREATE TABLE IF NOT EXISTS fragment_sessions (
+    id            TEXT PRIMARY KEY,
+    fragment_name TEXT,
+    category      TEXT,
+    status        TEXT NOT NULL DEFAULT 'draft',
+    origin        TEXT NOT NULL DEFAULT 'new',
+    created_at    TEXT NOT NULL,
+    updated_at    TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS records (
     app_id     TEXT NOT NULL,
     entity     TEXT NOT NULL,

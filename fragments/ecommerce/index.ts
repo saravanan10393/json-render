@@ -13,6 +13,8 @@
  *             Total(number) PlacedAt(date)
  */
 import type { FragmentRegistry } from "@/lib/jr/schema";
+import { TestimonialStrip } from "./TestimonialStrip";
+import { FeatureHighlights } from "./FeatureHighlights";
 import { CartSummary } from "./CartSummary";
 import { CategoryNav } from "./CategoryNav";
 import { CheckoutForm } from "./CheckoutForm";
@@ -31,4 +33,6 @@ export const ecommerceFragments = {
   CheckoutForm,
   OrderHistoryList,
   SalesStats,
+  FeatureHighlights,
+  TestimonialStrip,
 } as unknown as FragmentRegistry;

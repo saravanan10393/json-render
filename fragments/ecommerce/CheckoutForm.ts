@@ -30,6 +30,8 @@ export const CheckoutForm: Fragment<P> = {
   version: "1.0.0",
   description:
     "Checkout form (name, email, address, city, zip) that saves an Order with Status 'Placed' on submit. Requires Order fields: CustomerName, Email, Address, City, Zip, Status, Total. Pair with a same-page CartSummary via cartSummaryNs to capture the cart total.",
+  whenToUse:
+    "Use for the checkout/purchase step: shipping and contact form that places the order, captures the cart total, and clears/navigates on success.",
   category: "cart-checkout",
   params: Params as z.ZodType<P>,
   build: ({ orderBdo, cartSummaryNs, successTarget, title }, ns) => {

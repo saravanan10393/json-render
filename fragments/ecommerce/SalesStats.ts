@@ -35,7 +35,18 @@ export const SalesStats: Fragment<P> = {
   version: "1.0.0",
   description:
     "KPI stat card row for dashboards — each stat is a bdo.metric (COUNT/SUM/AVG/MAX/MIN with optional EQ filter). Use only on dashboard-style pages.",
+  whenToUse:
+    "Use on admin or analytics dashboards to show KPI stat cards (counts, revenue sums, averages) over any entity. Dashboard pages only.",
   category: "display",
+  previewParams: {
+    stats: [
+      { label: "Products", bdo: "Product", type: "COUNT" },
+      { label: "Revenue", bdo: "Order", type: "SUM", field: "Total", prefix: "$" },
+      { label: "Orders", bdo: "Order", type: "COUNT" },
+      { label: "Avg rating", bdo: "Product", type: "AVG", field: "Rating" },
+    ],
+    columns: 4,
+  },
   params: Params as z.ZodType<P>,
   build: ({ stats, columns }, ns) => {
     const elements: Record<string, Record<string, unknown>> = {

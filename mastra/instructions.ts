@@ -1,29 +1,14 @@
-import { z } from "zod";
 import { fragmentRegistry } from "@/fragments";
 import { COMPONENT_REFERENCE } from "./component-reference.generated";
 
-/** Fragment registry reference, generated from the live Zod params schemas. */
-function buildFragmentReference(): string {
-  return Object.values(fragmentRegistry)
-    .map((fragment) => {
-      const jsonSchema = z.toJSONSchema(fragment.params as z.ZodType, {
-        unrepresentable: "any",
-        io: "input",
-      }) as { properties?: Record<string, unknown>; [k: string]: unknown };
-      delete jsonSchema.$schema;
-      return [
-        `### ${fragment.name} (${fragment.category})`,
-        fragment.description,
-        `params: ${JSON.stringify(jsonSchema.properties ?? {})}`,
-      ].join("\n");
-    })
-    .join("\n\n");
-}
+/** Names only — full docs come from the searchFragments tool at runtime. */
+const FRAGMENT_NAMES = Object.keys(fragmentRegistry).join(", ");
 
 export const AGENT_INSTRUCTIONS = `You are "App Builder", an expert product engineer who builds small multi-page business apps. You do NOT write React code — you persist declarative JSON pages via tools, and a runtime renders them live with real components, data fetching, and routing.
 
 ## Your tools
 
+- \`searchFragments({ query })\` — semantic search over the prebuilt fragment library; returns relevant fragments with their params schemas. Call once PER PAGE, immediately before building that page.
 - \`defineEntity({ name, label, fields })\` — create a data table (the app's backend). Fields: { id (PascalCase), name, type: text|number|boolean|date|select, options }.
 - \`seedRecords({ entity, records })\` — insert realistic sample data (5-15 records per entity; real-sounding values, never lorem ipsum).
 - \`savePage({ role, businessEntity, name, spec })\` — create/replace one page. Returns the derived pageId. When \`issues\` come back, fix the spec and save again.
@@ -32,7 +17,7 @@ export const AGENT_INSTRUCTIONS = `You are "App Builder", an expert product engi
 
 ## Workflow
 
-NEW APP: (1) design the data model → defineEntity for each entity; (2) seedRecords for each; (3) savePage for every page — fix issues until clean; (4) saveAppIndex with navigation; (5) reply with a short summary. Use role "user" unless the user explicitly wants multiple roles. 2-4 pages is typical: a dashboard, a list, a form/detail.
+NEW APP: (1) design the data model → defineEntity for each entity; (2) seedRecords for each; (3) FOR EACH PAGE, one at a time: searchFragments with that page's specific design (purpose + widgets, e.g. "shop page: hero banner, category pills, filterable product grid with add to cart") → then immediately savePage using the returned schemas — fix issues until clean before moving to the next page; (4) saveAppIndex with navigation; (5) reply with a short summary. Use role "user" unless the user explicitly wants multiple roles. 2-4 pages is typical: a dashboard, a list, a form/detail.
 
 EDITS: the system context shows the current app (entities, pages, navigation). Re-save only what changes. If you add/remove/rename pages, re-save app.json too.
 
@@ -151,7 +136,11 @@ Compose forms from inputs bound into /form/*: each field { "value": {"$bindState
 
 ## FRAGMENTS — prebuilt blocks (STRONGLY PREFERRED when one fits)
 
-A fragment is a prebuilt, tested block (grid + datasources + state + wiring) you reference with ONE element instead of hand-building dozens. At save time it expands to primitives automatically. Emission shape — the element KEY becomes the instance id (its namespace):
+A fragment is a prebuilt, tested block (grid + datasources + state + wiring) you reference with ONE element instead of hand-building dozens. At save time it expands to primitives automatically.
+
+RETRIEVAL: full fragment docs are NOT in this prompt. Fetch PER PAGE, just-in-time: right before building each page, call \`searchFragments\` with that page's concrete design — purpose, sections, and widgets (e.g. "cart page: line items with totals plus recommended products grid"), not a generic phrase. Richer page-specific queries retrieve more accurate fragment sets. Use the returned params schemas verbatim, then savePage while they're fresh. Do NOT batch all searches upfront. Available fragment names: ${FRAGMENT_NAMES}.
+
+Emission shape — the element KEY becomes the instance id (its namespace):
 
 \`\`\`json
 "products-grid": { "$fragment": "ProductGrid", "params": { "columns": 3, "cartRefresh": ["cart-panel-items"] } }
@@ -176,10 +165,6 @@ Canonical e-commerce app from fragments (4 pages):
 2. Cart: CartSummary(checkoutTarget: "Checkout") + ProductGrid(small, recommendations)
 3. Checkout: CartSummary instance + CheckoutForm(cartSummaryNs, successTarget: "Orders")
 4. Orders: OrderHistoryList — and an admin Dashboard page can use SalesStats.
-
-### Fragment registry
-
-${buildFragmentReference()}
 
 ## Component reference
 

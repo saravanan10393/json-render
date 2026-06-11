@@ -32,7 +32,16 @@ export const HeroBanner: Fragment<P> = {
   version: "1.0.0",
   description:
     "Promotional hero banner: headline + subtitle + optional CTA button (navigates to a page) + optional image. Pure display — no entities required.",
+  whenToUse:
+    "Use for a promotional/marketing banner at the top of a landing or shop page: big headline, supporting text, call-to-action button, optional image. No data required.",
   category: "promotion",
+  previewParams: {
+    title: "Summer sale is live",
+    subtitle: "Up to 40% off headphones and wearables this week.",
+    ctaLabel: "Shop deals",
+    ctaTarget: "Shop",
+    imageUrl: "https://picsum.photos/seed/hero/640/440",
+  },
   params: Params as z.ZodType<P>,
   build: ({ title, subtitle, ctaLabel, ctaTarget, imageUrl }, ns) => ({
     root: ns,

@@ -25,6 +25,8 @@ export const CartSummary: Fragment<P> = {
   version: "1.0.0",
   description:
     "Cart panel: line items with remove buttons, total (SUM of LineTotal), item count, and optional 'Proceed to checkout' navigation. Requires cart entity fields: ProductId, Name, Price, Quantity, LineTotal. Its list datasource is '<ns>-items' — pass it in a sibling ProductGrid's cartRefresh to live-update on add.",
+  whenToUse:
+    "Use on cart or checkout pages to show the shopping cart contents: line items with remove buttons, item count, running total, and a checkout call-to-action.",
   category: "cart-checkout",
   params: Params as z.ZodType<P>,
   build: ({ cartBdo, title, checkoutTarget }, ns) => {
