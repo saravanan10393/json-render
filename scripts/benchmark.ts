@@ -169,6 +169,12 @@ async function benchOne(mode: string, promptKey: string, rep: number): Promise<R
     hasIndex: readAppIndex(app.id) !== null,
   };
 
+  // Mastra swallows upstream LLM errors (stream ends cleanly with no steps) —
+  // mark degenerate runs so the report excludes them from aggregates.
+  if (!result.error && result.steps.length === 0) {
+    result.error = "run produced no tool steps (likely upstream LLM error — check stderr)";
+  }
+
   const { keep } = parseArgs();
   if (!keep) deleteApp(app.id);
   return result;
