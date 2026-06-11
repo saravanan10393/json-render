@@ -5,7 +5,9 @@
  */
 import type { FragmentRegistry } from "@/lib/jr/schema";
 import { ecommerceFragments } from "./ecommerce";
+import { genericFragments } from "./generic";
 
 export const fragmentRegistry: FragmentRegistry = {
   ...ecommerceFragments,
+  ...genericFragments,
 };
