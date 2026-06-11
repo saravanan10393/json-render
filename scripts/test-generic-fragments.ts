@@ -83,7 +83,19 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Tasks: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table", "cards", "board", "task-form"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["filters", "table", "cards", "board", "task-form"] },
+      filters: {
+        $fragment: "FilterBar",
+        params: {
+          targetNs: "table",
+          layout: "toolbar",
+          filters: [
+            { field: "Status", label: "Status", kind: "select", options: ["Open", "In Progress", "Done"] },
+            { field: "Estimate", label: "Estimate", kind: "numberRange" },
+            { field: "CustomerId", label: "Customer", kind: "reference", lookupEntity: "Customer", lookupLabelField: "Name" },
+          ],
+        },
+      },
       "task-form": {
         $fragment: "RecordFormDialog",
         params: {
@@ -112,9 +124,14 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
             { field: "Done", label: "Done", display: "boolean" },
             { field: "DueDate", label: "Due", display: "date" },
           ],
-          searchable: true,
+          searchable: false,
           pageSize: 10,
-          filterBindings: [{ field: "Status", operator: "EQ" }],
+          filterBindings: [
+            { field: "Status" },
+            { field: "Estimate", operator: "GTE", stateKey: "EstimateMin" },
+            { field: "Estimate", operator: "LTE", stateKey: "EstimateMax" },
+            { field: "CustomerId" },
+          ],
           rowActions: ["edit", "delete"],
           formDialogNs: "task-form",
         },

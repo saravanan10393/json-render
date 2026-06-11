@@ -15,6 +15,7 @@ import { RecordFormDialog } from "./RecordFormDialog";
 import { FormCard } from "./FormCard";
 import { DetailHeader } from "./DetailHeader";
 import { RecordView } from "./RecordView";
+import { FilterBar } from "./FilterBar";
 
 export const genericFragments = {
   PageHeader,
@@ -32,4 +33,5 @@ export const genericFragments = {
   FormCard,
   DetailHeader,
   RecordView,
+  FilterBar,
 } as unknown as FragmentRegistry;
