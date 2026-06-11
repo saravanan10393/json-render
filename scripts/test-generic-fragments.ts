@@ -83,7 +83,7 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Tasks: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table", "cards"] },
       table: {
         $fragment: "DataTable",
         params: {
@@ -102,13 +102,31 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
           formDialogNs: "task-form",
         },
       },
+      cards: {
+        $fragment: "CardGrid",
+        params: { entity: "Task", titleField: "Title", subtitleFields: ["Priority", "DueDate"], badgeField: "Status", columns: 3, pageSize: 9, filterBindings: [{ field: "Status" }] },
+      },
     },
   },
   "Task Detail": {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: [] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["related"] },
+      related: {
+        $fragment: "RelatedList",
+        params: {
+          entity: "Task",
+          title: "Tasks for this customer",
+          parentField: "CustomerId",
+          parentIdPath: "/ui/selectedCustomerId",
+          columns: [
+            { field: "Title", label: "Title", display: "text" },
+            { field: "Status", label: "Status", display: "badge" },
+          ],
+        },
+      },
     },
+    state: { ui: { selectedCustomerId: "" } },
   },
 };
 

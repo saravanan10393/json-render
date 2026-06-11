@@ -8,6 +8,8 @@ import { ProgressTracker } from "./ProgressTracker";
 import { RecentList } from "./RecentList";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { DataTable } from "./DataTable";
+import { CardGrid } from "./CardGrid";
+import { RelatedList } from "./RelatedList";
 
 export const genericFragments = {
   PageHeader,
@@ -18,4 +20,6 @@ export const genericFragments = {
   RecentList,
   ActivityTimeline,
   DataTable,
+  CardGrid,
+  RelatedList,
 } as unknown as FragmentRegistry;
