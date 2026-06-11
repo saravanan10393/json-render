@@ -5,6 +5,8 @@ import { StatsRow } from "./StatsRow";
 import { ChartCard } from "./ChartCard";
 import { Leaderboard } from "./Leaderboard";
 import { ProgressTracker } from "./ProgressTracker";
+import { RecentList } from "./RecentList";
+import { ActivityTimeline } from "./ActivityTimeline";
 
 export const genericFragments = {
   PageHeader,
@@ -12,4 +14,6 @@ export const genericFragments = {
   ChartCard,
   Leaderboard,
   ProgressTracker,
+  RecentList,
+  ActivityTimeline,
 } as unknown as FragmentRegistry;

@@ -38,7 +38,7 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Dashboard: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["header", "stats", "status-chart", "top-priorities", "done-progress"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["header", "stats", "status-chart", "top-priorities", "done-progress", "recent", "timeline"] },
       header: {
         $fragment: "PageHeader",
         params: {
@@ -69,6 +69,14 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
       "done-progress": {
         $fragment: "ProgressTracker",
         params: { entity: "Task", title: "Done tasks vs target", target: 20, filter: [{ field: "Status", operator: "EQ", value: "Done" }] },
+      },
+      recent: {
+        $fragment: "RecentList",
+        params: { entity: "Task", title: "Recently due", titleField: "Title", sublabelField: "Priority", dateField: "DueDate", limit: 5, pressTarget: "Tasks" },
+      },
+      timeline: {
+        $fragment: "ActivityTimeline",
+        params: { entity: "Task", title: "Task timeline", titleField: "Title", dateField: "DueDate", descriptionField: "Status", limit: 8 },
       },
     },
   },
