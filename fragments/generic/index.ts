@@ -11,6 +11,8 @@ import { DataTable } from "./DataTable";
 import { CardGrid } from "./CardGrid";
 import { RelatedList } from "./RelatedList";
 import { KanbanBoard } from "./KanbanBoard";
+import { RecordFormDialog } from "./RecordFormDialog";
+import { FormCard } from "./FormCard";
 
 export const genericFragments = {
   PageHeader,
@@ -24,4 +26,6 @@ export const genericFragments = {
   CardGrid,
   RelatedList,
   KanbanBoard,
+  RecordFormDialog,
+  FormCard,
 } as unknown as FragmentRegistry;

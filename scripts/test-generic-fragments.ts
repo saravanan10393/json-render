@@ -83,7 +83,24 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Tasks: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table", "cards", "board"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table", "cards", "board", "task-form"] },
+      "task-form": {
+        $fragment: "RecordFormDialog",
+        params: {
+          entity: "Task",
+          title: "Task",
+          fields: [
+            { field: "Title", label: "Title", input: "text" },
+            { field: "Description", label: "Description", input: "textarea" },
+            { field: "Status", label: "Status", input: "select", options: ["Open", "In Progress", "Done"] },
+            { field: "Estimate", label: "Estimate", input: "number" },
+            { field: "DueDate", label: "Due date", input: "date" },
+            { field: "Done", label: "Done", input: "boolean" },
+            { field: "CustomerId", label: "Customer", input: "reference", lookupEntity: "Customer", lookupLabelField: "Name" },
+          ],
+          refresh: ["table-list", "cards-list", "board-col-0", "board-col-1", "board-col-2"],
+        },
+      },
       table: {
         $fragment: "DataTable",
         params: {
@@ -115,7 +132,20 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   "Task Detail": {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["related"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["related", "new-task"] },
+      "new-task": {
+        $fragment: "FormCard",
+        params: {
+          entity: "Task",
+          title: "New task",
+          fields: [
+            { field: "Title", label: "Title", input: "text" },
+            { field: "Status", label: "Status", input: "select", options: ["Open", "In Progress", "Done"] },
+          ],
+          refresh: ["related-list"],
+          successTarget: "Tasks",
+        },
+      },
       related: {
         $fragment: "RelatedList",
         params: {
