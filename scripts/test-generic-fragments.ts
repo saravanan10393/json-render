@@ -206,6 +206,69 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
     },
     state: { ui: { selectedCustomerId: "", selectedTaskId: "" } },
   },
+  "Wizard": {
+    root: "page",
+    elements: {
+      page: {
+        type: "Stack",
+        props: { direction: "vertical", gap: "lg", className: "p-8" },
+        children: ["task-wizard", "task-notes", "paged-table"],
+      },
+      "task-wizard": {
+        $fragment: "StepperForm",
+        params: {
+          entity: "Task",
+          title: "New Task Wizard",
+          steps: [
+            {
+              label: "Basic Info",
+              fields: [
+                { field: "Title", label: "Title", input: "text" },
+                { field: "Description", label: "Description", input: "textarea" },
+              ],
+            },
+            {
+              label: "Details",
+              fields: [
+                { field: "Status", label: "Status", input: "select", options: ["Open", "In Progress", "Done"] },
+                { field: "Estimate", label: "Estimate", input: "number" },
+              ],
+            },
+            {
+              label: "Schedule",
+              fields: [
+                { field: "DueDate", label: "Due date", input: "date" },
+              ],
+            },
+          ],
+          successTarget: "Tasks",
+        },
+      },
+      "task-notes": {
+        $fragment: "NotesPanel",
+        params: {
+          entity: "Task",
+          title: "Task Notes",
+          contentField: "Description",
+          dateField: "DueDate",
+          authorField: "Title",
+        },
+      },
+      "paged-table": {
+        $fragment: "DataTable",
+        params: {
+          entity: "Task",
+          columns: [
+            { field: "Title", label: "Title", display: "text" },
+            { field: "Status", label: "Status", display: "badge" },
+          ],
+          searchable: true,
+          pageSize: 10,
+          paginated: true,
+        },
+      },
+    },
+  },
 };
 
 let failed = false;

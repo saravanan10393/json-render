@@ -16,6 +16,8 @@ import { FormCard } from "./FormCard";
 import { DetailHeader } from "./DetailHeader";
 import { RecordView } from "./RecordView";
 import { FilterBar } from "./FilterBar";
+import { StepperForm } from "./StepperForm";
+import { NotesPanel } from "./NotesPanel";
 
 export const genericFragments = {
   PageHeader,
@@ -34,4 +36,6 @@ export const genericFragments = {
   DetailHeader,
   RecordView,
   FilterBar,
+  StepperForm,
+  NotesPanel,
 } as unknown as FragmentRegistry;

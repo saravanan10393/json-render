@@ -32,6 +32,16 @@ const Params = z.object({
   rowActions: z.array(z.enum(["edit", "delete"])).default([]),
   formDialogNs: z.string().nullable().default(null).describe("Sibling RecordFormDialog instance id — required when rowActions includes 'edit'."),
   refreshOnWrite: z.array(z.string()).default([]).describe("EXTRA same-page datasource names to re-fire after a delete (this table's list auto-refreshes)."),
+  paginated: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Adds a Pagination control below the rows. When true, the list's Page.number binds " +
+        "/filters/<ns>/page so changing pages re-fires the list. " +
+        "LIMITATION: totalPages is bound to {$datasource: '<ns>-list/page/total'} which is the " +
+        "RECORD total (e.g. 42), not the page count (e.g. 5 for pageSize=10). " +
+        "The Pagination control will show more page numbers than actual pages but navigation still works correctly.",
+    ),
 })
   .refine((p) => !p.rowActions.includes("edit") || Boolean(p.formDialogNs), {
     message: "rowActions 'edit' requires formDialogNs (a sibling RecordFormDialog instance id)",
@@ -55,7 +65,13 @@ export const DataTable: Fragment<P> = {
       [ns]: {
         type: "Stack",
         props: { direction: "vertical", gap: "sm" },
-        children: [...(params.searchable ? [`${ns}-toolbar`] : []), `${ns}-head`, `${ns}-rows`, `${ns}-empty`],
+        children: [
+          ...(params.searchable ? [`${ns}-toolbar`] : []),
+          `${ns}-head`,
+          `${ns}-rows`,
+          `${ns}-empty`,
+          ...(params.paginated ? [`${ns}-pagination`] : []),
+        ],
       },
       [`${ns}-head`]: {
         type: "Stack",
@@ -103,7 +119,9 @@ export const DataTable: Fragment<P> = {
                 ]),
               }
             : {}),
-          Page: { number: 1, size: params.pageSize },
+          Page: params.paginated
+            ? { number: { $state: `/filters/${ns}/page` }, size: params.pageSize }
+            : { number: 1, size: params.pageSize },
         },
         debounceMs: 300,
       },
@@ -154,13 +172,36 @@ export const DataTable: Fragment<P> = {
         };
       }
     }
+    if (params.paginated) {
+      elements[`${ns}-pagination`] = {
+        type: "Pagination",
+        // LIMITATION: totalPages binds to the record total (e.g. 42 records), not the
+        // page count (ceil(42/pageSize)). The control displays more page numbers than
+        // there are real pages but page navigation still works. Fix requires arithmetic
+        // support in spec JSON (not currently available).
+        props: {
+          totalPages: { $datasource: `${ds}/page/total` },
+          page: { $bindState: `/filters/${ns}/page` },
+        },
+      };
+    }
     return {
       root: ns,
       elements: elements as never,
       state: {
         // filterBindings deliberately seed nothing: unseeded $state RHS resolves undefined and the engine's pruneFilter drops the condition client-side (datasource-engine.ts).
         // search seed: only when this table owns its own search input (searchable=true); when paired with a FilterBar that has a search kind, FilterBar seeds /filters/<ns>/search instead.
-        ...(params.searchable ? { filters: { [ns]: { search: "" } } } : {}),
+        // page seed: only when paginated=true; starts at page 1.
+        ...(params.searchable || params.paginated
+          ? {
+              filters: {
+                [ns]: {
+                  ...(params.searchable ? { search: "" } : {}),
+                  ...(params.paginated ? { page: 1 } : {}),
+                },
+              },
+            }
+          : {}),
         ...(params.rowActions.includes("delete") ? { ui: { [ns]: { deleteId: null } } } : {}),
       },
       datasources: datasources as never,
