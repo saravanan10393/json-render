@@ -12,7 +12,7 @@ const Params = z.object({
   columns: z.number().int().min(2).max(4).default(3),
   pageSize: z.number().int().min(4).max(48).default(9),
   filterBindings: z.array(FilterBinding).default([]),
-  pressTarget: z.string().nullable().default(null).describe("Page NAME a card click navigates to."),
+  pressTarget: z.string().nullable().default(null).describe("Page NAME a card click navigates to. NOTE: navigation carries NO row context — the target page cannot know which card was clicked. For card→detail flows keep the detail on the SAME page (DetailHeader/RecordView reading an idPath) and write that idPath from a hand-built press handler instead."),
 });
 type P = z.infer<typeof Params>;
 
@@ -21,7 +21,7 @@ export const CardGrid: Fragment<P> = {
   version: "1.0.0",
   description:
     "Card grid over records: title, subtitle fields, optional status badge + image thumbnail, optional " +
-    "card-click navigation. List datasource '<ns>-list'; pair with FilterBar via filterBindings.",
+    "card-click navigation (page-level only — no row context crosses pages). List datasource '<ns>-list'; pair with FilterBar via filterBindings.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: (params, ns) => {

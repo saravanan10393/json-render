@@ -19,7 +19,7 @@ export const RelatedList: Fragment<P> = {
   description:
     "Child-record table scoped by <parentField> EQ the id at <parentIdPath> — for master-detail pages " +
     "(pairs with DetailHeader/RecordView reading the same id path). Auto-refires when the id changes; " +
-    "waits until the id is set. Datasource '<ns>-list'.",
+    "waits until the id is set. Datasource '<ns>-list'. The page must seed parentIdPath in state (e.g. \"\") and something must setState it (a row press handler or selection) — until it is non-empty this list stays in its empty state.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
