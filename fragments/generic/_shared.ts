@@ -31,17 +31,21 @@ export const DisplayKind = z
   .describe("How the value renders.");
 export type DisplayKindT = z.infer<typeof DisplayKind>;
 
-export const FormFieldDef = z.object({
-  field: z.string().describe("Entity field id."),
-  label: z.string(),
-  input: z
-    .enum(["text", "textarea", "number", "date", "boolean", "select", "reference"])
-    .default("text")
-    .describe("date renders a text input expecting YYYY-MM-DD. reference renders a Combobox over another entity."),
-  options: z.array(z.string()).optional().describe("select only — fixed options."),
-  lookupEntity: z.string().optional().describe("reference only — the entity to list."),
-  lookupLabelField: z.string().optional().describe("reference only — field shown as the option label (stored value is the record _id)."),
-});
+export const FormFieldDef = z
+  .object({
+    field: z.string().describe("Entity field id."),
+    label: z.string(),
+    input: z
+      .enum(["text", "textarea", "number", "date", "boolean", "select", "reference"])
+      .default("text")
+      .describe("date renders a text input expecting YYYY-MM-DD. reference renders a Combobox over another entity."),
+    options: z.array(z.string()).optional().describe("select only — fixed options."),
+    lookupEntity: z.string().optional().describe("reference only — the entity to list."),
+    lookupLabelField: z.string().optional().describe("reference only — field shown as the option label (stored value is the record _id)."),
+  })
+  .refine((f) => f.input !== "reference" || Boolean(f.lookupEntity), {
+    message: "reference inputs require lookupEntity",
+  });
 export type FormFieldDefT = z.infer<typeof FormFieldDef>;
 
 // ── Datasource builders ───────────────────────────────────────────────── //
@@ -91,8 +95,8 @@ export function textEl(text: unknown, variant = "body"): El {
  * Elements for one display-kind value. Returns the root key plus all elements
  * (money needs a 2-child Stack). `keyBase` must be ns-prefixed.
  * `ref` is the value expression: {$item}, {$state} or {$datasource}.
- * boolean: with an {$item} ref renders a Yes/No badge via $cond; with any
- * other ref it falls back to showing the raw value in a Badge.
+ * boolean: with an {$item} or {$state} ref renders a Yes/No badge via $cond;
+ * with any other ref it falls back to showing the raw value in a Badge.
  */
 export function displayElements(
   keyBase: string,
@@ -111,10 +115,13 @@ export function displayElements(
       };
     case "badge":
       return { rootKey: keyBase, elements: { [keyBase]: { type: "Badge", props: { text: ref, variant: "secondary" } } } };
+    // boolean Yes/No needs $item or $state (the $cond vocabulary); with a $datasource ref React drops raw booleans — callers should avoid display:"boolean" for datasource-bound fields.
     case "boolean": {
       const text =
         "$item" in ref
           ? { $cond: { $item: ref.$item as string, eq: true }, $then: "Yes", $else: "No" }
+          : "$state" in ref
+          ? { $cond: { $state: ref.$state as string, eq: true }, $then: "Yes", $else: "No" }
           : ref;
       return { rootKey: keyBase, elements: { [keyBase]: { type: "Badge", props: { text, variant: "outline" } } } };
     }
@@ -163,13 +170,15 @@ export function kpiValueElements(
  * One form field bound at `<formPath>/<field>`. Returns the field's root
  * element key, its elements, and any lookup datasources (reference inputs).
  * Lookup datasource names land in the fragment's init refresh list.
+ * reference fields render a Text-muted label above a Combobox (it has no
+ * native label prop), so they look slightly different from Input/Select labels.
  */
 export function formFieldOutput(
   ns: string,
   f: FormFieldDefT,
   formPath: string,
 ): { rootKey: string; elements: Record<string, El>; datasources: Record<string, Record<string, unknown>> } {
-  const key = `${ns}-field-${f.field.toLowerCase()}`;
+  const key = `${ns}-field-${f.field}`;
   const bind = { $bindState: `${formPath}/${f.field}` };
   switch (f.input) {
     case "textarea":
@@ -183,7 +192,7 @@ export function formFieldOutput(
     case "select":
       return { rootKey: key, elements: { [key]: { type: "Select", props: { label: f.label, name: f.field, options: f.options ?? [], value: bind, placeholder: f.label } } }, datasources: {} };
     case "reference": {
-      const ds = `${ns}-lookup-${f.field.toLowerCase()}`;
+      const ds = `${ns}-lookup-${f.field}`;
       return {
         rootKey: key,
         elements: {
