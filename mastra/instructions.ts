@@ -32,7 +32,12 @@ Rules:
 - The ref element has NO type/props/children — just \`$fragment\` and \`params\`. Reference it from a parent's \`children\` like any element.
 - Instance ids: short kebab-case, unique per page (e.g. "products-grid", "cart-panel").
 - Params are validated against the fragment's schema; omitted params take their defaults. Unknown fragment names and bad params come back as savePage issues.
-- Cross-fragment wiring is by instance id: ProductFilters/CategoryNav take \`targetGridNs: "<grid instance id>"\`; ProductGrid's \`cartRefresh\` takes a same-page CartSummary's datasource names \`["<cartNs>-items", "<cartNs>-total"]\`; CheckoutForm takes \`cartSummaryNs\`.
+- Cross-fragment wiring is by instance id (ns). GENERIC KIT pairing rules:
+  - Lists: DataTable (typed columns + rowActions) or CardGrid. Filters: add a FilterBar with targetNs = the list's instance id AND matching filterBindings on the list (numberRange → GTE '<Field>Min' + LTE '<Field>Max'; dateRange → '<Field>From'/'<Field>To'; select/boolean/reference → the field id). If the FilterBar has a search kind, set the list's searchable=false.
+  - Forms: RecordFormDialog opens from DataTable rowActions 'edit' (set formDialogNs) or PageHeader/DetailHeader actions kind 'openDialog' (target = the dialog's instance id). ALWAYS pass the page's list/stat/chart datasource names in the dialog's refresh (e.g. ["<tableNs>-list", "<statsNs>-stat-0"]) so the page updates after save. FormCard = full-page create form.
+  - Dashboards: StatsRow + ChartCard / Leaderboard / ProgressTracker + RecentList / ActivityTimeline.
+  - Detail (master-detail on ONE page): DetailHeader / RecordView / RelatedList all read a record id from an idPath state path (e.g. /ui/selectedId). Seed it in page state and write it from a hand-built row press (setState with {"$template": "\${_id}"}) — list fragments do not write it for you.
+  - e-commerce wiring: ProductFilters/CategoryNav take targetGridNs; ProductGrid's cartRefresh takes a CartSummary's datasource names ["<cartNs>-items", "<cartNs>-total"]; CheckoutForm takes cartSummaryNs.
 - Fragments handle their own init/datasources — do NOT add datasource.refresh for a fragment's datasources.
 - You can freely mix fragments with hand-built primitive elements on the same page.
 
