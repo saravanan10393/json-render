@@ -36,7 +36,7 @@ export const RecentList: Fragment<P> = {
         },
         [`${ns}-row`]: {
           type: "Stack",
-          props: { direction: "horizontal", justify: "between", align: "center", className: "rounded-lg border border-border px-3 py-2" },
+          props: { direction: "horizontal", justify: "between", align: "center", className: "rounded-lg border border-border px-3 py-2", ...(params.pressTarget ? { clickable: true } : {}) },
           children: [`${ns}-row-main`, `${ns}-row-date`],
           ...(params.pressTarget
             ? { on: { press: { action: "ui.navigate", params: { to: params.pressTarget } } } }

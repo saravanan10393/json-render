@@ -30,9 +30,11 @@ export const primitiveComponentDefinitions = {
 			style: z
 				.record(z.string(), z.union([z.string(), z.number()]))
 				.nullable()
-				.describe('Inline style for an exact one-off dimension the named scale lacks, e.g. { "width": "500px" }')
+				.describe('Inline style for an exact one-off dimension the named scale lacks, e.g. { "width": "500px" }'),
+			clickable: z.boolean().nullable().describe("When true the stack emits a press event on click (wire on.press).")
 		}),
 		slots: ["default"],
+		events: ["press"],
 		description: "Flex container for layouts",
 		example: { direction: "vertical", gap: "md" }
 	},
@@ -115,8 +117,9 @@ export type PrimitiveProps<K extends keyof typeof primitiveComponentDefinitions>
 
 // ── Runtime components ──────────────────────────────────────────────────────
 export const primitiveComponents = {
-	Stack: ({ props, children }: BaseComponentProps<PrimitiveProps<"Stack">>) => {
+	Stack: ({ props, children, emit }: BaseComponentProps<PrimitiveProps<"Stack">>) => {
 		const isHorizontal = props.direction === "horizontal"
+		const clickable = !!props.clickable
 		const gapMap: Record<string, string> = {
 			none: "gap-0",
 			sm: "gap-2",
@@ -143,6 +146,7 @@ export const primitiveComponents = {
 		const justifyClass = justifyMap[props.justify ?? ""] ?? ""
 
 		return (
+			// biome-ignore lint/a11y/noStaticElementInteractions: Stack opts into button semantics only when clickable
 			<div
 				className={cn(
 					"flex",
@@ -150,8 +154,22 @@ export const primitiveComponents = {
 					gapClass,
 					alignClass,
 					justifyClass,
+					clickable && "cursor-pointer hover:bg-muted/40",
 					props.className
 				)}
+				onClick={clickable ? (e) => { e.stopPropagation(); emit("press") } : undefined}
+				role={clickable ? "button" : undefined}
+				tabIndex={clickable ? 0 : undefined}
+				onKeyDown={
+					clickable
+						? (e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault()
+									emit("press")
+								}
+							}
+						: undefined
+				}
 			>
 				{children}
 			</div>
