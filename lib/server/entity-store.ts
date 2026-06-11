@@ -126,10 +126,10 @@ function matchCondition(record: Rec, cond: FilterCondition): boolean {
     case "NEQ": return String(value) !== String(target);
     case "IN": return Array.isArray(target) && target.map(String).includes(String(value));
     case "NOT_IN": return Array.isArray(target) && !target.map(String).includes(String(value));
-    case "GT": return Number(value) > Number(target);
-    case "GTE": return Number(value) >= Number(target);
-    case "LT": return Number(value) < Number(target);
-    case "LTE": return Number(value) <= Number(target);
+    case "GT": { const ln = Number(value), rn = Number(target); const [l, r] = Number.isNaN(ln) || Number.isNaN(rn) ? [String(value), String(target)] : [ln, rn]; return l > r; }
+    case "GTE": { const ln = Number(value), rn = Number(target); const [l, r] = Number.isNaN(ln) || Number.isNaN(rn) ? [String(value), String(target)] : [ln, rn]; return l >= r; }
+    case "LT": { const ln = Number(value), rn = Number(target); const [l, r] = Number.isNaN(ln) || Number.isNaN(rn) ? [String(value), String(target)] : [ln, rn]; return l < r; }
+    case "LTE": { const ln = Number(value), rn = Number(target); const [l, r] = Number.isNaN(ln) || Number.isNaN(rn) ? [String(value), String(target)] : [ln, rn]; return l <= r; }
     case "CONTAINS": return String(value ?? "").toLowerCase().includes(String(target ?? "").toLowerCase());
     case "STARTS_WITH": return String(value ?? "").toLowerCase().startsWith(String(target ?? "").toLowerCase());
     case "ENDS_WITH": return String(value ?? "").toLowerCase().endsWith(String(target ?? "").toLowerCase());

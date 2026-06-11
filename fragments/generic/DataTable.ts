@@ -159,7 +159,8 @@ export const DataTable: Fragment<P> = {
       elements: elements as never,
       state: {
         // filterBindings deliberately seed nothing: unseeded $state RHS resolves undefined and the engine's pruneFilter drops the condition client-side (datasource-engine.ts).
-        ...(params.searchable || params.filterBindings.length ? { filters: { [ns]: { search: "" } } } : {}),
+        // search seed: only when this table owns its own search input (searchable=true); when paired with a FilterBar that has a search kind, FilterBar seeds /filters/<ns>/search instead.
+        ...(params.searchable ? { filters: { [ns]: { search: "" } } } : {}),
         ...(params.rowActions.includes("delete") ? { ui: { [ns]: { deleteId: null } } } : {}),
       },
       datasources: datasources as never,

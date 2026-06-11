@@ -25,7 +25,9 @@ const Params = z.object({
         options: z.array(z.string()).optional().describe("select only."),
         lookupEntity: z.string().optional().describe("reference only."),
         lookupLabelField: z.string().optional().describe("reference only."),
-      }),
+      })
+        .refine((f) => f.kind !== "reference" || Boolean(f.lookupEntity), { message: "reference filters require lookupEntity" })
+        .refine((f) => f.kind !== "select" || (f.options?.length ?? 0) > 0, { message: "select filters require options" }),
     )
     .min(1)
     .max(6),
