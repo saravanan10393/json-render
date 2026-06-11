@@ -104,6 +104,7 @@ export function displayElements(
   ref: Record<string, unknown>,
 ): { rootKey: string; elements: Record<string, El> } {
   switch (display) {
+    // money renders a hard "$" prefix — before the datasource fires the value is blank, leaving a lone "$" (cosmetic only).
     case "money":
       return {
         rootKey: keyBase,

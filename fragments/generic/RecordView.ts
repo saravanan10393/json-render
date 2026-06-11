@@ -9,7 +9,7 @@ type DisplayKindNoBoolT = z.infer<typeof DisplayKindNoBool>;
 
 const Params = z.object({
   entity: z.string(),
-  idPath: z.string(),
+  idPath: z.string().describe("State path holding the selected record id (e.g. /ui/selectedTaskId) — same contract as DetailHeader."),
   title: z.string().default("Details"),
   fields: z
     .array(

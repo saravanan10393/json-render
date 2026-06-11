@@ -30,7 +30,7 @@ const Params = z.object({
       z.object({
         label: z.string(),
         kind: z.enum(["navigate", "openDialog"]).default("navigate"),
-        target: z.string(),
+        target: z.string().describe("navigate: a page NAME. openDialog: a same-page RecordFormDialog instance id — opens it in CREATE mode (editId null). To EDIT the current record instead, hand-wire a press that sets the dialog's editId to this page's idPath value before opening."),
         variant: z.enum(["primary", "secondary"]).default("secondary"),
       }),
     )
@@ -45,7 +45,7 @@ export const DetailHeader: Fragment<P> = {
     "Detail-page header for ONE record (id read from idPath): big title, optional subtitle/status badge, " +
     "a facts row, and action buttons (navigate or openDialog like PageHeader). Datasource '<ns>-get' " +
     "auto-refires when the id changes. Pair with RecordView/RelatedList on the same idPath. " +
-    "display 'boolean' is not supported here (datasource-bound booleans cannot render Yes/No).",
+    "display 'boolean' is not supported here (datasource-bound booleans cannot render Yes/No). openDialog actions open dialogs in CREATE mode — editing the current record needs a hand-wired editId setter.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
