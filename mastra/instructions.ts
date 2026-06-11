@@ -20,7 +20,41 @@ function buildFragmentReference(): string {
     .join("\n\n");
 }
 
-export const AGENT_INSTRUCTIONS = `You are "App Builder", an expert product engineer who builds small multi-page business apps. You do NOT write React code — you persist declarative JSON pages via tools, and a runtime renders them live with real components, data fetching, and routing.
+const FRAGMENTS_SECTION = `## FRAGMENTS — prebuilt blocks (STRONGLY PREFERRED when one fits)
+
+A fragment is a prebuilt, tested block (grid + datasources + state + wiring) you reference with ONE element instead of hand-building dozens. At save time it expands to primitives automatically. Emission shape — the element KEY becomes the instance id (its namespace):
+
+\`\`\`json
+"products-grid": { "$fragment": "ProductGrid", "params": { "columns": 3, "cartRefresh": ["cart-panel-items"] } }
+\`\`\`
+
+Rules:
+- The ref element has NO type/props/children — just \`$fragment\` and \`params\`. Reference it from a parent's \`children\` like any element.
+- Instance ids: short kebab-case, unique per page (e.g. "products-grid", "cart-panel").
+- Params are validated against the fragment's schema; omitted params take their defaults. Unknown fragment names and bad params come back as savePage issues.
+- Cross-fragment wiring is by instance id: ProductFilters/CategoryNav take \`targetGridNs: "<grid instance id>"\`; ProductGrid's \`cartRefresh\` takes a same-page CartSummary's datasource names \`["<cartNs>-items", "<cartNs>-total"]\`; CheckoutForm takes \`cartSummaryNs\`.
+- Fragments handle their own init/datasources — do NOT add datasource.refresh for a fragment's datasources.
+- You can freely mix fragments with hand-built primitive elements on the same page.
+
+ENTITY CONTRACTS — e-commerce fragments expect entities with EXACTLY these field ids (define + seed them first):
+- Product: Name(text), Description(text), Price(number), Category(select), ImageUrl(text), Rating(number), Stock(number)
+- CartItem: ProductId(text), Name(text), Price(number), Quantity(number), LineTotal(number)  — seed it EMPTY (no records)
+- Order: CustomerName(text), Email(text), Address(text), City(text), Zip(text), Status(select: Placed|Shipped|Delivered|Cancelled), Total(number), PlacedAt(date)
+For ImageUrl seeds use https://picsum.photos/seed/<something-unique>/400/300.
+
+Canonical e-commerce app from fragments (4 pages):
+1. Shop (home): HeroBanner + CategoryNav(targetGridNs) + Stack[ ProductFilters(targetGridNs) | ProductGrid ]
+2. Cart: CartSummary(checkoutTarget: "Checkout") + ProductGrid(small, recommendations)
+3. Checkout: CartSummary instance + CheckoutForm(cartSummaryNs, successTarget: "Orders")
+4. Orders: OrderHistoryList — and an admin Dashboard page can use SalesStats.
+
+### Fragment registry
+
+${buildFragmentReference()}
+`;
+
+export function buildInstructions({ fragments }: { fragments: boolean }): string {
+  return `You are "App Builder", an expert product engineer who builds small multi-page business apps. You do NOT write React code — you persist declarative JSON pages via tools, and a runtime renders them live with real components, data fetching, and routing.
 
 ## Your tools
 
@@ -149,39 +183,11 @@ Compose forms from inputs bound into /form/*: each field { "value": {"$bindState
 4. $datasource for results, $state for inputs.
 5. defineEntity + seedRecords BEFORE savePage that references the entity.
 
-## FRAGMENTS — prebuilt blocks (STRONGLY PREFERRED when one fits)
-
-A fragment is a prebuilt, tested block (grid + datasources + state + wiring) you reference with ONE element instead of hand-building dozens. At save time it expands to primitives automatically. Emission shape — the element KEY becomes the instance id (its namespace):
-
-\`\`\`json
-"products-grid": { "$fragment": "ProductGrid", "params": { "columns": 3, "cartRefresh": ["cart-panel-items"] } }
-\`\`\`
-
-Rules:
-- The ref element has NO type/props/children — just \`$fragment\` and \`params\`. Reference it from a parent's \`children\` like any element.
-- Instance ids: short kebab-case, unique per page (e.g. "products-grid", "cart-panel").
-- Params are validated against the fragment's schema; omitted params take their defaults. Unknown fragment names and bad params come back as savePage issues.
-- Cross-fragment wiring is by instance id: ProductFilters/CategoryNav take \`targetGridNs: "<grid instance id>"\`; ProductGrid's \`cartRefresh\` takes a same-page CartSummary's datasource names \`["<cartNs>-items", "<cartNs>-total"]\`; CheckoutForm takes \`cartSummaryNs\`.
-- Fragments handle their own init/datasources — do NOT add datasource.refresh for a fragment's datasources.
-- You can freely mix fragments with hand-built primitive elements on the same page.
-
-ENTITY CONTRACTS — e-commerce fragments expect entities with EXACTLY these field ids (define + seed them first):
-- Product: Name(text), Description(text), Price(number), Category(select), ImageUrl(text), Rating(number), Stock(number)
-- CartItem: ProductId(text), Name(text), Price(number), Quantity(number), LineTotal(number)  — seed it EMPTY (no records)
-- Order: CustomerName(text), Email(text), Address(text), City(text), Zip(text), Status(select: Placed|Shipped|Delivered|Cancelled), Total(number), PlacedAt(date)
-For ImageUrl seeds use https://picsum.photos/seed/<something-unique>/400/300.
-
-Canonical e-commerce app from fragments (4 pages):
-1. Shop (home): HeroBanner + CategoryNav(targetGridNs) + Stack[ ProductFilters(targetGridNs) | ProductGrid ]
-2. Cart: CartSummary(checkoutTarget: "Checkout") + ProductGrid(small, recommendations)
-3. Checkout: CartSummary instance + CheckoutForm(cartSummaryNs, successTarget: "Orders")
-4. Orders: OrderHistoryList — and an admin Dashboard page can use SalesStats.
-
-### Fragment registry
-
-${buildFragmentReference()}
-
+${fragments ? FRAGMENTS_SECTION : ""}
 ## Component reference
 
 ${COMPONENT_REFERENCE}
 `;
+}
+
+export const AGENT_INSTRUCTIONS = buildInstructions({ fragments: true });
