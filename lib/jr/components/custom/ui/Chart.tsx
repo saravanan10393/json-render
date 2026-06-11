@@ -49,7 +49,7 @@ function Chart({ props }: BaseComponentProps<ChartProps>) {
 	const height = props.height ?? 240
 
 	if (rows.length === 0) {
-		return <div className="flex items-center justify-center text-sm text-muted-foreground" style={{ height }}>No data</div>
+		return <div className="flex items-center justify-center text-sm text-muted-foreground" style={props.kind === "leaderboard" ? undefined : { height }}>No data</div>
 	}
 
 	if (props.kind === "leaderboard") {
@@ -76,7 +76,7 @@ function Chart({ props }: BaseComponentProps<ChartProps>) {
 			{pielike ? (
 				<PieChart>
 					<Tooltip formatter={(v) => fmt(Number(v), props.valueFormat)} />
-					<Pie data={rows} dataKey="value" nameKey="label" innerRadius={props.kind === "donut" ? "55%" : 0} outerRadius="90%" label={(e) => (e as unknown as { label: string }).label}>
+					<Pie data={rows} dataKey="value" nameKey="label" innerRadius={props.kind === "donut" ? "55%" : 0} outerRadius="70%" label={(e) => (e as unknown as { label: string }).label}>
 						{rows.map((r, i) => <Cell key={r.label + i} fill={PALETTE[i % PALETTE.length]} />)}
 					</Pie>
 				</PieChart>
@@ -115,7 +115,7 @@ export const definition = {
 		labelKey: z.string().nullable().describe("Point key holding the label — set to the GroupBy field id. Default 'label'."),
 		valueKey: z.string().nullable().describe("Point key holding the number. bdo.metric with ONE Metric entry emits 'value' (the default)."),
 		sort: z.enum(["asc", "desc"]).nullable().describe("Sort points by value before rendering."),
-		limit: z.number().nullable().describe("Keep only the first N points (after sort)."),
+		limit: z.number().int().positive().nullable().describe("Keep only the first N points (after sort)."),
 		height: z.number().nullable().describe("Pixel height (default 240). Ignored by 'leaderboard'."),
 		valueFormat: z.enum(["plain", "currency", "percent"]).nullable(),
 	}),
