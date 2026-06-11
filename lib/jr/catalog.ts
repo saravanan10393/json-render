@@ -1,6 +1,6 @@
 import { defineCatalog } from "@json-render/core";
 import { schema } from "@json-render/react/schema";
-import { shadcnComponentDefinitions } from "@json-render/shadcn/catalog";
+import { shadcnComponentDefinitions } from "@/lib/jr/components/shadcn/catalog";
 import { z } from "zod";
 import { customComponentDefinitions } from "./components/custom/catalog";
 

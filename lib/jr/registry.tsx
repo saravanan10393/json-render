@@ -1,7 +1,7 @@
 "use client";
 
 import { defineRegistry } from "@json-render/react";
-import { shadcnComponents } from "@json-render/shadcn";
+import { shadcnComponents } from "@/lib/jr/components/shadcn";
 import { catalog } from "./catalog";
 import { customComponents } from "./components/custom/components";
 

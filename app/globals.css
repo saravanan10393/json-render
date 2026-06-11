@@ -3,7 +3,6 @@
 @import "shadcn/tailwind.css";
 
 @source "../node_modules/streamdown/dist/*.js";
-@source "../node_modules/@json-render/shadcn/dist";
 
 @custom-variant dark (&:is(.dark *));
 

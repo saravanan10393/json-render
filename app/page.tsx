@@ -17,7 +17,13 @@ export default function HomePage() {
         <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           chat → json → app
         </span>
-        <span className="ml-auto font-mono text-xs text-muted-foreground">
+        <Link
+          href="/showcase/components"
+          className="ml-auto font-mono text-xs text-amber-500 underline-offset-4 hover:underline"
+        >
+          Catalog
+        </Link>
+        <span className="font-mono text-xs text-muted-foreground">
           {apps.length} app{apps.length === 1 ? "" : "s"}
         </span>
       </header>
