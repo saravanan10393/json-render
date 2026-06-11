@@ -23,7 +23,16 @@ export const ProgressTracker: Fragment<P> = {
   description:
     "Metric-vs-target progress card (e.g. 'Done tasks vs target 20'). ONE ungrouped aggregation; " +
     "Progress fills value/target. Datasource name '<ns>-metric'.",
+  whenToUse:
+    "Use when the user wants to track progress toward a goal or target number — like '7 of 10 orders delivered' shown as a filling progress bar.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    title: "Delivered orders",
+    metricType: "COUNT",
+    target: 10,
+    filter: [{ field: "Status", operator: "EQ", value: "Delivered" }],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => ({
     root: ns,

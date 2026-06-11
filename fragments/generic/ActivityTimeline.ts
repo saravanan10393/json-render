@@ -19,7 +19,16 @@ export const ActivityTimeline: Fragment<P> = {
   description:
     "Vertical timeline card of the N most recent records (dot + title + date + optional description). " +
     "Datasource name '<ns>-list'.",
+  whenToUse:
+    "Use when the user wants a timeline or activity feed of the latest records — recent orders, updates, or events shown newest first with a date on each entry.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    title: "Recent activity",
+    titleField: "CustomerName",
+    dateField: "PlacedAt",
+    descriptionField: "Status",
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ds = `${ns}-list`;

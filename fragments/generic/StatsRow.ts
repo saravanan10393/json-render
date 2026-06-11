@@ -33,7 +33,18 @@ export const StatsRow: Fragment<P> = {
     "Row of KPI stat cards (Grid), one bdo.metric per stat: { label, type: COUNT|SUM|AVG|MIN|MAX|DISTINCT_COUNT, " +
     "field?, format: plain|currency|percent, filter?: [{field, operator, value}] }. Use ONLY on dashboards. " +
     "Datasource names are '<ns>-stat-<i>' if you need to refresh them after a write.",
+  whenToUse:
+    "Use when the user wants KPI tiles at the top of a dashboard — headline numbers like total orders, revenue, or averages at a glance.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    stats: [
+      { label: "Orders", type: "COUNT" },
+      { label: "Revenue", type: "SUM", field: "Total", format: "currency" },
+      { label: "Delivered", type: "COUNT", filter: [{ field: "Status", operator: "EQ", value: "Delivered" }] },
+    ],
+    columns: 3,
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const elements: Record<string, Record<string, unknown>> = {

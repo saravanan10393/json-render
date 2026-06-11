@@ -27,6 +27,8 @@ export const ContactCard: Fragment<P> = {
     "Clicking a card writes the contact _id to detailStatePath for use with ContactDetail. " +
     "Entity contract: Contact(Name, Email, Phone, Company, Title, Status:select[Lead|Active|Inactive]). " +
     "Datasource: '<ns>-list' (bdo.list, Contact).",
+  whenToUse:
+    "Use when the user wants to browse contacts or people as a grid of cards showing each person's name, job title, company, and status. Cards can be clickable to open a contact's detail view.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ columns, pageSize, detailStatePath }, ns) => {

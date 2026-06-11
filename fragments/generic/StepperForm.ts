@@ -54,7 +54,30 @@ export const StepperForm: Fragment<P> = {
     "All field inputs bind under /form/<ns>/<field>. " +
     "Reference field lookup datasources (if any) are listed in init refresh. " +
     "This is CREATE-ONLY: use RecordFormDialog for edit flows.",
+  whenToUse:
+    "Use when the user wants a multi-step form or wizard that walks through filling in a record across several steps — like a checkout, signup, or onboarding flow.",
   category: "form",
+  previewParams: {
+    entity: "Order",
+    title: "Place order",
+    steps: [
+      {
+        label: "Customer",
+        fields: [
+          { field: "CustomerName", label: "Name" },
+          { field: "Email", label: "Email" },
+        ],
+      },
+      {
+        label: "Shipping",
+        fields: [
+          { field: "Address", label: "Address" },
+          { field: "City", label: "City" },
+          { field: "Zip", label: "Zip" },
+        ],
+      },
+    ],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ui = `/ui/${ns}`;

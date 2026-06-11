@@ -38,6 +38,8 @@ export const TicketQueue: Fragment<P> = {
     "Entity contract: Ticket(Subject, Description, Status:select[Open|In Progress|Waiting|Resolved|Closed], " +
     "Priority:select[Low|Medium|High|Urgent], Requester, Assignee, Category:select, CreatedAt:date). " +
     "Datasources: '<ns>-list' (bdo.list Ticket), '<ns>-new' (bdo.save CREATE Ticket, optional).",
+  whenToUse:
+    "Use when the user wants a support ticket queue or helpdesk inbox — a searchable list of tickets they can filter by status and priority, click into for details, and add new tickets to.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ pageSize, detailStatePath, showNewButton }, ns) => {

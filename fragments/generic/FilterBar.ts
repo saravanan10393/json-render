@@ -43,7 +43,17 @@ export const FilterBar: Fragment<P> = {
     "{field, LTE, '<field>Max'}, dateRange → '<field>From'/'<field>To', search → the target's Search param. " +
     "layout 'sidebar' renders a vertical Card (put it beside the list in a horizontal Stack). " +
     "If this bar has a search kind, set the target's searchable=false.",
+  whenToUse:
+    "Use when the user wants filter controls — a search box, category dropdown, price or date range — above or beside a table or card grid to narrow down the list.",
   category: "browse",
+  previewParams: {
+    targetNs: "product-table",
+    filters: [
+      { field: "Name", label: "Products", kind: "search" },
+      { field: "Category", label: "Category", kind: "select", options: ["Audio", "Wearables", "Accessories"] },
+      { field: "Price", label: "Price", kind: "numberRange" },
+    ],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const base = `/filters/${params.targetNs}`;

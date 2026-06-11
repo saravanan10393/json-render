@@ -20,7 +20,20 @@ export const RelatedList: Fragment<P> = {
     "Child-record table scoped by <parentField> EQ the id at <parentIdPath> — for master-detail pages " +
     "(pairs with DetailHeader/RecordView reading the same id path). Auto-refires when the id changes; " +
     "waits until the id is set. Datasource '<ns>-list'. The page must seed parentIdPath in state (e.g. \"\") and something must setState it (a row press handler or selection) — until it is non-empty this list stays in its empty state.",
+  whenToUse:
+    "Use on a detail page when the user wants a list of items that belong to the selected record — like a customer's orders, a project's tasks, or a product's reviews.",
   category: "display",
+  previewParams: {
+    entity: "CartItem",
+    title: "Cart items",
+    parentField: "ProductId",
+    parentIdPath: "/ui/selectedProductId",
+    columns: [
+      { field: "Name", label: "Name" },
+      { field: "Quantity", label: "Qty" },
+      { field: "LineTotal", label: "Line total", display: "money" },
+    ],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ds = `${ns}-list`;

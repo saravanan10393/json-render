@@ -31,6 +31,8 @@ export const ActivityLog: Fragment<P> = {
     "Entity contract: Activity(Subject:text, Type:select[Call|Email|Meeting|Note], RelatedTo:text, Date:date, Notes:text). " +
     "Datasources: '<ns>-list' (bdo.list Activity sorted by Date DESC) and '<ns>-add' (bdo.save CREATE, " +
     "binds /form/<ns>/Subject and /form/<ns>/Type, refreshes list on success).",
+  whenToUse:
+    "Use when the user wants a timeline or log of recent activities — calls, emails, meetings, or notes — shown newest first, with a quick inline way to log a new entry.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ title, pageSize }, ns) => {

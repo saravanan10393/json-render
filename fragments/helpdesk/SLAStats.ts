@@ -54,7 +54,21 @@ export const SLAStats: Fragment<P> = {
     "Entity contract: Ticket(Subject, Description, Status:select[Open|In Progress|Waiting|Resolved|Closed], " +
     "Priority:select[Low|Medium|High|Urgent], Requester, Assignee, Category:select, CreatedAt:date). " +
     "Datasources: '<ns>-stat-0…N-1' per KPI, '<ns>-chart' for the priority chart.",
+  whenToUse:
+    "Use when the user wants a support or SLA dashboard with headline numbers — open tickets, resolved today, average response — optionally with a breakdown chart of tickets by priority.",
   category: "display",
+  previewParams: {
+    stats: [
+      { label: "Open orders", bdo: "Order", type: "COUNT", filterField: "Status", filterValue: "Placed" },
+      { label: "Revenue", bdo: "Order", type: "SUM", field: "Total", prefix: "$" },
+      { label: "Avg order value", bdo: "Order", type: "AVG", field: "Total", prefix: "$" },
+      { label: "Delivered", bdo: "Order", type: "COUNT", filterField: "Status", filterValue: "Delivered" },
+    ],
+    columns: 4,
+    showChart: true,
+    chartEntity: "Order",
+    chartGroupBy: "Status",
+  },
   params: Params as z.ZodType<P>,
   build: ({ stats, columns, showChart, chartEntity, chartGroupBy }, ns) => {
     const rootChildren: string[] = [`${ns}-kpi-row`];

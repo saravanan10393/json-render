@@ -37,6 +37,8 @@ export const AgentLeaderboard: Fragment<P> = {
     "Renders a 'leaderboard' Chart. " +
     "Entity contract: Agent(Name:text, Email:text, Team:select, ResolvedCount:number). " +
     "Datasource: '<ns>-metric' (bdo.metric Agent, GroupBy Name, SUM ResolvedCount).",
+  whenToUse:
+    "Use when the user wants to see which support agents are performing best — a ranked leaderboard of agents by how many tickets they have resolved.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ title, limit, height }, ns) => {

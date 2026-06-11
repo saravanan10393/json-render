@@ -53,7 +53,21 @@ export const PublishStats: Fragment<P> = {
     "Optionally renders a by-Category bar chart (showChart: true, chartEntity: 'Post', chartGroupBy: 'Category'). " +
     "Entity contract: Post(Title, Slug, Excerpt, Body, AuthorName, Category:select, Status:select[Draft|Published|Archived], CoverUrl, PublishedAt:date). " +
     "Datasources: '<ns>-stat-0…N-1' per KPI, '<ns>-chart' for the category chart.",
+  whenToUse:
+    "Use on a blog or content dashboard to show headline numbers like total posts, published vs. draft counts, or averages, optionally with a bar chart breaking posts down by category.",
   category: "display",
+  previewParams: {
+    stats: [
+      { label: "Products", bdo: "Product", type: "COUNT" },
+      { label: "Revenue", bdo: "Order", type: "SUM", field: "Total", prefix: "$" },
+      { label: "Avg rating", bdo: "Product", type: "AVG", field: "Rating" },
+      { label: "In stock", bdo: "Product", type: "SUM", field: "Stock" },
+    ],
+    columns: 4,
+    showChart: true,
+    chartEntity: "Product",
+    chartGroupBy: "Category",
+  },
   params: Params as z.ZodType<P>,
   build: ({ stats, columns, showChart, chartEntity, chartGroupBy }, ns) => {
     const rootChildren: string[] = [`${ns}-kpi-row`];

@@ -42,6 +42,8 @@ export const MemberWorkload: Fragment<P> = {
     "Renders a 'leaderboard' Chart. " +
     "Entity contract: Task(Title, ProjectName, Assignee, Status:select[Todo|In Progress|Review|Done], Priority:select[Low|Medium|High], Estimate:number, DueDate:date). " +
     "Datasource: '<ns>-metric' (bdo.metric Task, GroupBy Assignee, COUNT with Status IN open statuses).",
+  whenToUse:
+    "Use when the user wants to see who on the team is busiest or how work is spread across people — a ranked chart of team members by how many open tasks each one has.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ title, limit, height, openStatuses }, ns) => {

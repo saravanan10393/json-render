@@ -37,6 +37,8 @@ export const TaskList: Fragment<P> = {
     "Entity contract: Task(Title, ProjectName, Assignee, Status:select[Todo|In Progress|Review|Done], " +
     "Priority:select[Low|Medium|High], Estimate:number, DueDate:date). " +
     "Datasources: '<ns>-list' (bdo.list Task), '<ns>-delete' (bdo.delete Task, when showDelete).",
+  whenToUse:
+    "Use when the user wants a searchable, filterable list or table of tasks showing who they're assigned to, their status, priority, and due dates, with the option to delete tasks.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ pageSize, showDelete, refreshOnDelete }, ns) => {

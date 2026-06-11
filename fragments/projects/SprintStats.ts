@@ -53,7 +53,27 @@ export const SprintStats: Fragment<P> = {
     "Optionally renders a by-Status bar chart (showChart: true, chartEntity: 'Task', chartGroupBy: 'Status'). " +
     "Entity contract: Task(Title, ProjectName, Assignee, Status:select[Todo|In Progress|Review|Done], Priority:select[Low|Medium|High], Estimate:number, DueDate:date). " +
     "Datasources: '<ns>-stat-0…N-1' per KPI, '<ns>-chart' for the status chart.",
+  whenToUse:
+    "Use when the user wants a sprint or project dashboard with headline numbers — total tasks, completed count, average estimate — optionally with a bar chart breaking work down by status.",
   category: "display",
+  previewParams: {
+    stats: [
+      { label: "Total orders", bdo: "Order", type: "COUNT" },
+      { label: "Revenue", bdo: "Order", type: "SUM", field: "Total", prefix: "$" },
+      { label: "Avg order value", bdo: "Order", type: "AVG", field: "Total", prefix: "$" },
+      {
+        label: "Delivered",
+        bdo: "Order",
+        type: "COUNT",
+        filterField: "Status",
+        filterValue: "Delivered",
+      },
+    ],
+    columns: 4,
+    showChart: true,
+    chartEntity: "Order",
+    chartGroupBy: "Status",
+  },
   params: Params as z.ZodType<P>,
   build: ({ stats, columns, showChart, chartEntity, chartGroupBy }, ns) => {
     const rootChildren: string[] = [`${ns}-kpi-row`];

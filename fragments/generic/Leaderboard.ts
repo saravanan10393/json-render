@@ -25,7 +25,18 @@ export const Leaderboard: Fragment<P> = {
   description:
     "Ranked top-N card (rank, label, bar, value) from ONE grouped aggregation — " +
     "e.g. SUM of Value by Owner. Datasource name '<ns>-metric'.",
+  whenToUse:
+    "Use when the user wants a ranked top-N list with bars — best-selling products, top customers, highest totals by city, and similar rankings.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    title: "Top cities by revenue",
+    metricType: "SUM",
+    field: "Total",
+    groupBy: "City",
+    valueFormat: "currency",
+    limit: 5,
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => ({
     root: ns,

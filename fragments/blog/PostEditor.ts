@@ -42,6 +42,8 @@ export const PostEditor: Fragment<P> = {
     "Save datasource '<ns>-save' (bdo.save) creates or updates based on _id; closes dialog on success; refreshes named datasources. " +
     "Entity contract: Post(Title, Slug, Excerpt, Body, AuthorName, Category:select, Status:select[Draft|Published|Archived], CoverUrl, PublishedAt:date). " +
     "Datasources: '<ns>-save' (bdo.save Post), '<ns>-prefill' (bdo.get Post).",
+  whenToUse:
+    "Use when the user wants to write a new blog post or edit an existing one in a popup form with fields for title, slug, excerpt, body, category, publish status, and cover image. Pair it with a post list or grid that opens the dialog.",
   category: "form",
   params: Params as z.ZodType<P>,
   build: ({ title, refresh, categoryOptions }, ns) => {

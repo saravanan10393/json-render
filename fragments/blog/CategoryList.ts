@@ -36,7 +36,13 @@ export const CategoryList: Fragment<P> = {
     "Entity contract: Category(Name:text, Description:text); " +
     "Post(Category:select). " +
     "Datasources: '<ns>-list' (bdo.list Category), '<ns>-counts' (bdo.metric COUNT Post GroupBy Category).",
+  whenToUse:
+    "Use when the user wants a sidebar or panel listing blog categories or topics with how many posts each one has, where clicking a category filters the post list to that topic.",
   category: "browse",
+  previewParams: {
+    targetNs: "post-grid",
+    title: "Categories",
+  },
   params: Params as z.ZodType<P>,
   build: ({ targetNs, title, pageSize }, ns) => {
     const listDs = `${ns}-list`;

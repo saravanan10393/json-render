@@ -26,7 +26,18 @@ export const ChartCard: Fragment<P> = {
   description:
     "Dashboard chart card: bar | line | area | donut | pie over ONE aggregation grouped by a field " +
     "(e.g. COUNT of tasks by Status, SUM of Value by Stage). Datasource name is '<ns>-metric'.",
+  whenToUse:
+    "Use when the user wants a chart — bar, line, area, pie, or donut — showing counts or totals broken down by a category, like sales by status or products per category.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    title: "Revenue by status",
+    kind: "bar",
+    metricType: "SUM",
+    field: "Total",
+    groupBy: "Status",
+    valueFormat: "currency",
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => ({
     root: ns,

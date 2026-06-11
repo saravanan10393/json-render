@@ -43,7 +43,12 @@ export const TicketDetail: Fragment<P> = {
     "Entity contract: Ticket(Subject, Description, Status:select[Open|In Progress|Waiting|Resolved|Closed], " +
     "Priority:select[Low|Medium|High|Urgent], Requester, Assignee, Category:select, CreatedAt:date). " +
     "Datasources: '<ns>-get' (bdo.get Ticket), '<ns>-status' (bdo.save UPDATE Ticket Status).",
+  whenToUse:
+    "Use when the user wants to open one support ticket and see everything about it — who reported it, its priority and description — and move it to another status like in progress, resolved, or closed.",
   category: "display",
+  previewParams: {
+    idPath: "/ui/selectedTicketId",
+  },
   params: Params as z.ZodType<P>,
   build: ({ idPath, targetStatuses }, ns) => {
     const getDs = `${ns}-get`;

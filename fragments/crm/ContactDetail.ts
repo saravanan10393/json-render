@@ -44,7 +44,13 @@ export const ContactDetail: Fragment<P> = {
     "Entity contract: Contact(Name, Email, Phone, Company, Title, Status:select[Lead|Active|Inactive]); " +
     "Deal(Name, ContactName, Value:number, Stage:select, CloseDate:date, Owner). " +
     "Datasources: '<ns>-get' (bdo.get Contact), '<ns>-deals' (bdo.list Deal filtered by ContactName).",
+  whenToUse:
+    "Use when the user wants to see one contact's full profile — email, phone, job title, company, and status — together with a table of the deals linked to that person.",
   category: "display",
+  previewParams: {
+    idPath: "/ui/selectedContactId",
+    contactNameStatePath: "/ui/selectedContactName",
+  },
   params: Params as z.ZodType<P>,
   build: ({ idPath, contactNameStatePath }, ns) => {
     const getDs = `${ns}-get`;

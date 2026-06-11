@@ -22,7 +22,17 @@ export const CardGrid: Fragment<P> = {
   description:
     "Card grid over records: title, subtitle fields, optional status badge + image thumbnail, optional " +
     "card-click navigation (page-level only — no row context crosses pages). List datasource '<ns>-list'; pair with FilterBar via filterBindings.",
+  whenToUse:
+    "Use when the user wants records shown as a grid of cards with a picture, title, and status badge instead of a table — good for browsing items, listings, or galleries.",
   category: "display",
+  previewParams: {
+    entity: "Product",
+    titleField: "Name",
+    subtitleFields: ["Description"],
+    badgeField: "Category",
+    imageField: "ImageUrl",
+    columns: 3,
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ds = `${ns}-list`;

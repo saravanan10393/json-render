@@ -136,7 +136,15 @@ export function createSession(fromFragment?: string): FragmentSession {
 
   if (fromFragment) {
     const source = readFragmentSource(fromFragment);
-    if (source) saveDraftSource(id, fromFragment, source);
+    if (source && category) {
+      // Drafts live outside the category folder — rewrite relative imports
+      // (e.g. generic fragments' "./_shared") to absolute alias paths.
+      const portable = source.replace(
+        /from\s+"\.\//g,
+        `from "@/fragments/${category}/`,
+      );
+      saveDraftSource(id, fromFragment, portable);
+    }
   }
   return getSession(id)!;
 }

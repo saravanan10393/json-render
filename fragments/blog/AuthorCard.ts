@@ -38,7 +38,13 @@ export const AuthorCard: Fragment<P> = {
     "Entity contract: Author(Name:text, Bio:text, AvatarUrl:text, Email:text); " +
     "Post(Title, AuthorName:text, Status:select[Draft|Published|Archived]). " +
     "Datasources: '<ns>-get' (bdo.get Author), '<ns>-count' (bdo.metric COUNT Post).",
+  whenToUse:
+    "Use when the user wants to show a writer's profile — their photo, name, bio, email, and how many posts they have written. Good for an author page or an 'about the author' panel next to blog content.",
   category: "display",
+  previewParams: {
+    idPath: "/ui/selectedAuthorId",
+    authorNameStatePath: "/ui/selectedAuthorName",
+  },
   params: Params as z.ZodType<P>,
   build: ({ idPath, authorNameStatePath }, ns) => {
     const getDs = `${ns}-get`;

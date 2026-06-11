@@ -43,7 +43,12 @@ export const ReplyThread: Fragment<P> = {
     "The page must seed idPath in state. " +
     "Datasources: '<ns>-list' (bdo.list Reply filtered by TicketId, sorted CreatedAt ASC, skipUntilReady) " +
     "and '<ns>-add' (bdo.save CREATE Reply, binds /form/<ns>/Body and /form/<ns>/Internal and idPath).",
+  whenToUse:
+    "Use when the user wants the conversation on a support ticket — the back-and-forth replies between customer and agents in order, with a box to write a reply or leave an internal note.",
   category: "display",
+  previewParams: {
+    idPath: "/ui/selectedTicketId",
+  },
   params: Params as z.ZodType<P>,
   build: ({ idPath, title, pageSize }, ns) => {
     const listDs = `${ns}-list`;

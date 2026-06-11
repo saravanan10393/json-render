@@ -56,7 +56,18 @@ export const DataTable: Fragment<P> = {
     "and row actions: 'edit' opens a sibling RecordFormDialog (set formDialogNs), 'delete' soft-deletes with " +
     "confirm. List datasource is '<ns>-list' — pass it to form dialogs' refresh. Pair with FilterBar via " +
     "filterBindings (FilterBar targetNs = this instance id).",
+  whenToUse:
+    "Use when the user wants a searchable table of records with labeled columns and optional edit/delete buttons on each row — the standard list view for managing data.",
   category: "display",
+  previewParams: {
+    entity: "Product",
+    columns: [
+      { field: "Name", label: "Name" },
+      { field: "Category", label: "Category", display: "badge" },
+      { field: "Price", label: "Price", display: "money" },
+      { field: "Rating", label: "Rating", display: "rating" },
+    ],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ds = `${ns}-list`;

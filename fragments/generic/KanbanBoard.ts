@@ -21,7 +21,16 @@ export const KanbanBoard: Fragment<P> = {
     "Kanban board grouped by a select field: one column per statusOptions entry, cards with title + meta " +
     "fields and left/right move buttons that update the record's status. Column datasources are " +
     "'<ns>-col-<i>'. statusOptions MUST equal the entity field's options.",
+  whenToUse:
+    "Use when the user wants a board view with one column per status or stage (like To do / In progress / Done) where cards can be moved between columns.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    statusField: "Status",
+    statusOptions: ["Placed", "Shipped", "Delivered", "Cancelled"],
+    titleField: "CustomerName",
+    metaFields: ["City"],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ui = `/ui/${ns}`;

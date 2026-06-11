@@ -37,6 +37,8 @@ export const DealPipeline: Fragment<P> = {
     "← / → buttons move the deal to the adjacent stage (two-step setState + datasource.fire). " +
     "Entity contract: Deal(Name, ContactName, Company, Value:number, Stage:select[Lead|Qualified|Proposal|Won|Lost], CloseDate:date, Owner). " +
     "Datasources: '<ns>-col-0…N-1' (bdo.list per stage), '<ns>-move' (bdo.save).",
+  whenToUse:
+    "Use when the user wants a sales pipeline board with deals organized by stage in Kanban-style columns, showing each deal's name, value, and owner, with buttons to move deals between stages.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ stages, pageSize, refreshOnMove }, ns) => {

@@ -20,7 +20,17 @@ export const RecentList: Fragment<P> = {
   description:
     "Card of the N most recent records by a date field (title + optional sublabel + date per row, " +
     "optional row-click navigation). Datasource name '<ns>-list'.",
+  whenToUse:
+    "Use when the user wants a compact 'latest items' card — the most recent orders, signups, or entries with a date on each row, often on a dashboard.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    title: "Recent orders",
+    titleField: "CustomerName",
+    sublabelField: "Status",
+    dateField: "PlacedAt",
+    limit: 5,
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ds = `${ns}-list`;

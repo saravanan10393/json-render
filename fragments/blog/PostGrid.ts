@@ -42,6 +42,8 @@ export const PostGrid: Fragment<P> = {
     "Clicking a card writes the post _id to detailStatePath and/or opens a PostEditor dialog via editIdStatePath + editorOpenPath. " +
     "Entity contract: Post(Title, Slug, Excerpt, Body, AuthorName, Category:select, Status:select[Draft|Published|Archived], CoverUrl, PublishedAt:date). " +
     "Datasource: '<ns>-list' (bdo.list, Post, filtered by /filters/<ns>/search, /filters/<ns>/Status, /filters/<ns>/Category).",
+  whenToUse:
+    "Use when the user wants a grid of blog posts or articles as cards with cover images, titles, excerpts, authors, and category/status labels, with built-in search and filters. Good for a blog home page or a content-management post list where clicking a card opens or edits the post.",
   category: "browse",
   params: Params as z.ZodType<P>,
   build: ({ columns, pageSize, detailStatePath, editIdStatePath, editorOpenPath }, ns) => {

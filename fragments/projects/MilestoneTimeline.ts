@@ -29,6 +29,8 @@ export const MilestoneTimeline: Fragment<P> = {
     "Project-management milestone timeline: list of Projects sorted by DueDate (Status badge + Name + DueDate). " +
     "Entity contract: Project(Name, Description, Status:select[Planning|Active|OnHold|Done], Owner, DueDate:date). " +
     "Datasource: '<ns>-list' (bdo.list Project sorted by DueDate).",
+  whenToUse:
+    "Use when the user wants a timeline or roadmap of upcoming project milestones and deadlines — projects listed in due-date order with their status at a glance.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ title, pageSize, sortOrder }, ns) => {

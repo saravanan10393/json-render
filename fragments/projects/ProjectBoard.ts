@@ -37,6 +37,8 @@ export const ProjectBoard: Fragment<P> = {
     "← / → buttons move the task to the adjacent status (two-step setState + datasource.fire). " +
     "Entity contract: Task(Title, ProjectName, Assignee, Status:select[Todo|In Progress|Review|Done], Priority:select[Low|Medium|High], Estimate:number, DueDate:date). " +
     "Datasources: '<ns>-col-0…N-1' (bdo.list per status), '<ns>-move' (bdo.save).",
+  whenToUse:
+    "Use when the user wants a sprint or kanban board of tasks organized into status columns (To do, In progress, Review, Done) where cards can be moved between stages.",
   category: "display",
   params: Params as z.ZodType<P>,
   build: ({ statuses, pageSize, refreshOnMove }, ns) => {

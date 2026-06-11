@@ -23,7 +23,19 @@ export const FormCard: Fragment<P> = {
   description:
     "Page-level CREATE form (Card). Same field model as RecordFormDialog; " +
     "navigates to successTarget after save. For edit flows use RecordFormDialog instead.",
+  whenToUse:
+    "Use when the user wants a standalone form on a page to add a new record — an 'Add product' or sign-up style form with labeled inputs and a save button.",
   category: "form",
+  previewParams: {
+    entity: "Product",
+    title: "Add product",
+    fields: [
+      { field: "Name", label: "Name" },
+      { field: "Description", label: "Description", input: "textarea" },
+      { field: "Price", label: "Price", input: "number" },
+      { field: "Category", label: "Category", input: "select", options: ["Audio", "Wearables", "Accessories"] },
+    ],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const formPath = `/form/${ns}`;

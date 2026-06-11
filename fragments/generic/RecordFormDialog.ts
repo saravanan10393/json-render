@@ -28,7 +28,19 @@ export const RecordFormDialog: Fragment<P> = {
     "/ui/<ns>/editId null, /form/<ns> {}, /ui/<ns>/open true; edit → set /ui/<ns>/editId then open " +
     "(DataTable rowActions and PageHeader openDialog do this when given this instance id). Pass the " +
     "page's list datasource names in `refresh`. Prefill refires when editId CHANGES — openers should set editId to null first, then the id (DataTable's edit action does).",
+  whenToUse:
+    "Use when the user wants a popup form to add or edit a record without leaving the page — pairs with a table's edit buttons or a header's 'Add new' button.",
   category: "form",
+  previewParams: {
+    entity: "Product",
+    title: "Product",
+    fields: [
+      { field: "Name", label: "Name" },
+      { field: "Price", label: "Price", input: "number" },
+      { field: "Category", label: "Category", input: "select", options: ["Audio", "Wearables", "Accessories"] },
+      { field: "Stock", label: "Stock", input: "number" },
+    ],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ui = `/ui/${ns}`;

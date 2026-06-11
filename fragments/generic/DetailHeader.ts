@@ -46,7 +46,21 @@ export const DetailHeader: Fragment<P> = {
     "a facts row, and action buttons (navigate or openDialog like PageHeader). Datasource '<ns>-get' " +
     "auto-refires when the id changes. Pair with RecordView/RelatedList on the same idPath. " +
     "display 'boolean' is not supported here (datasource-bound booleans cannot render Yes/No). openDialog actions open dialogs in CREATE mode — editing the current record needs a hand-wired editId setter.",
+  whenToUse:
+    "Use at the top of a record's detail page when the user wants a big title for the selected item with a status badge, a few key facts, and action buttons.",
   category: "display",
+  previewParams: {
+    entity: "Product",
+    idPath: "/ui/selectedProductId",
+    titleField: "Name",
+    subtitleField: "Description",
+    badgeField: "Category",
+    facts: [
+      { field: "Price", label: "Price", display: "money" },
+      { field: "Stock", label: "Stock", display: "text" },
+      { field: "Rating", label: "Rating", display: "rating" },
+    ],
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ds = `${ns}-get`;

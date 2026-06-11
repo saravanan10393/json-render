@@ -49,7 +49,14 @@ export const NotesPanel: Fragment<P> = {
     "on success resets the input to ''). " +
     "All field bindings are under /form/<ns>/<field>. " +
     "Pair with a detail page: pass the entity and the relevant content/date/author fields.",
+  whenToUse:
+    "Use when the user wants to jot down and read notes or comments on a page — a running list of short text entries with a quick-add box at the bottom.",
   category: "display",
+  previewParams: {
+    entity: "Product",
+    title: "Notes",
+    contentField: "Description",
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const listDs = `${ns}-list`;

@@ -34,7 +34,23 @@ export const RecordView: Fragment<P> = {
     "Detail body: a Card with a label/value grid of ONE record's fields (display kinds like DataTable " +
     "columns). Reads the id from idPath; datasource '<ns>-get'. Pair with DetailHeader on the same idPath. " +
     "display 'boolean' is not supported here (datasource-bound booleans cannot render Yes/No).",
+  whenToUse:
+    "Use on a detail page when the user wants to see one record's fields laid out as labeled values — like a customer profile or order summary.",
   category: "display",
+  previewParams: {
+    entity: "Order",
+    idPath: "/ui/selectedOrderId",
+    title: "Order details",
+    fields: [
+      { field: "CustomerName", label: "Customer" },
+      { field: "Email", label: "Email" },
+      { field: "Status", label: "Status", display: "badge" },
+      { field: "Total", label: "Total", display: "money" },
+      { field: "City", label: "City" },
+      { field: "PlacedAt", label: "Placed at", display: "date" },
+    ],
+    columns: 2,
+  },
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const ds = `${ns}-get`;

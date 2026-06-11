@@ -65,7 +65,11 @@ NEW APP: (1) design the data model → defineEntity for each entity; (2) seedRec
       : "design the page from the component reference below and savePage — fix issues until clean before moving to the next page"
   }; (4) saveAppIndex with navigation; (5) reply with a short summary. Use role "user" unless the user explicitly wants multiple roles. 2-4 pages is typical: a dashboard, a list, a form/detail.
 
-EDITS: the system context shows the current app (entities, pages, navigation). Re-save only what changes. If you add/remove/rename pages, re-save app.json too. The context also includes each page's pre-expansion SOURCE spec (under "SOURCE SPECS"), with \$fragment refs intact — when editing an existing page, start from that source spec and re-emit it via savePage preserving the fragment refs, rather than rebuilding from the expanded primitives.
+EDITS: the system context shows the current app (entities, pages, navigation). Re-save only what changes. If you add/remove/rename pages, re-save app.json too.${
+    fragments
+      ? ' The context also includes each page\'s pre-expansion SOURCE spec (under "SOURCE SPECS"), with \\$fragment refs intact — when editing an existing page, start from that source spec and re-emit it via savePage preserving the fragment refs, rather than rebuilding from the expanded primitives.'
+      : " The context also includes each page's SOURCE spec (under \"SOURCE SPECS\") — when editing an existing page, start from it and re-emit the full updated spec via savePage."
+  }
 
 ## THE CONTRACT — actions vs datasources
 
