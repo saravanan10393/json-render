@@ -27,6 +27,7 @@ const median = (xs: number[]) => {
   return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
 };
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
+const fmt1 = (x: number) => (Number.isFinite(x) ? x.toFixed(1) : "—");
 
 const prompts = [...new Set(ok.map((r) => r.prompt))].sort();
 const lines: string[] = [
@@ -43,8 +44,8 @@ for (const p of prompts) {
     if (!rs.length) continue;
     const pageSecs = rs.flatMap((r) => r.pages.map((pg) => pg.sincePrevCleanMs / 1000));
     lines.push(
-      `| ${p} | ${mode} | ${rs.length} | ${median(rs.map((r) => r.appSeconds ?? 0)).toFixed(1)} | ` +
-      `${mean(pageSecs).toFixed(1)} | ${Math.round(mean(rs.map((r) => r.tokens?.total ?? 0)))} | ` +
+      `| ${p} | ${mode} | ${rs.length} | ${fmt1(median(rs.map((r) => r.appSeconds ?? 0)))} | ` +
+      `${fmt1(mean(pageSecs))} | ${Math.round(mean(rs.map((r) => r.tokens?.total ?? 0)))} | ` +
       `${rs.reduce((a, r) => a + r.retries, 0)} |`,
     );
   }
@@ -64,6 +65,6 @@ if (failed.length) {
   lines.push("## Failed runs", "");
   for (const r of failed) lines.push(`- ${r.mode}/${r.prompt}/r${r.rep}: ${r.error}`);
 }
-writeFileSync(path.join(process.cwd(), "benchmarks", "REPORT.md"), lines.join("\n"));
+writeFileSync(path.join(process.cwd(), "benchmarks", "REPORT.md"), lines.join("\n") + "\n");
 console.log("wrote benchmarks/REPORT.md");
 console.log(lines.join("\n"));

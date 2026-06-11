@@ -183,6 +183,8 @@ async function benchOne(mode: string, promptKey: string, rep: number, keep: bool
   // mark degenerate runs so the report excludes them from aggregates.
   if (!result.error && result.steps.length === 0) {
     result.error = "run produced no tool steps (likely upstream LLM error — check stderr)";
+  } else if (!result.error && result.pages.length === 0) {
+    result.error = "run produced no clean page saves — build failed";
   }
 
   if (!keep) deleteApp(app.id);
