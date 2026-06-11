@@ -42,6 +42,8 @@ export async function POST(
     {
       maxSteps: 40,
       requestContext: new RequestContext([["appId", appId]]),
+      // Tag Langfuse traces so runs are filterable per app.
+      tracingOptions: { metadata: { appId, appName: app.name } },
       context: [{ role: "system", content: buildAppContext(appId, app.name) }],
     },
   );

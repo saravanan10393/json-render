@@ -1,10 +1,12 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import { fragmentRegistry } from "@/fragments";
 import {
   AppIndexSchema,
   SHELL_LAYOUTS,
   SHELL_VARIANTS,
 } from "@/lib/jr/schema";
+import { expandFragments } from "@/lib/server/fragment-expander";
 import {
   deletePage as deletePageFile,
   listPageIds,
@@ -12,6 +14,7 @@ import {
   touchApp,
   writeAppIndex,
   writePage,
+  writeSourceAudit,
 } from "@/lib/server/apps";
 import {
   countRecords,
@@ -147,8 +150,18 @@ export const savePage = createTool({
     const pageId = `${slug(input.role)}-${slug(input.businessEntity)}-${slug(input.name)}`;
     const existing = readAllPages(appId).filter((p) => p.id !== pageId);
 
+    // Eject-on-write: materialise $fragment refs to primitives first, then
+    // validate the expanded page (so validators see what will actually run).
+    const expansion = expandFragments(
+      input.spec as Record<string, unknown>,
+      fragmentRegistry,
+    );
+    if (expansion.issues.length > 0) {
+      return { ok: false, issues: expansion.issues, pageId: null };
+    }
+
     const issues = validatePageSpec({
-      spec: input.spec,
+      spec: expansion.spec,
       validPageNames: [...existing.map((p) => p.name), input.name],
       entities: listEntities(appId),
     });
@@ -161,7 +174,18 @@ export const savePage = createTool({
       role: input.role,
       businessEntity: input.businessEntity,
       name: input.name,
-      spec: input.spec as never,
+      spec: expansion.spec as never,
+    });
+    // Audit trail: the raw agent-emitted spec ($fragment refs un-expanded),
+    // persisted only now that every validation gate has passed.
+    writeSourceAudit(appId, pageId, {
+      id: pageId,
+      role: input.role,
+      businessEntity: input.businessEntity,
+      name: input.name,
+      savedAt: new Date().toISOString(),
+      expandedFragments: expansion.expanded,
+      spec: input.spec,
     });
     return { ok: true, issues: [], pageId };
   },

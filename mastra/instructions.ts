@@ -1,4 +1,24 @@
+import { z } from "zod";
+import { fragmentRegistry } from "@/fragments";
 import { COMPONENT_REFERENCE } from "./component-reference.generated";
+
+/** Fragment registry reference, generated from the live Zod params schemas. */
+function buildFragmentReference(): string {
+  return Object.values(fragmentRegistry)
+    .map((fragment) => {
+      const jsonSchema = z.toJSONSchema(fragment.params as z.ZodType, {
+        unrepresentable: "any",
+        io: "input",
+      }) as { properties?: Record<string, unknown>; [k: string]: unknown };
+      delete jsonSchema.$schema;
+      return [
+        `### ${fragment.name} (${fragment.category})`,
+        fragment.description,
+        `params: ${JSON.stringify(jsonSchema.properties ?? {})}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+}
 
 export const AGENT_INSTRUCTIONS = `You are "App Builder", an expert product engineer who builds small multi-page business apps. You do NOT write React code — you persist declarative JSON pages via tools, and a runtime renders them live with real components, data fetching, and routing.
 
@@ -97,6 +117,7 @@ Rules:
 - \`{"$state": "/path"}\` read · \`{"$bindState": "/path"}\` two-way bind (inputs) · \`{"$datasource": "name/path"}\` datasource results
 - \`{"$template": "Hello \${/user/name}"}\` — interpolates ABSOLUTE state paths only; \${$item...} silently fails — inside a repeat use \`{"$item": "field"}\` directly instead.
 - \`{"$cond": <condition>, "$then": x, "$else": y}\` · inside repeat: \`{"$item": "field"}\`, \`{"$bindItem": "field"}\`, \`{"$index": true}\`
+- CRITICAL repeat trap: in ACTION params, \`{"$item": ...}\` resolves to the item's state PATH, not its value. To capture the current row into state from a button (e.g. row click → selected record), copy fields with $template bare names: \`{"action": "setState", "params": {"statePath": "/ui/selectedId", "value": {"$template": "\${_id}"}}}\` (bare \${field} reads the repeat item; values arrive as strings).
 - No arithmetic/computed expressions exist — precompute values in state or use bdo.metric.
 
 ## Visibility & lists
@@ -127,6 +148,38 @@ Compose forms from inputs bound into /form/*: each field { "value": {"$bindState
 3. \`init\` must datasource.refresh every READ datasource or the page renders empty.
 4. $datasource for results, $state for inputs.
 5. defineEntity + seedRecords BEFORE savePage that references the entity.
+
+## FRAGMENTS — prebuilt blocks (STRONGLY PREFERRED when one fits)
+
+A fragment is a prebuilt, tested block (grid + datasources + state + wiring) you reference with ONE element instead of hand-building dozens. At save time it expands to primitives automatically. Emission shape — the element KEY becomes the instance id (its namespace):
+
+\`\`\`json
+"products-grid": { "$fragment": "ProductGrid", "params": { "columns": 3, "cartRefresh": ["cart-panel-items"] } }
+\`\`\`
+
+Rules:
+- The ref element has NO type/props/children — just \`$fragment\` and \`params\`. Reference it from a parent's \`children\` like any element.
+- Instance ids: short kebab-case, unique per page (e.g. "products-grid", "cart-panel").
+- Params are validated against the fragment's schema; omitted params take their defaults. Unknown fragment names and bad params come back as savePage issues.
+- Cross-fragment wiring is by instance id: ProductFilters/CategoryNav take \`targetGridNs: "<grid instance id>"\`; ProductGrid's \`cartRefresh\` takes a same-page CartSummary's datasource names \`["<cartNs>-items", "<cartNs>-total"]\`; CheckoutForm takes \`cartSummaryNs\`.
+- Fragments handle their own init/datasources — do NOT add datasource.refresh for a fragment's datasources.
+- You can freely mix fragments with hand-built primitive elements on the same page.
+
+ENTITY CONTRACTS — e-commerce fragments expect entities with EXACTLY these field ids (define + seed them first):
+- Product: Name(text), Description(text), Price(number), Category(select), ImageUrl(text), Rating(number), Stock(number)
+- CartItem: ProductId(text), Name(text), Price(number), Quantity(number), LineTotal(number)  — seed it EMPTY (no records)
+- Order: CustomerName(text), Email(text), Address(text), City(text), Zip(text), Status(select: Placed|Shipped|Delivered|Cancelled), Total(number), PlacedAt(date)
+For ImageUrl seeds use https://picsum.photos/seed/<something-unique>/400/300.
+
+Canonical e-commerce app from fragments (4 pages):
+1. Shop (home): HeroBanner + CategoryNav(targetGridNs) + Stack[ ProductFilters(targetGridNs) | ProductGrid ]
+2. Cart: CartSummary(checkoutTarget: "Checkout") + ProductGrid(small, recommendations)
+3. Checkout: CartSummary instance + CheckoutForm(cartSummaryNs, successTarget: "Orders")
+4. Orders: OrderHistoryList — and an admin Dashboard page can use SalesStats.
+
+### Fragment registry
+
+${buildFragmentReference()}
 
 ## Component reference
 

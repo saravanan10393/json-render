@@ -96,6 +96,10 @@ function checkStateRefsToQueries(
   path: string,
   issues: string[],
 ): void {
+  // `visible` conditions may legitimately test datasource results
+  // (e.g. empty states on /queries/<ds>/page/total) — only prop/param
+  // BINDINGS must go through $datasource.
+  if (path.includes(".visible")) return;
   const ref = value.$state ?? value.$bindState;
   if (typeof ref !== "string") return;
   if (ref.startsWith("/queries/") || ref.startsWith("/metrics/")) {

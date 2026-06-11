@@ -139,7 +139,23 @@ export function writePage(appId: string, page: PageFile): void {
 
 export function deletePage(appId: string, pageId: string): void {
   rmSync(path.join(appDir(appId), `${pageId}.json`), { force: true });
+  rmSync(path.join(appDir(appId), "temp", `${pageId}.json`), { force: true });
   touchApp(appId);
+}
+
+/**
+ * Audit copy of the agent-emitted SOURCE spec (pre fragment-expansion,
+ * $fragment refs intact). Written to data/<appId>/temp/<pageId>.json only
+ * after the expanded page passed all validation.
+ */
+export function writeSourceAudit(
+  appId: string,
+  pageId: string,
+  audit: Record<string, unknown>,
+): void {
+  const dir = path.join(appDir(appId), "temp");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(path.join(dir, `${pageId}.json`), JSON.stringify(audit, null, 2));
 }
 
 // ── Chat history (per app, so conversations survive reloads) ─────────────
