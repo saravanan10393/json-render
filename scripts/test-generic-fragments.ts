@@ -38,7 +38,26 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Dashboard: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: [] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["header", "stats"] },
+      header: {
+        $fragment: "PageHeader",
+        params: {
+          title: "Task Dashboard",
+          subtitle: "Live overview of all tasks",
+          actions: [{ label: "View tasks", kind: "navigate", target: "Tasks" }],
+        },
+      },
+      stats: {
+        $fragment: "StatsRow",
+        params: {
+          entity: "Task",
+          stats: [
+            { label: "Total tasks", type: "COUNT" },
+            { label: "Open", type: "COUNT", filter: [{ field: "Status", operator: "EQ", value: "Open" }] },
+            { label: "Total estimate", type: "SUM", field: "Estimate", format: "currency" },
+          ],
+        },
+      },
     },
   },
   Tasks: {
