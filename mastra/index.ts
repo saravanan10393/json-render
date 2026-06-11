@@ -16,6 +16,11 @@ const OPENROUTER_MODEL =
 
 const AGENT_TOOLS = { defineEntity, seedRecords, savePage, deletePage, saveAppIndex };
 
+/**
+ * Creates a fresh App Builder agent. NOTE: agents returned here are NOT
+ * registered with the Mastra instance and do NOT inherit Langfuse/
+ * Observability wiring. For traced production use, import `appBuilderAgent`.
+ */
 export function makeAppBuilderAgent({ fragments }: { fragments: boolean }): Agent {
   return new Agent({
     id: fragments ? "app-builder" : "app-builder-nofrag",

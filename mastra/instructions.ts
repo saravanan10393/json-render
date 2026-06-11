@@ -189,5 +189,3 @@ ${fragments ? FRAGMENTS_SECTION : ""}
 ${COMPONENT_REFERENCE}
 `;
 }
-
-export const AGENT_INSTRUCTIONS = buildInstructions({ fragments: true });
