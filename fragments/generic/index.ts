@@ -10,6 +10,7 @@ import { ActivityTimeline } from "./ActivityTimeline";
 import { DataTable } from "./DataTable";
 import { CardGrid } from "./CardGrid";
 import { RelatedList } from "./RelatedList";
+import { KanbanBoard } from "./KanbanBoard";
 
 export const genericFragments = {
   PageHeader,
@@ -22,4 +23,5 @@ export const genericFragments = {
   DataTable,
   CardGrid,
   RelatedList,
+  KanbanBoard,
 } as unknown as FragmentRegistry;

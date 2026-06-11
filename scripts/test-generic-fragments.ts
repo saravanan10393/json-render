@@ -83,7 +83,7 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Tasks: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table", "cards"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["table", "cards", "board"] },
       table: {
         $fragment: "DataTable",
         params: {
@@ -105,6 +105,10 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
       cards: {
         $fragment: "CardGrid",
         params: { entity: "Task", titleField: "Title", subtitleFields: ["Priority", "DueDate"], badgeField: "Status", columns: 3, pageSize: 9, filterBindings: [{ field: "Status" }] },
+      },
+      board: {
+        $fragment: "KanbanBoard",
+        params: { entity: "Task", statusField: "Status", statusOptions: ["Open", "In Progress", "Done"], titleField: "Title", metaFields: ["Priority"] },
       },
     },
   },
