@@ -2,7 +2,7 @@ import { Mastra } from "@mastra/core";
 import { Agent } from "@mastra/core/agent";
 import { LangfuseExporter } from "@mastra/langfuse";
 import { Observability } from "@mastra/observability";
-import { AGENT_INSTRUCTIONS } from "./instructions";
+import { buildInstructions } from "./instructions";
 import {
   defineEntity,
   deletePage,
@@ -14,14 +14,20 @@ import {
 const OPENROUTER_MODEL =
   process.env.OPENROUTER_MODEL ?? "anthropic/claude-sonnet-4.5";
 
-export const appBuilderAgent = new Agent({
-  id: "app-builder",
-  name: "App Builder",
-  instructions: AGENT_INSTRUCTIONS,
-  // Mastra model-router string: routes through OpenRouter using OPENROUTER_API_KEY.
-  model: `openrouter/${OPENROUTER_MODEL}`,
-  tools: { defineEntity, seedRecords, savePage, deletePage, saveAppIndex },
-});
+const AGENT_TOOLS = { defineEntity, seedRecords, savePage, deletePage, saveAppIndex };
+
+export function makeAppBuilderAgent({ fragments }: { fragments: boolean }): Agent {
+  return new Agent({
+    id: fragments ? "app-builder" : "app-builder-nofrag",
+    name: fragments ? "App Builder" : "App Builder (no fragments)",
+    instructions: buildInstructions({ fragments }),
+    // Mastra model-router string: routes through OpenRouter using OPENROUTER_API_KEY.
+    model: `openrouter/${OPENROUTER_MODEL}`,
+    tools: AGENT_TOOLS,
+  });
+}
+
+export const appBuilderAgent = makeAppBuilderAgent({ fragments: true });
 
 // Langfuse AI tracing — every agent run (LLM calls, tool calls, params,
 // outputs) lands as a trace. Keys live in .env.local; tracing is simply
