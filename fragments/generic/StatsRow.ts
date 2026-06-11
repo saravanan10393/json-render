@@ -16,6 +16,8 @@ const Params = z.object({
         field: z.string().optional().describe("Required for everything except COUNT."),
         format: z.enum(["plain", "currency", "percent"]).default("plain"),
         filter: z.array(FilterPair).optional().describe("Literal AND conditions, e.g. Status EQ 'Open'."),
+      }).refine((s) => s.type === "COUNT" || Boolean(s.field), {
+        message: "field is required for SUM/AVG/MIN/MAX/DISTINCT_COUNT",
       }),
     )
     .min(1)
@@ -35,7 +37,7 @@ export const StatsRow: Fragment<P> = {
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
     const elements: Record<string, Record<string, unknown>> = {
-      [ns]: { type: "Grid", props: { columns: params.columns, gap: "md" }, children: params.stats.map((_, i) => `${ns}-stat-${i}`) },
+      [ns]: { type: "Grid", props: { columns: Math.min(params.columns, params.stats.length), gap: "md" }, children: params.stats.map((_, i) => `${ns}-stat-${i}`) },
     };
     const datasources: Record<string, Record<string, unknown>> = {};
     params.stats.forEach((s, i) => {

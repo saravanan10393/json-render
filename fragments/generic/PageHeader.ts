@@ -29,7 +29,7 @@ export const PageHeader: Fragment<P> = {
   description:
     "Page title + subtitle + action buttons. Actions: kind 'navigate' (target = page name) or " +
     "'openDialog' (target = a same-page RecordFormDialog/FormCard instance id — opens /ui/<target>/open " +
-    "and clears its edit id so the dialog is in create mode). Use at the top of every page.",
+    "and clears its edit id so the dialog is in create mode). Use at the top of every page. Action variants are primary|secondary only (no danger in headers).",
   category: "layout",
   params: Params as z.ZodType<P>,
   build: (params, ns) => {
