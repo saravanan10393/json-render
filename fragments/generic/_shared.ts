@@ -137,6 +137,26 @@ export function displayElements(
   }
 }
 
+/**
+ * A display cell wrapped in a flex-sizing Stack — Text/Badge/etc hardcode
+ * their className, so column widths must come from a wrapping Stack.
+ */
+export function flexCell(
+  keyBase: string,
+  display: DisplayKindT,
+  ref: Record<string, unknown>,
+  className = "flex-1",
+): { rootKey: string; elements: Record<string, El> } {
+  const inner = displayElements(`${keyBase}-v`, display, ref);
+  return {
+    rootKey: keyBase,
+    elements: {
+      [keyBase]: { type: "Stack", props: { direction: "horizontal", gap: "none", align: "center", className }, children: [inner.rootKey] },
+      ...inner.elements,
+    },
+  };
+}
+
 /** KPI value: currency gets a "$" prefix Stack, else a bare Heading. */
 export function kpiValueElements(
   keyBase: string,

@@ -11,7 +11,7 @@
  */
 import { z } from "zod";
 import type { Fragment } from "@/lib/jr/schema";
-import { DisplayKind, FilterBinding, andFilter, boundConditions, displayElements } from "./_shared";
+import { DisplayKind, FilterBinding, andFilter, boundConditions, flexCell } from "./_shared";
 
 const Params = z.object({
   entity: z.string(),
@@ -32,7 +32,10 @@ const Params = z.object({
   rowActions: z.array(z.enum(["edit", "delete"])).default([]),
   formDialogNs: z.string().nullable().default(null).describe("Sibling RecordFormDialog instance id — required when rowActions includes 'edit'."),
   refreshOnWrite: z.array(z.string()).default([]).describe("EXTRA same-page datasource names to re-fire after a delete (this table's list auto-refreshes)."),
-});
+})
+  .refine((p) => !p.rowActions.includes("edit") || Boolean(p.formDialogNs), {
+    message: "rowActions 'edit' requires formDialogNs (a sibling RecordFormDialog instance id)",
+  });
 type P = z.infer<typeof Params>;
 
 export const DataTable: Fragment<P> = {
@@ -77,11 +80,9 @@ export const DataTable: Fragment<P> = {
       },
     };
     cols.forEach((c, i) => {
-      elements[`${ns}-head-${i}`] = { type: "Text", props: { text: c.label, variant: "muted", className: "flex-1 font-medium" } };
-      const cell = displayElements(`${ns}-cell-${i}`, c.display, { $item: c.field });
-      // each cell shares the row width evenly
-      const root = cell.elements[cell.rootKey] as { props?: Record<string, unknown> };
-      root.props = { ...root.props, className: "flex-1" };
+      elements[`${ns}-head-${i}`] = { type: "Stack", props: { direction: "horizontal", gap: "none", align: "center", className: "flex-1" }, children: [`${ns}-head-${i}-t`] };
+      elements[`${ns}-head-${i}-t`] = { type: "Text", props: { text: c.label, variant: "muted", className: null } };
+      const cell = flexCell(`${ns}-cell-${i}`, c.display, { $item: c.field });
       Object.assign(elements, cell.elements);
     });
     if (params.searchable) {
@@ -155,6 +156,7 @@ export const DataTable: Fragment<P> = {
       root: ns,
       elements: elements as never,
       state: {
+        // filterBindings deliberately seed nothing: unseeded $state RHS resolves undefined and the engine's pruneFilter drops the condition client-side (datasource-engine.ts).
         ...(params.searchable || params.filterBindings.length ? { filters: { [ns]: { search: "" } } } : {}),
         ...(params.rowActions.includes("delete") ? { ui: { [ns]: { deleteId: null } } } : {}),
       },
