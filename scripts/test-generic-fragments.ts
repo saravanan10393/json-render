@@ -38,7 +38,7 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   Dashboard: {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["header", "stats"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["header", "stats", "status-chart", "top-priorities", "done-progress"] },
       header: {
         $fragment: "PageHeader",
         params: {
@@ -57,6 +57,18 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
             { label: "Total estimate", type: "SUM", field: "Estimate", format: "currency" },
           ],
         },
+      },
+      "status-chart": {
+        $fragment: "ChartCard",
+        params: { entity: "Task", title: "Tasks by status", kind: "donut", groupBy: "Status" },
+      },
+      "top-priorities": {
+        $fragment: "Leaderboard",
+        params: { entity: "Task", title: "Estimate by priority", metricType: "SUM", field: "Estimate", groupBy: "Priority", limit: 5 },
+      },
+      "done-progress": {
+        $fragment: "ProgressTracker",
+        params: { entity: "Task", title: "Done tasks vs target", target: 20, filter: [{ field: "Status", operator: "EQ", value: "Done" }] },
       },
     },
   },
