@@ -23,6 +23,12 @@ export default function HomePage() {
         >
           fragment studio
         </Link>
+        <Link
+          href="/showcase/components"
+          className="rounded-md border border-border px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:border-amber-500/50 hover:text-foreground"
+        >
+          catalog
+        </Link>
         <span className="font-mono text-xs text-muted-foreground">
           {apps.length} app{apps.length === 1 ? "" : "s"}
         </span>
