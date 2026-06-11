@@ -132,7 +132,30 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
   "Task Detail": {
     root: "page",
     elements: {
-      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["related", "new-task"] },
+      page: { type: "Stack", props: { direction: "vertical", gap: "lg", className: "p-8" }, children: ["detail-head", "record", "related", "new-task"] },
+      "detail-head": {
+        $fragment: "DetailHeader",
+        params: {
+          entity: "Task", idPath: "/ui/selectedTaskId", titleField: "Title", badgeField: "Status",
+          facts: [
+            { field: "Priority", label: "Priority", display: "badge" },
+            { field: "DueDate", label: "Due", display: "date" },
+          ],
+          actions: [{ label: "All tasks", kind: "navigate", target: "Tasks" }],
+        },
+      },
+      record: {
+        $fragment: "RecordView",
+        params: {
+          entity: "Task", idPath: "/ui/selectedTaskId", title: "Details",
+          fields: [
+            { field: "Title", label: "Title", display: "text" },
+            { field: "Description", label: "Description", display: "muted" },
+            { field: "Status", label: "Status", display: "badge" },
+            { field: "Estimate", label: "Estimate", display: "money" },
+          ],
+        },
+      },
       "new-task": {
         $fragment: "FormCard",
         params: {
@@ -160,7 +183,7 @@ const PAGES: Record<string, { root: string; elements: Record<string, unknown>; s
         },
       },
     },
-    state: { ui: { selectedCustomerId: "" } },
+    state: { ui: { selectedCustomerId: "", selectedTaskId: "" } },
   },
 };
 

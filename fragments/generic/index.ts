@@ -13,6 +13,8 @@ import { RelatedList } from "./RelatedList";
 import { KanbanBoard } from "./KanbanBoard";
 import { RecordFormDialog } from "./RecordFormDialog";
 import { FormCard } from "./FormCard";
+import { DetailHeader } from "./DetailHeader";
+import { RecordView } from "./RecordView";
 
 export const genericFragments = {
   PageHeader,
@@ -28,4 +30,6 @@ export const genericFragments = {
   KanbanBoard,
   RecordFormDialog,
   FormCard,
+  DetailHeader,
+  RecordView,
 } as unknown as FragmentRegistry;
