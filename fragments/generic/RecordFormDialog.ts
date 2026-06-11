@@ -27,7 +27,7 @@ export const RecordFormDialog: Fragment<P> = {
     "(reference = Combobox over lookupEntity, stores _id). OPEN it from siblings: create → set " +
     "/ui/<ns>/editId null, /form/<ns> {}, /ui/<ns>/open true; edit → set /ui/<ns>/editId then open " +
     "(DataTable rowActions and PageHeader openDialog do this when given this instance id). Pass the " +
-    "page's list datasource names in `refresh`.",
+    "page's list datasource names in `refresh`. Prefill refires when editId CHANGES — openers should set editId to null first, then the id (DataTable's edit action does).",
   category: "form",
   params: Params as z.ZodType<P>,
   build: (params, ns) => {

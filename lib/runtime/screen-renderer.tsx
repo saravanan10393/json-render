@@ -3,8 +3,10 @@
 import {
   createStateStore,
   defineDirective,
+  evaluateVisibility,
   getByPath,
   resolveDynamicValue,
+  type VisibilityCondition,
 } from "@json-render/core";
 import { JSONUIProvider, Renderer } from "@json-render/react";
 import { useEffect, useMemo, useRef } from "react";
@@ -165,6 +167,12 @@ function resolveActionParams(
         const [name, ...rest] = (obj.$datasource as string).split("/");
         const base = `/queries/${name}`;
         return getByPath(state, rest.length ? `${base}/${rest.join("/")}` : base);
+      }
+      if (obj.$cond !== undefined) {
+        // $cond is a VisibilityCondition — evaluate against live state, then
+        // recursively resolve whichever branch is selected.
+        const condResult = evaluateVisibility(obj.$cond as VisibilityCondition, { stateModel: state });
+        return resolve(condResult ? obj.$then : obj.$else);
       }
       if (Object.keys(obj).some((k) => k.startsWith("$"))) {
         return resolveDynamicValue(obj as never, state);

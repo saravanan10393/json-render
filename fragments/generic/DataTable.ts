@@ -122,6 +122,8 @@ export const DataTable: Fragment<P> = {
           props: { label: "Edit", variant: "secondary", disabled: null },
           on: {
             press: [
+              // null→id transition ensures the prefill datasource sees a dep change on every re-edit (even for the same row).
+              { action: "setState", params: { statePath: `/ui/${dlg}/editId`, value: null } },
               // repeat-scope: $template bare names copy the row's values
               { action: "setState", params: { statePath: `/ui/${dlg}/editId`, value: { $template: "${_id}" } } },
               { action: "setState", params: { statePath: `/ui/${dlg}/open`, value: true } },
