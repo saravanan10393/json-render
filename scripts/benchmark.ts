@@ -77,13 +77,21 @@ function parseArgs() {
     process.exit(1);
   }
   const reps = Number(get("--reps") ?? "2");
+  if (Number.isNaN(reps) || reps < 1) {
+    console.error("--reps must be a positive integer");
+    process.exit(1);
+  }
   const prompts = (get("--prompts") ?? Object.keys(PROMPTS).join(","))
     .split(",")
     .filter((p) => p in PROMPTS);
+  if (prompts.length === 0) {
+    console.error(`No valid prompts; valid keys: ${Object.keys(PROMPTS).join(", ")}`);
+    process.exit(1);
+  }
   return { mode, reps, prompts, keep: args.includes("--keep") };
 }
 
-async function benchOne(mode: string, promptKey: string, rep: number): Promise<RunResult> {
+async function benchOne(mode: string, promptKey: string, rep: number, keep: boolean): Promise<RunResult> {
   const startedAt = new Date();
   const runId = `${startedAt.toISOString().replace(/[:.]/g, "-")}-${mode}-${promptKey}-r${rep}`;
   const result: RunResult = {
@@ -128,6 +136,8 @@ async function benchOne(mode: string, promptKey: string, rep: number): Promise<R
         }
       }
     })();
+    // TODO: cancel the stream on timeout — a timed-out run leaves a detached
+    // reader consuming in the background until the process exits.
     await Promise.race([consume, timeout]);
     result.appSeconds = (performance.now() - t0) / 1000;
 
@@ -175,20 +185,19 @@ async function benchOne(mode: string, promptKey: string, rep: number): Promise<R
     result.error = "run produced no tool steps (likely upstream LLM error — check stderr)";
   }
 
-  const { keep } = parseArgs();
   if (!keep) deleteApp(app.id);
   return result;
 }
 
 async function main() {
-  const { mode, reps, prompts } = parseArgs();
+  const { mode, reps, prompts, keep } = parseArgs();
   const outDir = path.join(process.cwd(), "benchmarks", "results");
   mkdirSync(outDir, { recursive: true });
 
   for (const promptKey of prompts) {
     for (let rep = 1; rep <= reps; rep++) {
       console.log(`\n▶ ${mode} / ${promptKey} / rep ${rep} ...`);
-      const res = await benchOne(mode, promptKey, rep);
+      const res = await benchOne(mode, promptKey, rep, keep);
       const file = path.join(outDir, `${res.runId}.json`);
       writeFileSync(file, JSON.stringify(res, null, 2));
       console.log(
