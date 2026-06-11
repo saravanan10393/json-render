@@ -49,11 +49,19 @@ any `$state` ref in their params changes (debounced); results land in a
   with one element — `{"$fragment": "ProductGrid", "params": {...}}` — and the
   eject-on-write expander (`lib/server/fragment-expander.ts`) materialises to
   primitives at save time (ns-prefixed ids, boundary manifest, deep-merged
-  state seeds). The e-commerce bundle ships 8 fragments (HeroBanner,
-  CategoryNav, ProductFilters, ProductGrid, CartSummary, CheckoutForm,
-  OrderHistoryList, SalesStats) wired by instance id and built on standard
-  Product/CartItem/Order entity contracts — a 4-page store assembles from
-  ~10 fragment refs. Smoke test: `bun scripts/test-fragment-expansion.ts`.
+  state seeds). Two bundles, 24 fragments total: the **generic kit** (16
+  entity-agnostic widgets — DataTable, StatsRow, ChartCard, KanbanBoard,
+  RecordFormDialog, FilterBar, DetailHeader… — parameterized by entity +
+  field ids) and the **e-commerce bundle** (8 fragments on fixed
+  Product/CartItem/Order contracts; a 4-page store assembles from ~10 refs).
+  Smoke tests: `bun scripts/test-generic-fragments.ts` and
+  `bun scripts/test-fragment-expansion.ts`.
+
+- **Benchmark** (`scripts/benchmark.ts`, Node 22 + tsx — not bun): headless
+  agent-build benchmark measuring wall-clock/tokens/validation-retries with
+  fragments on vs off (`--mode fragments|baseline`); aggregate with
+  `npx tsx scripts/benchmark-report.ts` → `benchmarks/REPORT.md`. Last run:
+  fragments cut median build time ×2.0 at equal token cost.
 
 ## Setup
 
