@@ -6,7 +6,7 @@ import { textEl } from "./_shared";
 const Params = z.object({
   entity: z.string(),
   statusField: z.string().describe("select field that defines the columns."),
-  statusOptions: z.array(z.string()).min(2).max(5).describe("Column values, in board order — must match the field's options."),
+  statusOptions: z.array(z.string()).min(2).max(5).describe("Column values, in board order — must match the field's options. A SUBSET silently hides cards in the missing statuses."),
   titleField: z.string(),
   metaFields: z.array(z.string()).max(2).default([]),
   pageSize: z.number().int().min(5).max(50).default(20),
@@ -74,23 +74,26 @@ export const KanbanBoard: Fragment<P> = {
         repeat: { statePath: `/queries/${ds}/data`, key: "_id" },
         children: [`${ns}-col-${i}-card`],
       };
+      const actionChildren = [
+        ...(i > 0 ? [`${ns}-col-${i}-card-left`] : []),
+        ...(i < params.statusOptions.length - 1 ? [`${ns}-col-${i}-card-right`] : []),
+      ];
       elements[`${ns}-col-${i}-card`] = {
         type: "Stack",
         props: { direction: "vertical", gap: "sm", className: "rounded-lg border border-border bg-card p-3" },
-        children: [`${ns}-col-${i}-card-title`, ...params.metaFields.map((_, m) => `${ns}-col-${i}-card-meta-${m}`), `${ns}-col-${i}-card-actions`],
+        children: [`${ns}-col-${i}-card-title`, ...params.metaFields.map((_, m) => `${ns}-col-${i}-card-meta-${m}`), ...(actionChildren.length ? [`${ns}-col-${i}-card-actions`] : [])],
       };
       elements[`${ns}-col-${i}-card-title`] = textEl({ $item: params.titleField }, "body");
       params.metaFields.forEach((f, m) => {
         elements[`${ns}-col-${i}-card-meta-${m}`] = textEl({ $item: f }, "muted");
       });
-      elements[`${ns}-col-${i}-card-actions`] = {
-        type: "Stack",
-        props: { direction: "horizontal", justify: "between", align: "center" },
-        children: [
-          ...(i > 0 ? [`${ns}-col-${i}-card-left`] : []),
-          ...(i < params.statusOptions.length - 1 ? [`${ns}-col-${i}-card-right`] : []),
-        ],
-      };
+      if (actionChildren.length > 0) {
+        elements[`${ns}-col-${i}-card-actions`] = {
+          type: "Stack",
+          props: { direction: "horizontal", justify: "between", align: "center" },
+          children: actionChildren,
+        };
+      }
       if (i > 0) {
         elements[`${ns}-col-${i}-card-left`] = {
           type: "Button",
