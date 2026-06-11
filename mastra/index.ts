@@ -2,7 +2,7 @@ import { Mastra } from "@mastra/core";
 import { Agent } from "@mastra/core/agent";
 import { LangfuseExporter } from "@mastra/langfuse";
 import { Observability } from "@mastra/observability";
-import { AGENT_INSTRUCTIONS } from "./instructions";
+import { buildInstructions } from "./instructions";
 import { fragmentAuthorAgent } from "./studio-agent";
 import {
   defineEntity,
@@ -16,14 +16,29 @@ import {
 const OPENROUTER_MODEL =
   process.env.OPENROUTER_MODEL ?? "anthropic/claude-sonnet-4.5";
 
-export const appBuilderAgent = new Agent({
-  id: "app-builder",
-  name: "App Builder",
-  instructions: AGENT_INSTRUCTIONS,
-  // Mastra model-router string: routes through OpenRouter using OPENROUTER_API_KEY.
-  model: `openrouter/${OPENROUTER_MODEL}`,
-  tools: { searchFragments, defineEntity, seedRecords, savePage, deletePage, saveAppIndex },
-});
+const BASE_TOOLS = { defineEntity, seedRecords, savePage, deletePage, saveAppIndex };
+
+/**
+ * Creates a fresh App Builder agent. The fragments flag controls BOTH the
+ * prompt (RAG retrieval directive + names line) and the searchFragments tool
+ * — the baseline variant hand-builds pages from raw components only.
+ *
+ * NOTE: agents returned here are NOT registered with the Mastra instance and
+ * do NOT inherit Langfuse/Observability wiring. For traced production use,
+ * import `appBuilderAgent`.
+ */
+export function makeAppBuilderAgent({ fragments }: { fragments: boolean }): Agent {
+  return new Agent({
+    id: fragments ? "app-builder" : "app-builder-nofrag",
+    name: fragments ? "App Builder" : "App Builder (no fragments)",
+    instructions: buildInstructions({ fragments }),
+    // Mastra model-router string: routes through OpenRouter using OPENROUTER_API_KEY.
+    model: `openrouter/${OPENROUTER_MODEL}`,
+    tools: fragments ? { searchFragments, ...BASE_TOOLS } : BASE_TOOLS,
+  });
+}
+
+export const appBuilderAgent = makeAppBuilderAgent({ fragments: true });
 
 // Langfuse AI tracing — every agent run (LLM calls, tool calls, params,
 // outputs) lands as a trace. Keys live in .env.local; tracing is simply

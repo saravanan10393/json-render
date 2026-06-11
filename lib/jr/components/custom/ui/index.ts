@@ -21,6 +21,7 @@ import * as AspectRatio from "./AspectRatio"
 import * as AvatarGroup from "./AvatarGroup"
 import * as Breadcrumb from "./Breadcrumb"
 import * as Calendar from "./Calendar"
+import * as Chart from "./Chart"
 import * as Combobox from "./Combobox"
 import * as Command from "./Command"
 import * as ContextMenu from "./ContextMenu"
@@ -37,6 +38,7 @@ import * as Label from "./Label"
 import * as Menubar from "./Menubar"
 import * as MultiSelect from "./MultiSelect"
 import * as NavigationMenu from "./NavigationMenu"
+import * as Progress from "./Progress"
 import * as Rating from "./Rating"
 import * as Resizable from "./Resizable"
 import * as ScrollArea from "./ScrollArea"
@@ -52,6 +54,7 @@ export const uiComponentDefinitions = {
 	AvatarGroup: AvatarGroup.definition,
 	Breadcrumb: Breadcrumb.definition,
 	Calendar: Calendar.definition,
+	Chart: Chart.definition,
 	Combobox: Combobox.definition,
 	Command: Command.definition,
 	ContextMenu: ContextMenu.definition,
@@ -68,6 +71,7 @@ export const uiComponentDefinitions = {
 	Menubar: Menubar.definition,
 	MultiSelect: MultiSelect.definition,
 	NavigationMenu: NavigationMenu.definition,
+	Progress: Progress.definition,
 	Rating: Rating.definition,
 	Resizable: Resizable.definition,
 	ScrollArea: ScrollArea.definition,
@@ -84,6 +88,7 @@ export const uiComponents = {
 	AvatarGroup: AvatarGroup.component,
 	Breadcrumb: Breadcrumb.component,
 	Calendar: Calendar.component,
+	Chart: Chart.component,
 	Combobox: Combobox.component,
 	Command: Command.component,
 	ContextMenu: ContextMenu.component,
@@ -100,6 +105,7 @@ export const uiComponents = {
 	Menubar: Menubar.component,
 	MultiSelect: MultiSelect.component,
 	NavigationMenu: NavigationMenu.component,
+	Progress: Progress.component,
 	Rating: Rating.component,
 	Resizable: Resizable.component,
 	ScrollArea: ScrollArea.component,

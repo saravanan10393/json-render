@@ -25,6 +25,7 @@ interface ComboboxProps {
 	options: ComboboxOption[]
 	placeholder?: string | null
 	name?: string | null
+	labelKey?: string | null
 }
 
 /** Coerce any incoming option to a `{label, value}` pair we can render.
@@ -35,7 +36,7 @@ interface ComboboxProps {
  *   2. `{label, value}` — the canonical shape.
  *   3. **Raw BDO record** — `state.<BDO>` records straight from
  *      `bdo.<BDO>.list()`. Salvages `_id` as both the option value and label. */
-function normalize(opt: unknown): { label: string; value: string } | null {
+function normalize(opt: unknown, labelKey?: string | null): { label: string; value: string } | null {
 	if (typeof opt === "string") return { label: opt, value: opt }
 	if (opt == null || typeof opt !== "object") return null
 	const rec = opt as Record<string, unknown>
@@ -48,7 +49,8 @@ function normalize(opt: unknown): { label: string; value: string } | null {
 	// garbage rows instead of rendering "undefined".
 	const id = typeof rec._id === "string" ? rec._id : typeof rec.id === "string" ? rec.id : null
 	if (id == null) return null
-	return { label: id, value: id }
+	const label = labelKey && typeof rec[labelKey] === "string" ? (rec[labelKey] as string) : id
+	return { label, value: id }
 }
 
 function Combobox({ props, bindings, emit }: BaseComponentProps<ComboboxProps>) {
@@ -60,9 +62,9 @@ function Combobox({ props, bindings, emit }: BaseComponentProps<ComboboxProps>) 
 	const options = useMemo(
 		() =>
 			(props.options ?? [])
-				.map((o) => normalize(o as ComboboxOption))
+				.map((o) => normalize(o as ComboboxOption, props.labelKey))
 				.filter((o): o is { label: string; value: string } => o !== null),
-		[props.options]
+		[props.options, props.labelKey]
 	)
 	// Find the label for the currently-selected value — needed because we now
 	// store the underlying id (e.g. _id) while displaying the human label.
@@ -126,7 +128,8 @@ export const definition = {
 		// `state.<BDO>__options` by the host).
 		options: z.array(z.union([z.string(), z.object({ label: z.string(), value: z.string() })])),
 		placeholder: z.string().nullable(),
-		name: z.string().nullable()
+		name: z.string().nullable(),
+		labelKey: z.string().nullable().describe("When options are raw BDO records (bound from a bdo.list datasource), the field id to show as the label; the stored value is the record _id.")
 	}),
 	events: ["change"],
 	description:
@@ -136,7 +139,8 @@ export const definition = {
 		"field dropdown populated by the host. The `value` written back to state " +
 		"is the option's `value` field (e.g. `_id`); the label is what the user " +
 		"sees and searches. Use for Reference fields or long option lists; for " +
-		"2-7 fixed options use Select.",
+		"2-7 fixed options use Select." +
+		" Bind options straight to {$datasource: \"<listDs>/data\"} and set labelKey for an entity-reference picker.",
 	example: {
 		name: "country",
 		options: ["United States", "Canada", "Mexico"],

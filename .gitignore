@@ -45,3 +45,4 @@ data/
 .playwright-mcp
 vendor/
 fragments/.drafts/
+benchmarks/results/

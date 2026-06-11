@@ -239,6 +239,10 @@ function deepMergeState(
       );
       continue;
     }
+    // Identical scalar seeds are not a conflict — silently keep the existing value.
+    if (target[key] === value || JSON.stringify(target[key]) === JSON.stringify(value)) {
+      continue;
+    }
     issues.push(
       `${origin}: state seed at "${at}" conflicts with an existing non-object value`,
     );

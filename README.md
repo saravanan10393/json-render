@@ -49,11 +49,14 @@ any `$state` ref in their params changes (debounced); results land in a
   with one element — `{"$fragment": "ProductGrid", "params": {...}}` — and the
   eject-on-write expander (`lib/server/fragment-expander.ts`) materialises to
   primitives at save time (ns-prefixed ids, boundary manifest, deep-merged
-  state seeds). The e-commerce bundle ships 8 fragments (HeroBanner,
-  CategoryNav, ProductFilters, ProductGrid, CartSummary, CheckoutForm,
-  OrderHistoryList, SalesStats) wired by instance id and built on standard
-  Product/CartItem/Order entity contracts — a 4-page store assembles from
-  ~10 fragment refs. Smoke test: `bun scripts/test-fragment-expansion.ts`.
+  state seeds). Six bundles, ~47 fragments: the **generic kit** (17
+  entity-agnostic widgets — DataTable, StatsRow, ChartCard, KanbanBoard,
+  RecordFormDialog, FilterBar, DetailHeader, StepperForm, NotesPanel… —
+  parameterized by entity + field ids), the **e-commerce bundle** (8 fragments
+  on fixed Product/CartItem/Order contracts; a 4-page store assembles from
+  ~10 refs), and domain bundles for **crm / blog / helpdesk / projects**.
+  Smoke tests: `bun scripts/test-generic-fragments.ts` and
+  `bun scripts/test-fragment-expansion.ts`.
 - **Fragment retrieval (RAG)**: fragment docs are NOT in the agent prompt.
   They're embedded (OpenRouter `text-embedding-3-small`) into a
   [sqlite-vector](https://github.com/sqliteai/sqlite-vector) index inside
@@ -71,6 +74,11 @@ any `$state` ref in their params changes (debounced); results land in a
   reserved sandbox app with seeded data; iterate via chat, a params
   playground, or direct source edits, then approve into the category — which
   registers and vector-indexes it in one click.
+- **Benchmark** (`scripts/benchmark.ts`, Node 22 + tsx — not bun): headless
+  agent-build benchmark measuring wall-clock/tokens/validation-retries with
+  fragments on vs off (`--mode fragments|baseline`); aggregate with
+  `npx tsx scripts/benchmark-report.ts` → `benchmarks/REPORT.md`. The
+  fragments mode uses the same RAG retrieval as production.
 
 ## Setup
 

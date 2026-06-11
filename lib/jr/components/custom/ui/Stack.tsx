@@ -1,3 +1,4 @@
+import type { BaseComponentProps } from "@json-render/react"
 import type { CSSProperties, ReactNode } from "react"
 
 /**
@@ -11,9 +12,9 @@ import type { CSSProperties, ReactNode } from "react"
  * @json-render/shadcn's Stack.
  *
  * Matches the catalog's Stack schema: { direction, gap, align, justify,
- * className }. Box and Grid are intentionally NOT owned yet — Stack alone for
- * now. Wired in registry.ts after `...shadcnComponents` so it shadows the
- * built-in one.
+ * className, clickable }. Box and Grid are intentionally NOT owned yet — Stack
+ * alone for now. Wired in registry.ts after `...shadcnComponents` so it shadows
+ * the built-in one.
  */
 
 type StackProps = {
@@ -25,6 +26,8 @@ type StackProps = {
 	/** Inline style escape hatch for exact one-off values (e.g. `{ width: "500px" }`)
 	 *  that the named class scale doesn't cover. */
 	style?: Record<string, string | number> | null
+	/** When true the stack emits a press event on click (wire on.press). */
+	clickable?: boolean | null
 }
 
 // Every class below is also emitted by the shadcn components, so Tailwind's
@@ -50,8 +53,9 @@ const JUSTIFY = {
 	around: "justify-around"
 } as const
 
-export function Stack({ props, children }: { props?: StackProps | null; children?: ReactNode }): ReactNode {
+export function Stack({ props, children, emit }: BaseComponentProps<StackProps>): ReactNode {
 	const p = props ?? {}
+	const clickable = !!p.clickable
 	const horizontal = p.direction === "horizontal"
 	const className = [
 		"flex",
@@ -59,12 +63,30 @@ export function Stack({ props, children }: { props?: StackProps | null; children
 		GAP[p.gap ?? "md"],
 		ALIGN[p.align ?? "stretch"], // flexbox-correct default; shadcn's is "start"
 		JUSTIFY[p.justify ?? "start"],
+		clickable ? "cursor-pointer hover:bg-muted/40" : "",
 		p.className ?? ""
 	]
 		.filter(Boolean)
 		.join(" ")
 	return (
-		<div className={className} style={(p.style as CSSProperties | undefined) ?? undefined}>
+		// biome-ignore lint/a11y/noStaticElementInteractions: Stack opts into button semantics only when clickable; a real <button> can't be used as a generic layout container
+		<div
+			className={className}
+			style={(p.style as CSSProperties | undefined) ?? undefined}
+			onClick={clickable ? (e) => { e.stopPropagation(); emit("press") } : undefined}
+			role={clickable ? "button" : undefined}
+			tabIndex={clickable ? 0 : undefined}
+			onKeyDown={
+				clickable
+					? (e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault()
+								emit("press")
+							}
+						}
+					: undefined
+			}
+		>
 			{children}
 		</div>
 	)

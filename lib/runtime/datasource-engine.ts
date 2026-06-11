@@ -245,12 +245,13 @@ export class DatasourceEngine {
         lastFetchedAt: new Date().toISOString(),
       });
       await this.runHooks(ds, "success");
-      if (!isReadDatasource(ds.def) && ds.def.refresh?.length) {
-        await this.refresh(ds.def.refresh);
-      }
-      // closePath convenience from bdo.save: flip the dialog flag on success.
+      // closePath convenience from bdo.save: close the dialog BEFORE the list
+      // refresh so the UI doesn't flash stale data inside an open dialog.
       if (typeof resolved.closePath === "string") {
         this.store.set(resolved.closePath, false);
+      }
+      if (!isReadDatasource(ds.def) && ds.def.refresh?.length) {
+        await this.refresh(ds.def.refresh);
       }
     } catch (error) {
       if (this.disposed) return;
