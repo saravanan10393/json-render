@@ -49,11 +49,12 @@ any `$state` ref in their params changes (debounced); results land in a
   with one element — `{"$fragment": "ProductGrid", "params": {...}}` — and the
   eject-on-write expander (`lib/server/fragment-expander.ts`) materialises to
   primitives at save time (ns-prefixed ids, boundary manifest, deep-merged
-  state seeds). Two bundles, 24 fragments total: the **generic kit** (16
+  state seeds). Two bundles, 26 fragments total: the **generic kit** (18
   entity-agnostic widgets — DataTable, StatsRow, ChartCard, KanbanBoard,
-  RecordFormDialog, FilterBar, DetailHeader… — parameterized by entity +
-  field ids) and the **e-commerce bundle** (8 fragments on fixed
-  Product/CartItem/Order contracts; a 4-page store assembles from ~10 refs).
+  RecordFormDialog, FilterBar, DetailHeader, StepperForm, NotesPanel… —
+  parameterized by entity + field ids) and the **e-commerce bundle** (8
+  fragments on fixed Product/CartItem/Order contracts; a 4-page store
+  assembles from ~10 refs).
   Smoke tests: `bun scripts/test-generic-fragments.ts` and
   `bun scripts/test-fragment-expansion.ts`.
 
