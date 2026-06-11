@@ -143,6 +143,16 @@ export function deletePage(appId: string, pageId: string): void {
   touchApp(appId);
 }
 
+/** Reads the pre-expansion SOURCE audit (temp/<pageId>.json) — null if absent. */
+export function readSourceAudit(appId: string, pageId: string): Record<string, unknown> | null {
+  try {
+    const raw = readFileSync(path.join(appDir(appId), "temp", `${pageId}.json`), "utf8");
+    return JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Audit copy of the agent-emitted SOURCE spec (pre fragment-expansion,
  * $fragment refs intact). Written to data/<appId>/temp/<pageId>.json only
