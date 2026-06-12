@@ -1,8 +1,27 @@
 import { fragmentRegistry } from "@/fragments";
 import { COMPONENT_REFERENCE } from "./component-reference.generated";
+import { designPresetReference } from "./tools";
 
 /** Names only — full docs come from the searchFragments tool at runtime. */
 const FRAGMENT_NAMES = Object.keys(fragmentRegistry).join(", ");
+
+const DESIGN_SECTION = `## DESIGN SYSTEM & NAVIGATION (pick per app domain)
+
+Every app gets a design system (DESIGN.md preset → colors, fonts, radius, light+dark) and a navigation shell. Choose BOTH from the app's domain right after understanding the request:
+
+Presets (applyDesignSystem tool):
+${designPresetReference()}
+
+Domain → preset guide: shops/food/retail → commerce-warm · helpdesk/CRM/ops/admin → ops-utility · blogs/content/docs → editorial · project/creative/startup tools → studio-bold · finance/legal/B2B → finance-trust · wellness/education/personal → wellness-soft. When the user names brand colors, pass colorTweaks (always tweak ring with primary).
+
+Navigation shell — set \`shellLayout\` in saveAppIndex:
+- sidebar: classic left nav with labels — default for 3+ page business apps
+- topnav: horizontal header nav — consumer-facing apps (shops, blogs)
+- icon-rail: slim icon-only rail — dense ops/admin tools where space matters
+- compact-rail: icons + tiny labels — dashboards with 4-6 sections
+- minimal: no chrome, floating page switcher — single-purpose or landing-style apps
+- split-rail: icon rail + secondary label panel — large multi-module apps
+Give every navigation entry a lucide \`icon\` name (e.g. layout-dashboard, shopping-cart, ticket, users, settings).`;
 
 const FRAGMENTS_SECTION = `## FRAGMENTS — prebuilt blocks (STRONGLY PREFERRED when one fits)
 
@@ -51,6 +70,7 @@ export function buildInstructions({ fragments }: { fragments: boolean }): string
 
 ## Your tools
 
+- \`applyDesignSystem({ preset, colorTweaks?, headingFont?, bodyFont? })\` — theme the app (see DESIGN SYSTEM section). Call once per new app, FIRST.
 ${fragments ? SEARCH_TOOL_LINE : ""}- \`defineEntity({ name, label, fields })\` — create a data table (the app's backend). Fields: { id (PascalCase), name, type: text|number|boolean|date|select, options }.
 - \`seedRecords({ entity, records })\` — insert realistic sample data (5-15 records per entity; real-sounding values, never lorem ipsum).
 - \`savePage({ role, businessEntity, name, spec })\` — create/replace one page. Returns the derived pageId. When \`issues\` come back, fix the spec and save again.
@@ -59,7 +79,7 @@ ${fragments ? SEARCH_TOOL_LINE : ""}- \`defineEntity({ name, label, fields })\` 
 
 ## Workflow
 
-NEW APP: (1) design the data model → defineEntity for each entity; (2) seedRecords for each; (3) FOR EACH PAGE, one at a time: ${
+NEW APP: (0) applyDesignSystem — pick the preset + plan the shellLayout from the app's domain; (1) design the data model → defineEntity for each entity; (2) seedRecords for each; (3) FOR EACH PAGE, one at a time: ${
     fragments
       ? 'searchFragments with that page\'s specific design (purpose + widgets, e.g. "shop page: hero banner, category pills, filterable product grid with add to cart") → then immediately savePage using the returned schemas — fix issues until clean before moving to the next page'
       : "design the page from the component reference below and savePage — fix issues until clean before moving to the next page"
@@ -183,6 +203,8 @@ Compose forms from inputs bound into /form/*: each field { "value": {"$bindState
 3. \`init\` must datasource.refresh every READ datasource or the page renders empty.
 4. $datasource for results, $state for inputs.
 5. defineEntity + seedRecords BEFORE savePage that references the entity.
+
+${DESIGN_SECTION}
 
 ${fragments ? FRAGMENTS_SECTION : ""}
 ## Component reference

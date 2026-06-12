@@ -5,6 +5,7 @@ import { Observability } from "@mastra/observability";
 import { buildInstructions } from "./instructions";
 import { fragmentAuthorAgent } from "./studio-agent";
 import {
+  applyDesignSystem,
   defineEntity,
   deletePage,
   saveAppIndex,
@@ -16,7 +17,7 @@ import {
 const OPENROUTER_MODEL =
   process.env.OPENROUTER_MODEL ?? "anthropic/claude-sonnet-4.5";
 
-const BASE_TOOLS = { defineEntity, seedRecords, savePage, deletePage, saveAppIndex };
+const BASE_TOOLS = { applyDesignSystem, defineEntity, seedRecords, savePage, deletePage, saveAppIndex };
 
 /**
  * Creates a fresh App Builder agent. The fragments flag controls BOTH the

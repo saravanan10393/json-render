@@ -74,6 +74,16 @@ any `$state` ref in their params changes (debounced); results land in a
   reserved sandbox app with seeded data; iterate via chat, a params
   playground, or direct source edits, then approve into the category — which
   registers and vector-indexes it in one click.
+- **Design systems** ([DESIGN.md](https://github.com/google-labs-code/design.md)
+  spec): six curated presets in `design/presets/` (full shadcn palettes
+  light+dark, Google Font pairs, radius — lint-clean via `@google/design.md`).
+  The agent's `applyDesignSystem` tool picks one per app domain (plus optional
+  brand-color tweaks, re-linted), persisting `data/<appId>/DESIGN.md` +
+  `theme.json`; the runtime applies the tokens as scoped CSS variables with a
+  per-app dark-mode toggle. Navigation renders through six polished shells
+  (`lib/runtime/shells.tsx` — sidebar, topnav, icon-rail, compact-rail,
+  minimal, split-rail) selected by the agent via app.json's `shellLayout`,
+  with lucide icons and the app's theme.
 - **Benchmark** (`scripts/benchmark.ts`, Node 22 + tsx — not bun): headless
   agent-build benchmark measuring wall-clock/tokens/validation-retries with
   fragments on vs off (`--mode fragments|baseline`); aggregate with

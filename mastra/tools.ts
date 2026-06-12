@@ -6,6 +6,10 @@ import {
   SHELL_LAYOUTS,
   SHELL_VARIANTS,
 } from "@/lib/jr/schema";
+import {
+  applyDesignSystem as applyDesign,
+  listPresets,
+} from "@/lib/server/design-md";
 import { expandFragments } from "@/lib/server/fragment-expander";
 import { searchFragments as searchFragmentIndex } from "@/lib/server/fragment-index";
 import {
@@ -115,6 +119,58 @@ export const seedRecords = createTool({
     };
   },
 });
+
+// ── Design system ─────────────────────────────────────────────────────────
+
+export const applyDesignSystem = createTool({
+  id: "applyDesignSystem",
+  description:
+    "Apply a design system (DESIGN.md preset + optional tweaks) to the app. The preview re-themes immediately — colors, fonts, radius, light+dark palettes. Call ONCE per new app (before pages, after understanding the domain) and again only when the user asks for a different look.",
+  inputSchema: z.object({
+    preset: z
+      .string()
+      .describe("Preset id — pick by app domain/mood (see instructions)."),
+    colorTweaks: z
+      .record(z.string(), z.string())
+      .nullable()
+      .describe(
+        'Optional shadcn-token color overrides, e.g. {"primary": "#7C2D9E", "ring": "#7C2D9E"} — prefix "dark-" to adjust the dark palette. Use ONLY when the user asks for specific brand colors.',
+      ),
+    headingFont: z
+      .string()
+      .nullable()
+      .describe("Optional Google Font family override for headings."),
+    bodyFont: z.string().nullable().describe("Optional Google Font family override for body text."),
+  }),
+  outputSchema: z.object({
+    ok: z.boolean(),
+    issues: z.array(z.string()),
+    applied: z.string().nullable(),
+  }),
+  execute: async (input, context) => {
+    const appId = appIdFrom(context);
+    const result = await applyDesign({
+      appId,
+      preset: input.preset,
+      colorTweaks: input.colorTweaks ?? undefined,
+      headingFont: input.headingFont ?? undefined,
+      bodyFont: input.bodyFont ?? undefined,
+    });
+    touchApp(appId);
+    return {
+      ok: result.ok,
+      issues: result.issues,
+      applied: result.theme ? `${result.theme.name} (${result.theme.preset})` : null,
+    };
+  },
+});
+
+/** Compact preset list for the agent prompt. */
+export function designPresetReference(): string {
+  return listPresets()
+    .map((p) => `- ${p.id} — "${p.name}": ${p.mood}`)
+    .join("\n");
+}
 
 // ── Fragment retrieval ────────────────────────────────────────────────────
 

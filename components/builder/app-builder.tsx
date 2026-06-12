@@ -41,8 +41,8 @@ export function AppBuilder({ app, initialMessages }: AppBuilderProps) {
   const refreshBundle = useCallback(async () => {
     const res = await fetch(`/api/apps/${app.id}/bundle`);
     if (!res.ok) return;
-    const body = (await res.json()) as AppBundle & { app: unknown };
-    setBundle({ index: body.index, pages: body.pages });
+    const body = (await res.json()) as AppBundle;
+    setBundle(body);
   }, [app.id]);
 
   // Reload the bundle whenever the agent completes tool work (new files on

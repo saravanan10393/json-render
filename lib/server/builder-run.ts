@@ -1,6 +1,7 @@
 import { RequestContext } from "@mastra/core/request-context";
 import type { UIMessage } from "ai";
 import { readAllPages, readAppIndex, readSourceAudit } from "@/lib/server/apps";
+import { getAppTheme } from "@/lib/server/design-md";
 import { listEntities } from "@/lib/server/entity-store";
 import { appBuilderAgent, makeAppBuilderAgent } from "@/mastra";
 
@@ -74,6 +75,14 @@ export function buildAppContext(appId: string, appName: string): string {
     `\nENTITIES:\n${entitySummary || "(none)"}`,
     `\nPAGES:\n${pageSummary || "(none)"}`,
     `\nAPP INDEX (app.json):\n${index ? JSON.stringify(index) : "(not written yet — call saveAppIndex)"}`,
+    `\nDESIGN SYSTEM: ${
+      getAppTheme(appId)
+        ? (() => {
+            const theme = getAppTheme(appId)!;
+            return `${theme.name} (preset ${theme.preset}, fonts ${theme.fonts.heading}/${theme.fonts.body}) — applied; re-run applyDesignSystem only if the user wants a different look.`;
+          })()
+        : "none yet — call applyDesignSystem first."
+    }`,
     `\nFull page specs are on disk; savePage REPLACES a page entirely, so emit the complete spec when editing one. ui.navigate valid targets: [${pages.map((p) => p.name).join(", ")}].`,
     sourceSection,
   ].join("\n");
