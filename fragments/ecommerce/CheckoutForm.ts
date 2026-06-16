@@ -26,7 +26,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const CheckoutForm: Fragment<P> = {
-  name: "CheckoutForm",
+  id: "fragment-checkout-form",
+  section: "checkout",
+  name: "Checkout Form",
   version: "1.0.0",
   description:
     "Checkout form (name, email, address, city, zip) that saves an Order with Status 'Placed' on submit. Requires Order fields: CustomerName, Email, Address, City, Zip, Status, Total. Pair with a same-page CartSummary via cartSummaryNs to capture the cart total.",

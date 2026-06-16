@@ -19,7 +19,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const OrderHistoryList: Fragment<P> = {
-  name: "OrderHistoryList",
+  id: "fragment-order-history-list",
+  section: "account",
+  name: "Order History List",
   version: "1.0.0",
   description:
     "Paginated order history with status filter and color-coded badges. Requires Order fields: CustomerName, Status, Total; PlacedAt (date) recommended for ordering.",

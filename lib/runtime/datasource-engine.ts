@@ -28,6 +28,36 @@ type LocalActionRunner = (
 ) => Promise<void>;
 
 /**
+ * Executes one resolved datasource request and returns the raw result envelope.
+ * The real app POSTs to the per-app datasource API (the default below); the
+ * showcase injects an in-memory mock so blocks render without a backend.
+ */
+export type DatasourceExecutor = (
+  type: string,
+  params: Record<string, unknown>,
+) => Promise<{ result?: unknown; page?: unknown; error?: string }>;
+
+/** Default executor: POST to the per-app datasource route. */
+function httpExecutor(appId: string): DatasourceExecutor {
+  return async (type, params) => {
+    const response = await fetch(`/api/apps/${appId}/datasource`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, params }),
+    });
+    const body = (await response.json()) as {
+      result?: unknown;
+      page?: unknown;
+      error?: string;
+    };
+    if (!response.ok || body.error) {
+      throw new Error(body.error ?? `datasource failed (${response.status})`);
+    }
+    return body;
+  };
+}
+
+/**
  * Mode-specific optional fields flattened for uniform access — READ types
  * carry into/debounceMs/skipUntilReady/oneShot, WRITE types carry refresh.
  */
@@ -113,10 +143,12 @@ export class DatasourceEngine {
   private disposed = false;
 
   constructor(
-    private appId: string,
+    appId: string,
     private store: StateStore,
     private runLocalAction: LocalActionRunner,
     private toast: (message: string, kind?: string) => void,
+    /** Defaults to the per-app HTTP route; the showcase injects a mock. */
+    private executor: DatasourceExecutor = httpExecutor(appId),
   ) {}
 
   register(datasources: DataSourceMap | undefined): void {
@@ -223,19 +255,7 @@ export class DatasourceEngine {
     this.store.set(into, { ...prevEnvelope, isLoading: true });
 
     try {
-      const response = await fetch(`/api/apps/${this.appId}/datasource`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: ds.def.type, params: resolved }),
-      });
-      const body = (await response.json()) as {
-        result?: unknown;
-        page?: unknown;
-        error?: string;
-      };
-      if (!response.ok || body.error) {
-        throw new Error(body.error ?? `datasource ${name} failed (${response.status})`);
-      }
+      const body = await this.executor(ds.def.type, resolved);
       if (this.disposed) return;
       this.store.set(into, {
         data: body.result ?? null,

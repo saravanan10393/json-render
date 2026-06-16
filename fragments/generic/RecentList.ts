@@ -15,7 +15,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const RecentList: Fragment<P> = {
-  name: "RecentList",
+  id: "fragment-recent-list",
+  name: "Recent List",
   version: "1.0.0",
   description:
     "Card of the N most recent records by a date field (title + optional sublabel + date per row, " +

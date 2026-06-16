@@ -380,16 +380,22 @@ export const shadcnComponents = {
 		)
 	},
 
-	Popover: ({ props }: BaseComponentProps<ShadcnProps<"Popover">>) => {
+	Popover: ({ props, children }: BaseComponentProps<ShadcnProps<"Popover">>) => {
+		const hasBadge = props.badge != null && props.badge !== ""
 		return (
 			<PopoverPrimitive>
 				<PopoverTrigger asChild>
 					<Button variant="outline" className="text-sm">
 						{props.trigger}
+						{hasBadge && (
+							<Badge variant="secondary" className="ml-1.5">
+								{props.badge}
+							</Badge>
+						)}
 					</Button>
 				</PopoverTrigger>
-				<PopoverContent className="w-64">
-					<p className="text-sm">{props.content}</p>
+				<PopoverContent className="w-72">
+					{props.content != null ? <p className="text-sm">{props.content}</p> : children}
 				</PopoverContent>
 			</PopoverPrimitive>
 		)

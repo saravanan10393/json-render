@@ -20,6 +20,7 @@ const Params = z
 type P = z.infer<typeof Params>;
 
 export const Leaderboard: Fragment<P> = {
+  id: "fragment-leaderboard",
   name: "Leaderboard",
   version: "1.0.0",
   description:

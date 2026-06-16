@@ -23,7 +23,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const MilestoneTimeline: Fragment<P> = {
-  name: "MilestoneTimeline",
+  id: "fragment-milestone-timeline",
+  name: "Milestone Timeline",
   version: "1.0.0",
   description:
     "Project-management milestone timeline: list of Projects sorted by DueDate (Status badge + Name + DueDate). " +

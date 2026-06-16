@@ -189,7 +189,8 @@ export const searchFragments = createTool({
   outputSchema: z.object({
     matches: z.array(
       z.object({
-        name: z.string(),
+        id: z.string().describe("Emit this as the element's $fragment value."),
+        name: z.string().describe("Human label (display only)."),
         category: z.string(),
         doc: z.string(),
         score: z.number(),
@@ -201,6 +202,7 @@ export const searchFragments = createTool({
     const matches = await searchFragmentIndex(fragmentRegistry, input.query);
     return {
       matches: matches.map((m) => ({
+        id: m.id,
         name: m.name,
         category: m.category,
         doc: m.doc,

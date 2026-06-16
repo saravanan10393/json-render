@@ -129,7 +129,7 @@ function ComponentDetail({ entry }: { entry: ShowcaseEntry }) {
 				)}
 			</div>
 			<div className="canvas-grid mt-2 flex min-h-40 items-center justify-center rounded-lg border border-dashed border-border p-8">
-				<div className="w-full max-w-xl">
+				<div className="w-full max-w-xl rounded-lg bg-background p-4">
 					{isNote ? (
 						<ComponentPreview entry={entry} />
 					) : renderable ? (

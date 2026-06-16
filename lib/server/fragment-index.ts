@@ -129,9 +129,19 @@ async function openDb(): Promise<MinimalDb> {
     db = nodeDb as unknown as MinimalDb;
   }
 
+  // Migration: the table was previously keyed by `name`. If an old-schema
+  // table exists (no `id` column), drop it so it rebuilds keyed by `id` — a
+  // one-time full re-embed (cheap, hash-guarded thereafter).
+  const cols = db
+    .prepare("SELECT name FROM pragma_table_info('fragment_index')")
+    .all() as Array<{ name: string }>;
+  if (cols.length > 0 && !cols.some((c) => c.name === "id")) {
+    db.exec("DROP TABLE fragment_index;");
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS fragment_index (
-      name         TEXT PRIMARY KEY,
+      id           TEXT PRIMARY KEY,
+      name         TEXT NOT NULL,
       category     TEXT NOT NULL,
       version      TEXT NOT NULL,
       content_hash TEXT NOT NULL,
@@ -183,6 +193,8 @@ function buildDoc(fragment: Fragment<unknown>): string {
   }) as { properties?: Record<string, unknown> };
   return [
     `### ${fragment.name} (${fragment.category})`,
+    `Emit as: { "$fragment": "${fragment.id}" }`,
+    fragment.section ? `Section: ${fragment.section}` : "",
     fragment.description,
     fragment.whenToUse ? `When to use: ${fragment.whenToUse}` : "",
     `params: ${JSON.stringify(jsonSchema.properties ?? {})}`,
@@ -217,10 +229,10 @@ export interface SyncResult {
 export async function syncFragmentIndex(registry: FragmentRegistry): Promise<SyncResult> {
   const db = await getDb();
   const existing = new Map(
-    (db.prepare("SELECT name, content_hash FROM fragment_index").all() as Array<{
-      name: string;
+    (db.prepare("SELECT id, content_hash FROM fragment_index").all() as Array<{
+      id: string;
       content_hash: string;
-    }>).map((row) => [row.name, row.content_hash]),
+    }>).map((row) => [row.id, row.content_hash]),
   );
 
   const result: SyncResult = { added: [], updated: [], removed: [], skipped: 0 };
@@ -230,25 +242,26 @@ export async function syncFragmentIndex(registry: FragmentRegistry): Promise<Syn
     const doc = buildDoc(fragment);
     const text = buildEmbedText(fragment);
     const hash = sha256(`${fragment.version}\n${text}\n${doc}`);
-    if (existing.get(fragment.name) === hash) {
+    if (existing.get(fragment.id) === hash) {
       result.skipped++;
     } else {
       pending.push({ fragment, doc, hash, text });
-      (existing.has(fragment.name) ? result.updated : result.added).push(fragment.name);
+      (existing.has(fragment.id) ? result.updated : result.added).push(fragment.id);
     }
-    existing.delete(fragment.name);
+    existing.delete(fragment.id);
   }
 
   if (pending.length > 0) {
     const vectors = await embed(pending.map((p) => p.text));
     const upsert = db.prepare(
-      `INSERT INTO fragment_index (name, category, version, content_hash, doc, embedding)
-       VALUES (?, ?, ?, ?, ?, vector_as_f32(?))
-       ON CONFLICT(name) DO UPDATE SET category=excluded.category, version=excluded.version,
+      `INSERT INTO fragment_index (id, name, category, version, content_hash, doc, embedding)
+       VALUES (?, ?, ?, ?, ?, ?, vector_as_f32(?))
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, category=excluded.category, version=excluded.version,
          content_hash=excluded.content_hash, doc=excluded.doc, embedding=excluded.embedding`,
     );
     pending.forEach((p, i) => {
       upsert.run(
+        p.fragment.id,
         p.fragment.name,
         p.fragment.category,
         p.fragment.version,
@@ -260,7 +273,7 @@ export async function syncFragmentIndex(registry: FragmentRegistry): Promise<Syn
   }
 
   // fragments that vanished from the registry
-  const remove = db.prepare("DELETE FROM fragment_index WHERE name = ?");
+  const remove = db.prepare("DELETE FROM fragment_index WHERE id = ?");
   for (const stale of existing.keys()) {
     remove.run(stale);
     result.removed.push(stale);
@@ -272,6 +285,9 @@ export async function syncFragmentIndex(registry: FragmentRegistry): Promise<Syn
 // ── Search ────────────────────────────────────────────────────────────────
 
 export interface FragmentMatch {
+  /** Machine key the LLM emits as `$fragment`. */
+  id: string;
+  /** Human display label. */
   name: string;
   category: string;
   doc: string;
@@ -309,13 +325,14 @@ export async function searchFragments(
 
   const rows = db
     .prepare(
-      `SELECT f.name, f.category, f.doc, v.distance
+      `SELECT f.id, f.name, f.category, f.doc, v.distance
        FROM fragment_index AS f
        JOIN vector_full_scan('fragment_index','embedding', vector_as_f32(?)) AS v
          ON f.rowid = v.rowid
        ORDER BY v.distance ASC`,
     )
     .all(JSON.stringify(queryVector)) as Array<{
+    id: string;
     name: string;
     category: string;
     doc: string;
@@ -328,6 +345,7 @@ export async function searchFragments(
   const matches = rows.map((row) => {
     const similarity = 1 - row.distance;
     return {
+      id: row.id,
       name: row.name,
       category: row.category,
       doc: row.doc,

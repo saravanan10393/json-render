@@ -29,7 +29,8 @@ const STATUSES = ["Open", "In Progress", "Waiting", "Resolved", "Closed"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
 
 export const TicketQueue: Fragment<P> = {
-  name: "TicketQueue",
+  id: "fragment-ticket-queue",
+  name: "Ticket Queue",
   version: "1.0.0",
   description:
     "Helpdesk ticket queue table: Subject/Status/Priority/Assignee/CreatedAt columns, " +

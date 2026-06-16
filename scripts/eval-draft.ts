@@ -22,6 +22,7 @@ interface EvalOutput {
   ok: boolean;
   issues: string[];
   meta?: {
+    id: string;
     name: string;
     category: string;
     version: string;
@@ -53,12 +54,12 @@ try {
 
 const fragment = Object.values(mod!).find(
   (v): v is Fragment<unknown> =>
-    !!v && typeof v === "object" && "build" in v && "params" in v && "name" in v,
+    !!v && typeof v === "object" && "build" in v && "params" in v && "id" in v && "name" in v,
 );
 if (!fragment) {
   emit({
     ok: false,
-    issues: ["draft does not export a Fragment ({ name, version, description, category, params, build })"],
+    issues: ["draft does not export a Fragment ({ id, name, version, description, category, params, build })"],
   });
 }
 
@@ -80,11 +81,11 @@ const page = {
       props: { direction: "vertical", gap: "lg", className: "p-8" },
       children: [ns],
     },
-    [ns]: { $fragment: fragment!.name, params },
+    [ns]: { $fragment: fragment!.id, params },
   },
 };
 
-const registry = { ...fragmentRegistry, [fragment!.name]: fragment! };
+const registry = { ...fragmentRegistry, [fragment!.id]: fragment! };
 const { spec, issues, expanded } = expandFragments(page, registry);
 if (issues.length > 0 || expanded.length === 0) {
   emit({ ok: false, issues: issues.length ? issues : ["fragment did not expand"] });
@@ -113,6 +114,7 @@ emit({
   ok: validationIssues.length === 0,
   issues: validationIssues,
   meta: {
+    id: fragment!.id,
     name: fragment!.name,
     category: fragment!.category,
     version: fragment!.version,

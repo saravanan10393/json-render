@@ -6,8 +6,10 @@
  * list. The body below is a full-height flex row that each route fills (the
  * Components route renders a sidebar + detail; Blocks renders a placeholder).
  *
- * Rendered in the app's dark theme (the home + builder surfaces are dark too);
- * there is no theme picker in this build.
+ * A light/dark toggle lives in the top bar. The `dark` class is applied to the
+ * document element (not a wrapper div) so Radix portals — popovers, dialogs,
+ * dropdowns — which mount onto document.body, outside any wrapper, still
+ * inherit the theme. Defaults to dark, matching the home + builder surfaces.
  */
 import { Moon, Sun } from "lucide-react";
 import Link from "next/link";
@@ -31,22 +33,26 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
     return { total: entries.length, shadcn, ours: entries.length - shadcn };
   }, []);
 
-  // Default to dark (matches SSR + the rest of the app); reconcile from
-  // localStorage after mount so a stored preference survives reloads without a
-  // hydration mismatch.
+  // Default to dark (matches the rest of the app); reconcile from localStorage
+  // after mount so a stored preference survives reloads without a hydration
+  // mismatch.
   const [theme, setTheme] = useState<Theme>("dark");
   useEffect(() => {
     const stored = localStorage.getItem(THEME_KEY);
     if (stored === "light" || stored === "dark") setTheme(stored);
   }, []);
+  // Apply `dark` to the document element so portaled overlays (which escape
+  // this subtree to document.body) inherit it too; clean it off on unmount so
+  // the preference doesn't leak to other routes.
   useEffect(() => {
     localStorage.setItem(THEME_KEY, theme);
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    return () => root.classList.remove("dark");
   }, [theme]);
 
   return (
-    <div
-      className={`${theme === "dark" ? "dark" : ""} flex h-screen flex-col bg-background text-foreground`}
-    >
+    <div className="flex h-screen flex-col bg-background text-foreground">
       <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-2.5">
         <div className="flex items-center gap-3">
           <h1 className="text-sm font-semibold">Component Catalog</h1>

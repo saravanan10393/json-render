@@ -20,7 +20,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const RecordFormDialog: Fragment<P> = {
-  name: "RecordFormDialog",
+  id: "fragment-record-form-dialog",
+  name: "Record Form Dialog",
   version: "1.0.0",
   description:
     "Create/edit dialog form. Field inputs: text|textarea|number|date|boolean|select|reference " +

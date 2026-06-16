@@ -32,7 +32,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const TestimonialStrip: Fragment<P> = {
-  name: "TestimonialStrip",
+  id: "fragment-testimonial-strip",
+  section: "discovery",
+  name: "Testimonial Strip",
   version: "1.0.0",
   description: "Displays customer testimonials in a grid layout. Shows quote cards with customer name and role. Generic component that works with any parameterized testimonials.",
   whenToUse: "Use when you want to display customer testimonials, reviews, quotes, or social proof. Perfect for landing pages, about pages, or anywhere you need to showcase customer feedback.",

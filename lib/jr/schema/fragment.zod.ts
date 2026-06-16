@@ -62,7 +62,7 @@ export type {
 
 export const FragmentRefSchema = z
   .object({
-    $fragment: z.string().describe("Registered fragment name."),
+    $fragment: z.string().describe("Registered fragment id (e.g. 'fragment-cart-summary')."),
     params: z
       .record(z.string(), PropValueSchema)
       .optional()

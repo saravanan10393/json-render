@@ -194,9 +194,12 @@ export const shadcnComponentDefinitions = {
 	Popover: {
 		props: z.object({
 			trigger: z.string(),
-			content: z.string()
+			content: z.string().nullable(),
+			badge: z.string().nullable()
 		}),
-		description: "Popover that appears on click of trigger."
+		slots: ["default"],
+		description:
+			"Popover on click of a trigger button. Pass CHILDREN for rich content (e.g. a filter facet: a CheckboxGroup or RangeSlider); `content` is a plain-text fallback used only when there are no children. `badge` shows a small count/indicator in the trigger (e.g. active filter count)."
 	},
 
 	// ==========================================================================

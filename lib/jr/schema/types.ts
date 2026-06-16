@@ -87,6 +87,15 @@ export interface FragmentOutput {
 }
 
 export interface Fragment<P> {
+  /**
+   * Unique MACHINE key — no spaces, kebab-case, "fragment-" prefixed
+   * (e.g. "fragment-cart-summary"). This is the registry key, the value the
+   * LLM emits as `$fragment`, the vector-index primary key, and the boundary
+   * id. Distinct from `name`, which is the human label.
+   */
+  id: string;
+  /** Human display label, WITH spaces (e.g. "Cart Summary"). Shown in the
+   *  showcase/studio and folded into the retrieval text — never used as a key. */
   name: string;
   version: string;
   /** Human-readable; appears in the LLM system-prompt registry enumeration. */
@@ -102,6 +111,14 @@ export interface Fragment<P> {
    * gate evaluate with these when no explicit params are given.
    */
   previewParams?: Record<string, unknown>;
+  /**
+   * Journey grouping within a bundle — the single bucket a block lives under
+   * in the showcase drilldown (Tier → Bundle → Section → Block) and a hint for
+   * picking. Freeform per domain (e.g. ecommerce: "discovery" | "browse" |
+   * "product-detail" | "reviews" | "cart" | "checkout" | "account" |
+   * "promotion" | "admin"). Optional; falls back to the category grouping.
+   */
+  section?: string;
   /** Coarse grouping for the LLM prompt + telemetry. */
   category:
     | "product-display"

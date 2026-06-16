@@ -28,7 +28,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const HeroBanner: Fragment<P> = {
-  name: "HeroBanner",
+  id: "fragment-hero-banner",
+  section: "discovery",
+  name: "Hero Banner",
   version: "1.0.0",
   description:
     "Promotional hero banner: headline + subtitle + optional CTA button (navigates to a page) + optional image. Pure display — no entities required.",

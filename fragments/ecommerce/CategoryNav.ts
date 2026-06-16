@@ -27,7 +27,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const CategoryNav: Fragment<P> = {
-  name: "CategoryNav",
+  id: "fragment-category-nav",
+  section: "browse",
+  name: "Category Nav",
   version: "1.0.0",
   description:
     "Horizontal category pill bar. Writes the picked category to /filters/<targetGridNs>/category so the target ProductGrid auto-refilters. Requires the grid's Product entity to have a Category field.",

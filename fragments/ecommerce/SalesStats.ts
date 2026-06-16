@@ -31,7 +31,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const SalesStats: Fragment<P> = {
-  name: "SalesStats",
+  id: "fragment-sales-stats",
+  section: "admin",
+  name: "Sales Stats",
   version: "1.0.0",
   description:
     "KPI stat card row for dashboards — each stat is a bdo.metric (COUNT/SUM/AVG/MAX/MIN with optional EQ filter). Use only on dashboard-style pages.",

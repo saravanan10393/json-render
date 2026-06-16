@@ -49,7 +49,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const FeatureHighlights: Fragment<P> = {
-  name: "FeatureHighlights",
+  id: "fragment-feature-highlights",
+  section: "discovery",
+  name: "Feature Highlights",
   version: "1.0.1",
   description:
     "Feature highlights — a grid of feature cards with icon badge, title, and supporting text. Optional centered section title. Pure display — no entities required.",

@@ -29,7 +29,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const AuthorCard: Fragment<P> = {
-  name: "AuthorCard",
+  id: "fragment-author-card",
+  name: "Author Card",
   version: "1.0.0",
   description:
     "Blog/CMS Author profile card: avatar image, Name, Bio, Email, and post count metric. " +

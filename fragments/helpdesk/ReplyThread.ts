@@ -33,7 +33,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const ReplyThread: Fragment<P> = {
-  name: "ReplyThread",
+  id: "fragment-reply-thread",
+  name: "Reply Thread",
   version: "1.0.0",
   description:
     "Helpdesk reply thread: reverse-chronological list of Reply records for a ticket " +

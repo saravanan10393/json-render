@@ -21,7 +21,9 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const CartSummary: Fragment<P> = {
-  name: "CartSummary",
+  id: "fragment-cart-summary",
+  section: "cart",
+  name: "Cart Summary",
   version: "1.0.0",
   description:
     "Cart panel: line items with remove buttons, total (SUM of LineTotal), item count, and optional 'Proceed to checkout' navigation. Requires cart entity fields: ProductId, Name, Price, Quantity, LineTotal. Its list datasource is '<ns>-items' — pass it in a sibling ProductGrid's cartRefresh to live-update on add.",

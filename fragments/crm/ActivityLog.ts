@@ -23,7 +23,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const ActivityLog: Fragment<P> = {
-  name: "ActivityLog",
+  id: "fragment-activity-log",
+  name: "Activity Log",
   version: "1.0.0",
   description:
     "CRM Activity timeline: reverse-chronological list of Activity records (Type badge + Subject + Date) " +

@@ -35,7 +35,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const FilterBar: Fragment<P> = {
-  name: "FilterBar",
+  id: "fragment-filter-bar",
+  name: "Filter Bar",
   version: "1.0.0",
   description:
     "Filter inputs writing /filters/<targetNs>/* — the paired DataTable/CardGrid declares matching " +

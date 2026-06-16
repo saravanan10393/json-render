@@ -26,7 +26,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const CategoryList: Fragment<P> = {
-  name: "CategoryList",
+  id: "fragment-category-list",
+  name: "Category List",
   version: "1.0.0",
   description:
     "Blog/CMS Category list with per-category post count. " +

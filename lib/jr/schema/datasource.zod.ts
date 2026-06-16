@@ -125,8 +125,8 @@ export const FilterGroupSchema: z.ZodType<unknown> = z.lazy(() =>
 );
 
 export const SortSchema = z
-  .array(z.record(z.string(), z.enum(["ASC", "DESC"])))
-  .describe('[{<FieldId>: "ASC" | "DESC"}, ...] — multi-key sort.');
+  .union([BindingSchema, z.array(z.record(z.string(), z.enum(["ASC", "DESC"])))])
+  .describe('[{<FieldId>: "ASC" | "DESC"}, ...] — multi-key sort. May be a binding (e.g. a Sort/Results toolbar writing the whole array to state).');
 
 export const PageSchema = z
   .object({

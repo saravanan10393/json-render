@@ -35,7 +35,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const ContactDetail: Fragment<P> = {
-  name: "ContactDetail",
+  id: "fragment-contact-detail",
+  name: "Contact Detail",
   version: "1.0.0",
   description:
     "CRM detail panel for one Contact: Name/Company/Status header, Email/Phone/Title facts, " +

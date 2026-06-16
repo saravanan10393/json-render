@@ -7,7 +7,7 @@
  * tree is available below for the full detail.
  */
 import { z } from "zod"
-import { JsonTree } from "../shared/JsonTree"
+import { InfoHint } from "../shared/InfoHint"
 
 type JsonSchema = {
 	type?: string | string[]
@@ -80,10 +80,14 @@ export function SchemaView({ schema }: { schema: unknown }) {
 							const optional = !required.has(name) || isNullable(node)
 							return (
 								<tr key={name} className="border-t border-border align-top">
-									<td className="px-3 py-2 font-mono text-[13px] font-medium">{name}</td>
+									<td className="px-3 py-2 font-mono text-[13px] font-medium">
+										<span className="inline-flex items-center gap-1">
+											{name}
+											{node.description && <InfoHint text={node.description} />}
+										</span>
+									</td>
 									<td className="px-3 py-2">
 										<code className="font-mono text-[12px] text-sky-700 dark:text-sky-300">{typeLabel(node)}</code>
-										{node.description && <div className="mt-0.5 text-xs text-muted-foreground">{node.description}</div>}
 									</td>
 									<td className="px-3 py-2">
 										{optional ? (
@@ -103,9 +107,9 @@ export function SchemaView({ schema }: { schema: unknown }) {
 				<summary className="cursor-pointer select-none text-muted-foreground hover:text-foreground">
 					Raw JSON Schema
 				</summary>
-				<div className="mt-2">
-					<JsonTree data={json} />
-				</div>
+				<pre className="mt-2 max-h-[28rem] overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 p-3 font-mono text-[12px] leading-relaxed text-zinc-200">
+					{JSON.stringify(json, null, 2)}
+				</pre>
 			</details>
 		</div>
 	)
