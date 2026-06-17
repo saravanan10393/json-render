@@ -6,11 +6,17 @@
  * Requires Review fields: Author, Rating, Title, Body, CreatedAt (+ ProductId when scoped).
  */
 import { z } from "zod";
-import type { Fragment } from "@/lib/jr/schema";
+import { BindingSchema, type Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
   reviewBdo: z.string().default("Review").describe("Review entity name."),
-  productId: z.string().nullable().default(null).describe("Scope to one product's reviews (filters Review.ProductId). null = all."),
+  productId: z
+    .union([z.string(), BindingSchema])
+    .nullable()
+    .default(null)
+    .describe(
+      'Scope to one product\'s reviews — filters Review.ProductId (MUST equal the Product _id). Literal id OR a binding like {"$state":"/ui/selectedProductId"}. null = all.',
+    ),
   pageSize: z.number().int().min(1).max(50).default(10),
 });
 

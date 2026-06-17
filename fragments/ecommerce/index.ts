@@ -28,6 +28,8 @@ import { OrderConfirmation } from "./OrderConfirmation";
 import { OrderDetail } from "./OrderDetail";
 import { OrderTracking } from "./OrderTracking";
 import { AccountDashboard } from "./AccountDashboard";
+import { OrdersManagement } from "./OrdersManagement";
+import { ProductManagement } from "./ProductManagement";
 import { ShippingMethodSelector } from "./ShippingMethodSelector";
 import { FreeShippingProgress } from "./FreeShippingProgress";
 import { MiniCartDrawer } from "./MiniCartDrawer";
@@ -70,6 +72,8 @@ export const ecommerceFragments = {
   OrderDetail,
   OrderTracking,
   AccountDashboard,
+  OrdersManagement,
+  ProductManagement,
   SalesStats,
   FeatureHighlights,
   TestimonialStrip,

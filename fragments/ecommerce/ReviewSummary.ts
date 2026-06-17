@@ -8,11 +8,17 @@
  * Requires Review fields: Rating (+ ProductId when scoped).
  */
 import { z } from "zod";
-import type { Fragment } from "@/lib/jr/schema";
+import { BindingSchema, type Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
   reviewBdo: z.string().default("Review").describe("Review entity name."),
-  productId: z.string().nullable().default(null).describe("Scope to one product's reviews (filters Review.ProductId). null = store-wide."),
+  productId: z
+    .union([z.string(), BindingSchema])
+    .nullable()
+    .default(null)
+    .describe(
+      'Scope to one product\'s reviews — filters Review.ProductId (which MUST equal the Product _id). Pass a literal id OR a binding like {"$state":"/ui/selectedProductId"} for a dynamic PDP. null = store-wide.',
+    ),
 });
 
 type P = z.infer<typeof Params>;

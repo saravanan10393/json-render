@@ -7,11 +7,13 @@
  * Requires Review fields: ProductId, Author, Rating, Title, Body.
  */
 import { z } from "zod";
-import type { Fragment } from "@/lib/jr/schema";
+import { BindingSchema, type Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
   reviewBdo: z.string().default("Review").describe("Review entity name."),
-  productId: z.string().describe("Product _id the review is for (literal or bound)."),
+  productId: z
+    .union([z.string(), BindingSchema])
+    .describe('Product _id the review is for — literal id OR a binding like {"$state":"/ui/selectedProductId"}.'),
   title: z.string().default("Write a review"),
   refresh: z.array(z.string()).default([]).describe("SAME-PAGE datasource names to re-fire after submit (e.g. a Review List's '<ns>-reviews')."),
 });

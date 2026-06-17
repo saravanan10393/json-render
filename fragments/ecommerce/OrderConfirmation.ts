@@ -9,11 +9,13 @@
  * Email, Address, City, Zip, Status, Total, PlacedAt.
  */
 import { z } from "zod";
-import type { Fragment } from "@/lib/jr/schema";
+import { BindingSchema, type Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
   orderBdo: z.string().default("Order").describe("Order entity name."),
-  orderId: z.string().describe("Order _id to show (literal, or bind to a route/state path)."),
+  orderId: z
+    .union([z.string(), BindingSchema])
+    .describe('Order _id to show — a literal id OR a binding like {"$state":"/ui/selectedOrderId"} for a route/state-driven page.'),
   currency: z.string().nullable().default(null).describe("ISO 4217 code (default USD)."),
   continueTarget: z.string().nullable().default(null).describe("Page NAME for the 'Continue shopping' CTA. null hides it."),
 });

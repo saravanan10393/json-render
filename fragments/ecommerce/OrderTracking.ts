@@ -12,11 +12,13 @@
  * Requires Order fields: Status.
  */
 import { z } from "zod";
-import type { Fragment } from "@/lib/jr/schema";
+import { BindingSchema, type Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
   orderBdo: z.string().default("Order").describe("Order entity name."),
-  orderId: z.string().describe("Order _id to track (literal, or bind to a route/state path)."),
+  orderId: z
+    .union([z.string(), BindingSchema])
+    .describe('Order _id to track — a literal id OR a binding like {"$state":"/ui/selectedOrderId"} for a route/state-driven page.'),
   statuses: z
     .array(z.string())
     .default(["Placed", "Shipped", "Delivered"])

@@ -18,12 +18,14 @@
  * Cart entity: ProductId, Name, Price, Quantity, LineTotal.
  */
 import { z } from "zod";
-import type { Fragment } from "@/lib/jr/schema";
+import { BindingSchema, type Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
   productBdo: z.string().default("Product").describe("Product entity name."),
   cartBdo: z.string().default("CartItem").describe("Cart line-item entity name."),
-  productId: z.string().describe("Product _id to load (literal, or bind to a route/state path)."),
+  productId: z
+    .union([z.string(), BindingSchema])
+    .describe('Product _id to load — a literal id OR a binding like {"$state":"/ui/selectedProductId"} for a route/state-driven PDP.'),
   currency: z.string().nullable().default(null).describe("ISO 4217 code for the price (default USD)."),
   showGallery: z.boolean().default(false).describe("Multi-image gallery (main carousel + synced thumbnail strip; needs Product.Images); else a single hero image."),
   imagesField: z.string().default("Images").describe("Product field holding the gallery image objects [{image}]."),

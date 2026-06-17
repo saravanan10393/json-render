@@ -19,7 +19,7 @@ const Params = z.object({
   secondaryLabel: z.string().nullable().default(null).describe("Optional secondary CTA label."),
   secondaryTarget: z.string().nullable().default(null).describe("Page NAME the secondary CTA navigates to."),
   imageUrl: z.string().nullable().default(null).describe("Hero image — the right column in 'split', the full-bleed background in 'overlay'."),
-  layout: z.enum(["split", "overlay"]).default("split").describe("'split' = copy left + cover image right; 'overlay' = copy over a full-bleed image."),
+  layout: z.enum(["split", "overlay"]).default("overlay").describe("'overlay' (default) = copy over a full-bleed image with a scrim; 'split' = copy left + cover image right."),
 });
 
 type P = z.infer<typeof Params>;
