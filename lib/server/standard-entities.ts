@@ -44,6 +44,18 @@ export const STANDARD_ENTITIES: EntityDefinition[] = [
       { id: "PlacedAt", name: "Placed at", type: "date" },
     ],
   },
+  {
+    name: "Review",
+    label: "Reviews",
+    fields: [
+      { id: "ProductId", name: "Product id", type: "text" },
+      { id: "Author", name: "Author", type: "text" },
+      { id: "Rating", name: "Rating", type: "number" },
+      { id: "Title", name: "Title", type: "text" },
+      { id: "Body", name: "Body", type: "text" },
+      { id: "CreatedAt", name: "Created at", type: "date" },
+    ],
+  },
   // CRM entity contracts (field ids are FIXED — see fragments/crm/index.ts).
   // The crm bundle hardcodes these bdo names in build(), so the test harness
   // and studio sandbox must define them for those fragments to validate.
@@ -204,6 +216,12 @@ export const STANDARD_SEEDS: Record<string, Array<Record<string, unknown>>> = {
     { CustomerName: "Maya Lin", Email: "maya@example.com", Address: "12 Cedar Way", City: "Austin", Zip: "73301", Status: "Delivered", Total: 218, PlacedAt: "2026-05-28" },
     { CustomerName: "Tom Hale", Email: "tom@example.com", Address: "8 Birch Road", City: "Denver", Zip: "80014", Status: "Shipped", Total: 129, PlacedAt: "2026-06-02" },
     { CustomerName: "Ana Cruz", Email: "ana@example.com", Address: "3 Palm Court", City: "Miami", Zip: "33101", Status: "Placed", Total: 299, PlacedAt: "2026-06-08" },
+  ],
+  Review: [
+    { ProductId: "demo-1", Author: "Maya L.", Rating: 5, Title: "Fantastic sound", Body: "Crisp highs and deep bass — the noise cancelling is excellent on flights.", CreatedAt: "2026-06-10" },
+    { ProductId: "demo-1", Author: "Tom H.", Rating: 4, Title: "Comfortable, great value", Body: "Light on the ears for long sessions. Battery easily lasts a full day.", CreatedAt: "2026-06-04" },
+    { ProductId: "demo-1", Author: "Ana C.", Rating: 5, Title: "Worth it", Body: "Build quality feels premium and pairing is instant.", CreatedAt: "2026-05-29" },
+    { ProductId: "demo-2", Author: "Riya S.", Rating: 3, Title: "Decent band", Body: "Does the job but the clasp is a little stiff at first.", CreatedAt: "2026-05-25" },
   ],
   Contact: [
     { Name: "Maya Lin", Email: "maya@example.com", Phone: "512-555-0142", Company: "Cedarworks", Title: "VP Operations", Status: "Active" },

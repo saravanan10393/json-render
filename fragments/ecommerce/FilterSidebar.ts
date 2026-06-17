@@ -30,8 +30,8 @@ const Params = z.object({
   showRating: z.boolean().default(true),
   mode: z
     .enum(["sidebar", "drawer"])
-    .default("sidebar")
-    .describe("'sidebar' = always-visible left rail; 'drawer' = a 'Filters' button opening a slide-in Sheet (mobile)."),
+    .default("drawer")
+    .describe("'drawer' = a 'Filters' button opening a slide-in Sheet (default; mobile-friendly); 'sidebar' = an always-visible left rail."),
   title: z.string().default("Filters"),
 });
 

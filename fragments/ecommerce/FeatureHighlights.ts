@@ -1,49 +1,28 @@
 /**
- * FeatureHighlights — a row of feature cards with icon, title, and description.
+ * FeatureHighlights — a row of value-proposition cards: a lucide icon in a
+ * tinted badge, a title, and a line of supporting text. Optional centered
+ * section title. Pure display — no entities.
+ *
+ * v2 — quality pass: lucide `Icon` badges (was emoji glyphs), softer tile, and
+ * previewParams so it renders in the gallery.
  */
 import { z } from "zod";
 import type { Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
-  sectionTitle: z
-    .string()
-    .optional()
-    .describe("Optional centered section title displayed above the feature cards."),
+  sectionTitle: z.string().nullable().default(null).describe("Optional centered section title above the cards."),
   items: z
     .array(
       z.object({
-        icon: z.string().describe("Icon text (emoji or 1-2 letter glyph)."),
-        title: z.string().describe("Feature title."),
-        description: z.string().describe("One line of supporting text."),
-      })
+        icon: z.string().describe("lucide icon name (kebab-case), e.g. 'truck', 'shield-check'."),
+        title: z.string(),
+        description: z.string(),
+      }),
     )
     .min(1)
     .max(6)
-    .default([
-      {
-        icon: "⚡",
-        title: "Lightning Fast",
-        description: "Optimized for speed and performance",
-      },
-      {
-        icon: "🔒",
-        title: "Secure by Default",
-        description: "Enterprise-grade security built in",
-      },
-      {
-        icon: "🎨",
-        title: "Beautiful Design",
-        description: "Stunning UI that users love",
-      },
-    ])
-    .describe("Feature items to display."),
-  columns: z
-    .number()
-    .int()
-    .min(1)
-    .max(6)
-    .default(3)
-    .describe("Number of columns in the grid."),
+    .describe("Feature items."),
+  columns: z.number().int().min(1).max(4).default(3),
 });
 
 type P = z.infer<typeof Params>;
@@ -52,86 +31,51 @@ export const FeatureHighlights: Fragment<P> = {
   id: "fragment-feature-highlights",
   section: "discovery",
   name: "Feature Highlights",
-  version: "1.0.1",
+  version: "2.0.0",
   description:
-    "Feature highlights — a grid of feature cards with icon badge, title, and supporting text. Optional centered section title. Pure display — no entities required.",
+    "A grid of value-proposition cards — lucide icon badge + title + supporting line, with an optional centered section title. Pure display, no entities.",
   whenToUse:
-    "Use to showcase product features, benefits, or highlights on landing pages, marketing pages, or product detail pages. No data required.",
+    "Use to showcase product features, benefits, or store value props on landing/marketing/PDP pages. For the compact free-shipping/returns icon row use Incentives Bar.",
   category: "display",
+  previewParams: {
+    sectionTitle: "Why shop with us",
+    items: [
+      { icon: "truck", title: "Free shipping", description: "On all orders over $50, delivered in 2–5 days." },
+      { icon: "rotate-ccw", title: "30-day returns", description: "Not the right fit? Send it back, free." },
+      { icon: "shield-check", title: "Secure checkout", description: "256-bit encryption on every transaction." },
+    ],
+    columns: 3,
+  },
   params: Params as z.ZodType<P>,
   build: ({ sectionTitle, items, columns }, ns) => {
-    const elements: Record<string, any> = {};
-    const rootChildren: string[] = [];
-
-    // Add optional section title
+    const elements: Record<string, Record<string, unknown>> = {
+      [ns]: {
+        type: "Stack",
+        props: { direction: "vertical", gap: "lg", align: "stretch", className: "w-full" },
+        children: [...(sectionTitle ? [`${ns}-title`] : []), `${ns}-grid`],
+      },
+      [`${ns}-grid`]: { type: "Grid", props: { columns, gap: "lg" }, children: items.map((_, i) => `${ns}-card-${i}`) },
+    };
     if (sectionTitle) {
-      const titleKey = `${ns}-section-title`;
-      elements[titleKey] = {
-        type: "Heading",
-        props: { text: sectionTitle, level: "h2" },
-      };
-      rootChildren.push(titleKey);
+      elements[`${ns}-title`] = { type: "Heading", props: { text: sectionTitle, level: "h2", className: "text-center" } };
     }
 
-    // Add the grid
-    const gridKey = `${ns}-grid`;
-    elements[gridKey] = {
-      type: "Grid",
-      props: { columns, gap: "lg" },
-      children: items.map((_, i) => `${ns}-card-${i}`),
-    };
-    rootChildren.push(gridKey);
-
-    // Root stack
-    elements[ns] = {
-      type: "Stack",
-      props: { 
-        direction: "vertical", 
-        gap: "xl", 
-        align: "center", 
-        justify: null, 
-        className: null, 
-        style: null 
-      },
-      children: rootChildren,
-    };
-
-    // Build feature cards
     items.forEach((item, i) => {
-      const cardKey = `${ns}-card-${i}`;
-      const stackKey = `${ns}-stack-${i}`;
-      const iconKey = `${ns}-icon-${i}`;
-      const titleKey = `${ns}-title-${i}`;
-      const descKey = `${ns}-desc-${i}`;
-
-      elements[cardKey] = {
-        type: "Card",
-        props: { title: null, description: null, maxWidth: null, centered: false, className: null },
-        children: [stackKey],
-      };
-
-      elements[stackKey] = {
+      elements[`${ns}-card-${i}`] = {
         type: "Stack",
-        props: { direction: "vertical", gap: "md", align: "start", justify: null, className: null, style: null },
-        children: [iconKey, titleKey, descKey],
+        props: { direction: "vertical", gap: "sm", align: "start", className: "rounded-xl border border-border bg-card p-5" },
+        children: [`${ns}-icon-${i}`, `${ns}-title-${i}`, `${ns}-desc-${i}`],
       };
-
-      elements[iconKey] = {
-        type: "Badge",
-        props: { text: item.icon, variant: "secondary" },
+      elements[`${ns}-icon-${i}`] = {
+        type: "Stack",
+        props: { direction: "horizontal", gap: "none", align: "center", justify: "center", className: "size-10 rounded-lg bg-primary/10" },
+        children: [`${ns}-glyph-${i}`],
       };
-
-      elements[titleKey] = {
-        type: "Heading",
-        props: { text: item.title, level: "h3" },
-      };
-
-      elements[descKey] = {
-        type: "Text",
-        props: { text: item.description, variant: "muted" },
-      };
+      elements[`${ns}-glyph-${i}`] = { type: "Icon", props: { name: item.icon, size: 20, color: "var(--primary)", strokeWidth: null, className: null } };
+      elements[`${ns}-title-${i}`] = { type: "Heading", props: { text: item.title, level: "h4", className: null } };
+      elements[`${ns}-desc-${i}`] = { type: "Text", props: { text: item.description, variant: "muted", className: "leading-relaxed" } };
     });
 
-    return { root: ns, elements };
+    return { root: ns, elements: elements as unknown as ReturnType<Fragment<P>["build"]>["elements"] };
   },
 };

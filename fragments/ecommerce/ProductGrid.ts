@@ -30,6 +30,10 @@ const Params = z.object({
   pageSize: z.number().int().min(4).max(48).default(12),
   sortField: z.string().default("Name").describe("Product field to sort by."),
   sortDirection: z.enum(["ASC", "DESC"]).default("ASC"),
+  ratingStyle: z
+    .enum(["compact", "stars"])
+    .default("compact")
+    .describe("'compact' = a single star + numeric value pill (default); 'stars' = the full 5-star row."),
   showAddToCart: z.boolean().default(true),
   showWishlist: z
     .boolean()
@@ -75,6 +79,7 @@ export const ProductGrid: Fragment<P> = {
       pageSize,
       sortField,
       sortDirection,
+      ratingStyle,
       showAddToCart,
       showWishlist,
       wishlistBdo,
@@ -230,18 +235,38 @@ export const ProductGrid: Fragment<P> = {
           type: "Heading",
           props: { text: { $item: "Name" }, level: "h4", className: null },
         },
-        [`${ns}-card-rating`]: {
-          type: "Rating",
-          props: { value: { $item: "Rating" }, max: 5, symbol: null, icons: null, readOnly: true, name: null },
-        },
+        ...(ratingStyle === "compact"
+          ? {
+              [`${ns}-card-rating`]: {
+                type: "Stack",
+                props: { direction: "horizontal", gap: "none", align: "center", className: "inline-flex w-fit items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5" },
+                children: [`${ns}-card-rating-star`, `${ns}-card-rating-value`],
+              },
+              [`${ns}-card-rating-star`]: { type: "Icon", props: { name: "star", size: 14, color: "#f59e0b", strokeWidth: null, className: null } },
+              [`${ns}-card-rating-value`]: { type: "Text", props: { text: { $item: "Rating" }, variant: "caption", className: "font-medium text-amber-700 dark:text-amber-400" } },
+            }
+          : {
+              [`${ns}-card-rating`]: {
+                type: "Rating",
+                props: { value: { $item: "Rating" }, max: 5, symbol: null, icons: null, readOnly: true, name: null },
+              },
+            }),
         [`${ns}-card-footer`]: {
           type: "Stack",
           props: { direction: "horizontal", justify: "between", align: "center", className: "pt-1" },
           children: [`${ns}-card-price`, `${ns}-card-actions`],
         },
         [`${ns}-card-price`]: {
-          type: "Heading",
-          props: { text: { $template: "$${Price}" }, level: "h3", className: null },
+          type: "Money",
+          props: {
+            value: { $item: "Price" },
+            currency: null,
+            locale: null,
+            compareAt: null,
+            showDiscount: null,
+            size: "lg",
+            className: null,
+          },
         },
         [`${ns}-card-actions`]: {
           type: "Stack",
@@ -328,8 +353,16 @@ export const ProductGrid: Fragment<P> = {
                 props: { value: { $state: `${ui}/selected/Rating` }, max: 5, symbol: null, icons: null, readOnly: true, name: null },
               },
               [`${ns}-sheet-price`]: {
-                type: "Heading",
-                props: { text: { $template: `$\${${ui}/selected/Price}` }, level: "h2", className: null },
+                type: "Money",
+                props: {
+                  value: { $state: `${ui}/selected/Price` },
+                  currency: null,
+                  locale: null,
+                  compareAt: null,
+                  showDiscount: null,
+                  size: "xl",
+                  className: null,
+                },
               },
               [`${ns}-sheet-availability`]: {
                 type: "Text",
@@ -420,6 +453,7 @@ export const ProductGrid: Fragment<P> = {
               Price: { $state: `${ui}/pending/Price` },
               Quantity: { $state: `${ui}/pending/Quantity` },
               LineTotal: { $state: `${ui}/pending/Price` },
+              ImageUrl: { $state: `${ui}/pending/ImageUrl` },
             },
           },
           refresh: cartRefresh,

@@ -1,32 +1,28 @@
+/**
+ * TestimonialStrip — social-proof cards: per testimonial an optional star
+ * rating, the quote, and an author row (avatar initials + name + role). Pure
+ * display — no entities.
+ *
+ * v2 — quality pass: star Rating + Avatar author row (was a plain separator
+ * layout), and previewParams so it renders in the gallery.
+ */
 import { z } from "zod";
 import type { Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
-  title: z.string().default("What Our Customers Say").describe("Section heading"),
-  testimonials: z.array(
-    z.object({
-      quote: z.string(),
-      name: z.string(),
-      role: z.string()
-    })
-  ).default([
-    {
-      quote: "This product transformed our workflow. The team was incredibly responsive and the results exceeded our expectations.",
-      name: "Sarah Johnson",
-      role: "VP of Operations, Acme Corp"
-    },
-    {
-      quote: "Outstanding quality and service. We've seen a 40% increase in efficiency since adopting this solution.",
-      name: "Michael Chen",
-      role: "CTO, TechStart Inc"
-    },
-    {
-      quote: "The best investment we've made this year. Highly recommended for any growing business.",
-      name: "Emma Davis",
-      role: "Founder, Growth Labs"
-    }
-  ]).describe("Array of testimonial objects with quote, name, and role"),
-  columns: z.number().min(1).max(3).default(3).describe("Number of columns (1-3)")
+  title: z.string().nullable().default("What our customers say").describe("Section heading; null hides it."),
+  testimonials: z
+    .array(
+      z.object({
+        quote: z.string(),
+        name: z.string(),
+        role: z.string().nullable(),
+        rating: z.number().nullable(),
+      }),
+    )
+    .min(1)
+    .describe("Testimonials: quote, name, optional role, optional star rating (1-5)."),
+  columns: z.number().int().min(1).max(3).default(3),
 });
 
 type P = z.infer<typeof Params>;
@@ -35,123 +31,57 @@ export const TestimonialStrip: Fragment<P> = {
   id: "fragment-testimonial-strip",
   section: "discovery",
   name: "Testimonial Strip",
-  version: "1.0.0",
-  description: "Displays customer testimonials in a grid layout. Shows quote cards with customer name and role. Generic component that works with any parameterized testimonials.",
-  whenToUse: "Use when you want to display customer testimonials, reviews, quotes, or social proof. Perfect for landing pages, about pages, or anywhere you need to showcase customer feedback.",
-  category: "display",
+  version: "2.0.0",
+  description:
+    "Social-proof cards — optional star rating, a quote, and an author row (avatar initials + name + role). Pure display, content from params.",
+  whenToUse:
+    "Use to show customer testimonials / social proof on landing, about, or product pages. For real product reviews backed by data use Review List / Review Summary.",
+  category: "review",
+  previewParams: {
+    testimonials: [
+      { quote: "This transformed our workflow — the team was responsive and the results beat expectations.", name: "Sarah Johnson", role: "VP Operations, Acme Corp", rating: 5 },
+      { quote: "Outstanding quality and service. We've seen a 40% jump in efficiency since switching.", name: "Michael Chen", role: "CTO, TechStart", rating: 5 },
+      { quote: "The best investment we've made this year. Highly recommended for any growing team.", name: "Emma Davis", role: "Founder, Growth Labs", rating: 4 },
+    ],
+    columns: 3,
+  },
   params: Params as z.ZodType<P>,
-  
-  build: (params, ns) => {
-    const elements: Record<string, any> = {};
-    
-    // Root container
-    elements[ns] = {
-      type: "Stack",
-      props: {
-        direction: "vertical",
-        gap: "lg",
-        align: "stretch",
-        className: null,
-        style: null
-      },
-      children: [`${ns}-heading`, `${ns}-grid`]
-    };
-    
-    // Heading
-    elements[`${ns}-heading`] = {
-      type: "Heading",
-      props: {
-        text: params.title,
-        level: "h2"
-      },
-      children: []
-    };
-    
-    // Grid container
-    elements[`${ns}-grid`] = {
-      type: "Grid",
-      props: {
-        columns: params.columns,
-        gap: "lg",
-        className: null,
-        style: null
-      },
-      children: params.testimonials.map((_, i) => `${ns}-card-${i}`)
-    };
-    
-    // Generate a card for each testimonial
-    params.testimonials.forEach((testimonial, i) => {
-      const cardId = `${ns}-card-${i}`;
-      const stackId = `${ns}-stack-${i}`;
-      const quoteId = `${ns}-quote-${i}`;
-      const separatorId = `${ns}-separator-${i}`;
-      const nameId = `${ns}-name-${i}`;
-      const roleId = `${ns}-role-${i}`;
-      
-      elements[cardId] = {
-        type: "Card",
-        props: {
-          title: null,
-          description: null,
-          maxWidth: null,
-          centered: null,
-          className: null
-        },
-        children: [stackId]
-      };
-      
-      elements[stackId] = {
+  build: ({ title, testimonials, columns }, ns) => {
+    const elements: Record<string, Record<string, unknown>> = {
+      [ns]: {
         type: "Stack",
-        props: {
-          direction: "vertical",
-          gap: "md",
-          align: "start",
-          justify: null,
-          className: null,
-          style: null
-        },
-        children: [quoteId, separatorId, nameId, roleId]
-      };
-      
-      elements[quoteId] = {
-        type: "Text",
-        props: {
-          text: `"${testimonial.quote}"`,
-          variant: "body"
-        },
-        children: []
-      };
-      
-      elements[separatorId] = {
-        type: "Separator",
-        props: {
-          orientation: "horizontal"
-        },
-        children: []
-      };
-      
-      elements[nameId] = {
-        type: "Text",
-        props: {
-          text: testimonial.name,
-          variant: "body"
-        },
-        children: []
-      };
-      
-      elements[roleId] = {
-        type: "Text",
-        props: {
-          text: testimonial.role,
-          variant: "muted"
-        },
-        children: []
-      };
-    });
-    
-    return {
-      root: ns,
-      elements
+        props: { direction: "vertical", gap: "lg", align: "stretch", className: "w-full" },
+        children: [...(title ? [`${ns}-title`] : []), `${ns}-grid`],
+      },
+      [`${ns}-grid`]: { type: "Grid", props: { columns, gap: "lg" }, children: testimonials.map((_, i) => `${ns}-card-${i}`) },
     };
-  }
+    if (title) elements[`${ns}-title`] = { type: "Heading", props: { text: title, level: "h2", className: "text-center" } };
+
+    testimonials.forEach((t, i) => {
+      elements[`${ns}-card-${i}`] = {
+        type: "Stack",
+        props: { direction: "vertical", gap: "md", align: "start", justify: "between", className: "h-full rounded-xl border border-border bg-card p-5" },
+        children: [...(t.rating != null ? [`${ns}-rating-${i}`] : []), `${ns}-quote-${i}`, `${ns}-author-${i}`],
+      };
+      if (t.rating != null) {
+        elements[`${ns}-rating-${i}`] = { type: "Rating", props: { value: t.rating, max: 5, symbol: null, icons: null, readOnly: true, name: null } };
+      }
+      elements[`${ns}-quote-${i}`] = { type: "Text", props: { text: `“${t.quote}”`, variant: "body", className: "leading-relaxed" } };
+      elements[`${ns}-author-${i}`] = {
+        type: "Stack",
+        props: { direction: "horizontal", gap: "sm", align: "center" },
+        children: [`${ns}-avatar-${i}`, `${ns}-author-meta-${i}`],
+      };
+      elements[`${ns}-avatar-${i}`] = { type: "Avatar", props: { src: null, name: t.name, size: "sm" } };
+      elements[`${ns}-author-meta-${i}`] = {
+        type: "Stack",
+        props: { direction: "vertical", gap: "none" },
+        children: [...(t.role != null ? [`${ns}-name-${i}`, `${ns}-role-${i}`] : [`${ns}-name-${i}`])],
+      };
+      elements[`${ns}-name-${i}`] = { type: "Text", props: { text: t.name, variant: "body", className: "font-medium" } };
+      if (t.role != null) elements[`${ns}-role-${i}`] = { type: "Text", props: { text: t.role, variant: "caption", className: "text-muted-foreground" } };
+    });
+
+    return { root: ns, elements: elements as unknown as ReturnType<Fragment<P>["build"]>["elements"] };
+  },
 };

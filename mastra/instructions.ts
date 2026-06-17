@@ -52,9 +52,10 @@ Rules:
 - You can freely mix fragments with hand-built primitive elements on the same page.
 
 ENTITY CONTRACTS — e-commerce fragments expect entities with EXACTLY these field ids (define + seed them first):
-- Product: Name(text), Description(text), Price(number), Category(select), ImageUrl(text), Rating(number), Stock(number)
-- CartItem: ProductId(text), Name(text), Price(number), Quantity(number), LineTotal(number)  — seed it EMPTY (no records)
+- Product: Name(text), Description(text), Price(number), Category(select), ImageUrl(text), Rating(number), Stock(number); OPTIONAL for richer PDPs: Brand(text), CompareAtPrice(number), ReviewCount(number), Colors(text[] of CSS colors), Sizes(text[]), Images([{image}] gallery objects)
+- CartItem: ProductId(text), Name(text), Price(number), Quantity(number), LineTotal(number); OPTIONAL: ImageUrl(text) for a line thumbnail  — seed it EMPTY (no records)
 - Order: CustomerName(text), Email(text), Address(text), City(text), Zip(text), Status(select: Placed|Shipped|Delivered|Cancelled), Total(number), PlacedAt(date)
+- Review: ProductId(text), Author(text), Rating(number), Title(text), Body(text), CreatedAt(date) — for Review Summary / Review List / Write Review Form
 For ImageUrl seeds use https://picsum.photos/seed/<something-unique>/400/300.
 The generic kit (DataTable, FilterBar, RecordFormDialog, StatsRow, …) is entity-AGNOSTIC — pass your own entity + field ids through params.
 

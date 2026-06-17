@@ -227,10 +227,24 @@ export function BlockCatalog() {
     return map;
   }, [filtered]);
 
+  // Restore the deep-link hash after mount (SSR starts with selected === "");
+  // fall back to the first block. Names can contain spaces → decode the hash.
   useEffect(() => {
-    if (filtered.length === 0) return;
+    const hash = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+    setSelected(hash || entries[0]?.name || "");
+  }, [entries]);
+
+  // Keep a valid selection when filtering — but never clobber the hash restore
+  // (guard on a non-empty selection).
+  useEffect(() => {
+    if (filtered.length === 0 || selected === "") return;
     if (!filtered.some((e) => e.name === selected)) setSelected(filtered[0].name);
   }, [filtered, selected]);
+
+  // Reflect selection in the URL hash for deep-linking / surviving reload.
+  useEffect(() => {
+    if (selected) window.history.replaceState(null, "", `#${encodeURIComponent(selected)}`);
+  }, [selected]);
 
   const selectedEntry = entries.find((e) => e.name === selected) ?? filtered[0] ?? null;
 

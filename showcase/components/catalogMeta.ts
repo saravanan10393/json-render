@@ -240,7 +240,10 @@ const CATEGORY: Record<string, Category> = {
 	ColorPicker: "Forms & Inputs",
 	StatusDot: "Feedback",
 	ProgressCircle: "Feedback",
-	Tree: "Data Display"
+	Tree: "Data Display",
+	Money: "Data Display",
+	SwatchGroup: "Forms & Inputs",
+	ImageGallery: "Data Display"
 }
 
 // ---------------------------------------------------------------------------
@@ -687,6 +690,22 @@ const DEMOS: Record<string, Demo> = {
 	StatusDot: { props: { variant: "success", label: "Operational", pulse: true } },
 	ProgressCircle: { props: { value: 72, size: 56 } },
 	CopyButton: { props: { text: "npm install json-render", label: "Copy command" } },
+	Money: { props: { value: 1299.5, currency: "USD", compareAt: 1599, size: "lg" } },
+	SwatchGroup: bound("SwatchGroup", "value", "/color", "#1f2937", {
+		label: "Color",
+		swatch: true,
+		options: ["#1f2937", "#b91c1c", "#1d4ed8", "#15803d"],
+	}),
+	ImageGallery: {
+		props: {
+			aspectRatio: "1/1",
+			images: [
+				"https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=320",
+				"https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=320",
+				"https://images.unsplash.com/photo-1565636192335-2eea4f5d3e0e?w=320",
+			],
+		},
+	},
 	DropdownMenu: {
 		props: {
 			label: "Options",

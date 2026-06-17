@@ -98,11 +98,19 @@ export const shadcnComponentDefinitions = {
 			items: z.array(
 				z.object({
 					title: z.string().nullable(),
-					description: z.string().nullable()
+					description: z.string().nullable(),
+					image: z.string().nullable()
 				})
-			)
+			),
+			aspectRatio: z
+				.string()
+				.nullable()
+				.describe("Aspect ratio for image slides, e.g. '1/1' or '4/3'.")
 		}),
-		description: "Horizontally scrollable carousel of cards."
+		description:
+			"Horizontally scrollable carousel with prev/next arrows. Each item renders as a card " +
+			"(title/description) OR, when `image` (a URL) is set, a full-width image slide — use " +
+			"`aspectRatio` for image slides (product galleries, banners)."
 	},
 
 	// ==========================================================================

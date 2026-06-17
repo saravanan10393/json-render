@@ -34,6 +34,7 @@ import * as Empty from "./Empty"
 import * as FileUrls from "./FileUrls"
 import * as HoverCard from "./HoverCard"
 import * as Icon from "./Icon"
+import * as ImageGallery from "./ImageGallery"
 import * as InputGroup from "./InputGroup"
 import * as InputMask from "./InputMask"
 import * as InputOTP from "./InputOTP"
@@ -41,6 +42,7 @@ import * as Item from "./Item"
 import * as Kbd from "./Kbd"
 import * as Label from "./Label"
 import * as Menubar from "./Menubar"
+import * as Money from "./Money"
 import * as MultiSelect from "./MultiSelect"
 import * as NavigationMenu from "./NavigationMenu"
 import * as Progress from "./Progress"
@@ -52,6 +54,7 @@ import * as ScrollArea from "./ScrollArea"
 import * as Sheet from "./Sheet"
 import * as Sidebar from "./Sidebar"
 import * as StatusDot from "./StatusDot"
+import * as SwatchGroup from "./SwatchGroup"
 import * as TagInput from "./TagInput"
 import * as TimePicker from "./TimePicker"
 import * as Timeline from "./Timeline"
@@ -78,6 +81,7 @@ export const uiComponentDefinitions = {
 	FileUrls: FileUrls.definition,
 	HoverCard: HoverCard.definition,
 	Icon: Icon.definition,
+	ImageGallery: ImageGallery.definition,
 	InputGroup: InputGroup.definition,
 	InputMask: InputMask.definition,
 	InputOTP: InputOTP.definition,
@@ -85,6 +89,7 @@ export const uiComponentDefinitions = {
 	Kbd: Kbd.definition,
 	Label: Label.definition,
 	Menubar: Menubar.definition,
+	Money: Money.definition,
 	MultiSelect: MultiSelect.definition,
 	NavigationMenu: NavigationMenu.definition,
 	Progress: Progress.definition,
@@ -96,6 +101,7 @@ export const uiComponentDefinitions = {
 	Sheet: Sheet.definition,
 	Sidebar: Sidebar.definition,
 	StatusDot: StatusDot.definition,
+	SwatchGroup: SwatchGroup.definition,
 	TagInput: TagInput.definition,
 	TimePicker: TimePicker.definition,
 	Timeline: Timeline.definition,
@@ -123,6 +129,7 @@ export const uiComponents = {
 	FileUrls: FileUrls.component,
 	HoverCard: HoverCard.component,
 	Icon: Icon.component,
+	ImageGallery: ImageGallery.component,
 	InputGroup: InputGroup.component,
 	InputMask: InputMask.component,
 	InputOTP: InputOTP.component,
@@ -130,6 +137,7 @@ export const uiComponents = {
 	Kbd: Kbd.component,
 	Label: Label.component,
 	Menubar: Menubar.component,
+	Money: Money.component,
 	MultiSelect: MultiSelect.component,
 	NavigationMenu: NavigationMenu.component,
 	Progress: Progress.component,
@@ -141,6 +149,7 @@ export const uiComponents = {
 	Sheet: Sheet.component,
 	Sidebar: Sidebar.component,
 	StatusDot: StatusDot.component,
+	SwatchGroup: SwatchGroup.component,
 	TagInput: TagInput.component,
 	TimePicker: TimePicker.component,
 	Timeline: Timeline.component,

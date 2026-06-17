@@ -53,12 +53,21 @@ export interface BlockEntry {
 
 // ── Seed bank ───────────────────────────────────────────────────────────────
 const PRODUCTS: Rec[] = [
-  { Name: "Aurora Desk Lamp", Description: "Warm-dimming LED with USB-C", Price: 79, Category: "Lighting", ImageUrl: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=320", Rating: 4, Stock: 42 },
-  { Name: "Nimbus Office Chair", Description: "Mesh-back ergonomic chair", Price: 329, Category: "Furniture", ImageUrl: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=320", Rating: 5, Stock: 12 },
+  { Name: "Aurora Desk Lamp", Description: "Warm-dimming LED with USB-C", Price: 79, CompareAtPrice: 99, Category: "Lighting", ImageUrl: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=320", Rating: 4, Stock: 42, Brand: "Lumen&Co", ReviewCount: 128, Colors: ["#1f2937", "#b91c1c", "#1d4ed8"], Sizes: ["S", "M", "L"], Images: [{ image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=320" }, { image: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=320" }, { image: "https://picsum.photos/seed/aurora-lamp/400/400" }] },
+  { Name: "Nimbus Office Chair", Description: "Mesh-back ergonomic chair", Price: 329, Category: "Furniture", ImageUrl: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=320", Rating: 5, Stock: 12, Brand: "Ergoform", ReviewCount: 54, Colors: ["#111827", "#6b7280"] },
   { Name: "Pulse Mechanical Keyboard", Description: "Hot-swap, 75% layout", Price: 149, Category: "Electronics", ImageUrl: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=320", Rating: 4, Stock: 0 },
   { Name: "Drift Wireless Mouse", Description: "Silent click, 70-day battery", Price: 59, Category: "Electronics", ImageUrl: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=320", Rating: 3, Stock: 88 },
   { Name: "Loom Wool Throw", Description: "Hand-loomed merino blanket", Price: 119, Category: "Home", ImageUrl: "https://images.unsplash.com/photo-1600369671236-e74521d4b6ad?w=320", Rating: 5, Stock: 23 },
   { Name: "Verde Planter Set", Description: "Set of 3 ceramic planters", Price: 44, Category: "Home", ImageUrl: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=320", Rating: 4, Stock: 67 },
+];
+
+const REVIEWS: Rec[] = [
+  { ProductId: "Product-0", Author: "Priya N.", Rating: 5, Title: "Perfect bedside light", Body: "The warm dimming is exactly what I wanted — bright enough to read, cozy at night. USB-C is a nice touch.", CreatedAt: "2026-06-10" },
+  { ProductId: "Product-0", Author: "Marcus R.", Rating: 4, Title: "Great, slightly pricey", Body: "Build quality is excellent and it looks premium on the desk. Docked a star only for the price.", CreatedAt: "2026-06-06" },
+  { ProductId: "Product-0", Author: "Lena F.", Rating: 5, Title: "Looks better in person", Body: "Sleek, sturdy, and the light is even with no flicker. Would buy again.", CreatedAt: "2026-05-30" },
+  { ProductId: "Product-0", Author: "Sam O.", Rating: 4, Title: "Solid daily lamp", Body: "Does everything I need. The base could be a touch heavier but it's stable enough.", CreatedAt: "2026-05-22" },
+  { ProductId: "Product-0", Author: "Aisha K.", Rating: 3, Title: "Good but the app is fiddly", Body: "The lamp itself is nice; pairing the companion app took a few tries.", CreatedAt: "2026-05-18" },
+  { ProductId: "Product-1", Author: "Diego M.", Rating: 5, Title: "Best chair I've owned", Body: "All-day comfort and the mesh keeps me cool. Assembly was quick.", CreatedAt: "2026-06-08" },
 ];
 
 const ORDERS: Rec[] = [
@@ -122,9 +131,17 @@ const TASKS: Rec[] = [
 ];
 
 /** Passed to every block; the mock executor only reads the entities the block queries. */
+const CARTITEMS: Rec[] = [
+  { ProductId: "Product-0", Name: "Aurora Desk Lamp", Price: 79, Quantity: 2, LineTotal: 158, ImageUrl: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=160" },
+  { ProductId: "Product-3", Name: "Drift Wireless Mouse", Price: 59, Quantity: 1, LineTotal: 59, ImageUrl: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=160" },
+  { ProductId: "Product-4", Name: "Loom Wool Throw", Price: 119, Quantity: 1, LineTotal: 119, ImageUrl: "https://images.unsplash.com/photo-1600369671236-e74521d4b6ad?w=160" },
+];
+
 const SEED: Record<string, Rec[]> = {
   Product: PRODUCTS,
+  CartItem: CARTITEMS,
   Order: ORDERS,
+  Review: REVIEWS,
   Contact: CONTACTS,
   Deal: DEALS,
   Ticket: TICKETS,
