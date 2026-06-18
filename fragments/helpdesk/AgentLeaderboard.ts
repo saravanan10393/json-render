@@ -30,7 +30,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const AgentLeaderboard: Fragment<P> = {
-  name: "AgentLeaderboard",
+  id: "fragment-agent-leaderboard",
+  name: "Agent Leaderboard",
   version: "1.0.0",
   description:
     "Helpdesk agent leaderboard: ranks agents by ResolvedCount using a bdo.metric GroupBy Name SUM ResolvedCount. " +

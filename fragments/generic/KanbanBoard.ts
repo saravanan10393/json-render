@@ -15,7 +15,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const KanbanBoard: Fragment<P> = {
-  name: "KanbanBoard",
+  id: "fragment-kanban-board",
+  name: "Kanban Board",
   version: "1.0.0",
   description:
     "Kanban board grouped by a select field: one column per statusOptions entry, cards with title + meta " +

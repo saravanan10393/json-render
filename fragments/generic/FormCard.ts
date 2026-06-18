@@ -18,7 +18,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const FormCard: Fragment<P> = {
-  name: "FormCard",
+  id: "fragment-form-card",
+  name: "Form Card",
   version: "1.0.0",
   description:
     "Page-level CREATE form (Card). Same field model as RecordFormDialog; " +

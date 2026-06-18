@@ -28,7 +28,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const RecordView: Fragment<P> = {
-  name: "RecordView",
+  id: "fragment-record-view",
+  name: "Record View",
   version: "1.0.0",
   description:
     "Detail body: a Card with a label/value grid of ONE record's fields (display kinds like DataTable " +

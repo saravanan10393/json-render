@@ -56,7 +56,8 @@ export const primitiveComponentDefinitions = {
 	Heading: {
 		props: z.object({
 			text: z.string(),
-			level: z.enum(["h1", "h2", "h3", "h4"]).nullable()
+			level: z.enum(["h1", "h2", "h3", "h4"]).nullable(),
+			className: z.string().nullable().describe("Additional CSS classes")
 		}),
 		description:
 			"Page or section title. THE primitive for titles. Use one h1 as the page title — place it with a Text subtitle directly at the top of the page (NOT inside a Card); use h2/h3 for section titles.",
@@ -65,7 +66,8 @@ export const primitiveComponentDefinitions = {
 	Text: {
 		props: z.object({
 			text: z.string(),
-			variant: z.enum(["body", "caption", "muted", "lead", "code"]).nullable()
+			variant: z.enum(["body", "caption", "muted", "lead", "code"]).nullable(),
+			className: z.string().nullable().describe("Additional CSS classes")
 		}),
 		description: "Paragraph text",
 		example: { text: "Hello, world!" }
@@ -75,9 +77,19 @@ export const primitiveComponentDefinitions = {
 			src: z.string().nullable(),
 			alt: z.string(),
 			width: z.number().nullable(),
-			height: z.number().nullable()
+			height: z.number().nullable(),
+			aspectRatio: z
+				.string()
+				.nullable()
+				.describe('Crop to a ratio like "4/3", "1/1", "16/9" — fills the container width and cover-crops for consistent card/grid framing. Overrides width/height.'),
+			fit: z
+				.enum(["cover", "contain"])
+				.nullable()
+				.describe('How the image fills its box when aspectRatio is set (default "cover").'),
+			className: z.string().nullable().describe("Additional CSS classes (e.g. rounded-lg).")
 		}),
-		description: "Image component. Renders an img tag when src is provided, otherwise a placeholder."
+		description:
+			"Image. With `aspectRatio` it fills the container and cover-crops (consistent framing for product cards/galleries); otherwise renders at width/height. Shows a placeholder when src is empty."
 	},
 	Spinner: {
 		props: z.object({
@@ -217,10 +229,11 @@ export const primitiveComponents = {
 						? "text-sm font-semibold"
 						: "text-lg font-semibold"
 
-		if (level === "h1") return <h1 className={`${headingClass} text-left`}>{props.text}</h1>
-		if (level === "h3") return <h3 className={`${headingClass} text-left`}>{props.text}</h3>
-		if (level === "h4") return <h4 className={`${headingClass} text-left`}>{props.text}</h4>
-		return <h2 className={`${headingClass} text-left`}>{props.text}</h2>
+		const cls = cn(headingClass, "text-left", props.className)
+		if (level === "h1") return <h1 className={cls}>{props.text}</h1>
+		if (level === "h3") return <h3 className={cls}>{props.text}</h3>
+		if (level === "h4") return <h4 className={cls}>{props.text}</h4>
+		return <h2 className={cls}>{props.text}</h2>
 	},
 
 	Text: ({ props }: BaseComponentProps<PrimitiveProps<"Text">>) => {
@@ -236,12 +249,35 @@ export const primitiveComponents = {
 							: "text-sm"
 
 		if (props.variant === "code") {
-			return <code className={`${textClass} text-left`}>{props.text}</code>
+			return <code className={cn(textClass, "text-left", props.className)}>{props.text}</code>
 		}
-		return <p className={`${textClass} text-left`}>{props.text}</p>
+		return <p className={cn(textClass, "text-left", props.className)}>{props.text}</p>
 	},
 
 	Image: ({ props }: BaseComponentProps<PrimitiveProps<"Image">>) => {
+		const fitClass = props.fit === "contain" ? "object-contain" : "object-cover"
+		// aspectRatio mode: fill the container and cover/contain-crop (consistent framing).
+		if (props.aspectRatio) {
+			const ratio = props.aspectRatio.replace("/", " / ")
+			if (props.src) {
+				return (
+					<div className={cn("w-full overflow-hidden bg-muted", props.className)} style={{ aspectRatio: ratio }}>
+						<img src={props.src} alt={props.alt ?? ""} className={cn("h-full w-full", fitClass)} />
+					</div>
+				)
+			}
+			return (
+				<div
+					className={cn(
+						"flex w-full items-center justify-center border border-border bg-muted text-xs text-muted-foreground",
+						props.className
+					)}
+					style={{ aspectRatio: ratio }}
+				>
+					{props.alt || "img"}
+				</div>
+			)
+		}
 		if (props.src) {
 			return (
 				<img
@@ -249,13 +285,16 @@ export const primitiveComponents = {
 					alt={props.alt ?? ""}
 					width={props.width ?? undefined}
 					height={props.height ?? undefined}
-					className="rounded max-w-full"
+					className={cn("max-w-full rounded", props.className)}
 				/>
 			)
 		}
 		return (
 			<div
-				className="bg-muted border border-border rounded flex items-center justify-center text-xs text-muted-foreground max-w-full"
+				className={cn(
+					"flex items-center justify-center rounded border border-border bg-muted text-xs text-muted-foreground max-w-full",
+					props.className
+				)}
 				style={
 					props.width && props.height
 						? { width: props.width, aspectRatio: `${props.width} / ${props.height}` }

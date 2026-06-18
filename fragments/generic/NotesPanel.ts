@@ -40,7 +40,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const NotesPanel: Fragment<P> = {
-  name: "NotesPanel",
+  id: "fragment-notes-panel",
+  name: "Notes Panel",
   version: "1.0.0",
   description:
     "Card showing a reverse-chronological list of notes plus an inline quick-add row. " +

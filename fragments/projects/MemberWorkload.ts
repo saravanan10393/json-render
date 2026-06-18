@@ -34,7 +34,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const MemberWorkload: Fragment<P> = {
-  name: "MemberWorkload",
+  id: "fragment-member-workload",
+  name: "Member Workload",
   version: "1.0.0",
   description:
     "Project-management member workload chart: ranks members (Assignee) by open-task count " +

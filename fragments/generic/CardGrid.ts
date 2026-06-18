@@ -17,7 +17,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const CardGrid: Fragment<P> = {
-  name: "CardGrid",
+  id: "fragment-card-grid",
+  name: "Card Grid",
   version: "1.0.0",
   description:
     "Card grid over records: title, subtitle fields, optional status badge + image thumbnail, optional " +

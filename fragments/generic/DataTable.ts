@@ -49,7 +49,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const DataTable: Fragment<P> = {
-  name: "DataTable",
+  id: "fragment-data-table",
+  name: "Data Table",
   version: "1.0.0",
   description:
     "Searchable, paged data table with typed columns (text|muted|money|date|badge|boolean|rating|progress) " +

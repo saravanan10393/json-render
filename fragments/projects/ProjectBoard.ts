@@ -30,7 +30,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const ProjectBoard: Fragment<P> = {
-  name: "ProjectBoard",
+  id: "fragment-project-board",
+  name: "Project Board",
   version: "1.0.0",
   description:
     "Project-management Kanban board for Tasks by Status: one column per status, cards show Title/Assignee/Priority, " +

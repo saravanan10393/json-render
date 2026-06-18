@@ -14,7 +14,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const ActivityTimeline: Fragment<P> = {
-  name: "ActivityTimeline",
+  id: "fragment-activity-timeline",
+  name: "Activity Timeline",
   version: "1.0.0",
   description:
     "Vertical timeline card of the N most recent records (dot + title + date + optional description). " +

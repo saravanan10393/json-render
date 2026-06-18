@@ -33,7 +33,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const TicketDetail: Fragment<P> = {
-  name: "TicketDetail",
+  id: "fragment-ticket-detail",
+  name: "Ticket Detail",
   version: "1.0.0",
   description:
     "Helpdesk detail panel for one Ticket: Subject/Status/Priority header, " +

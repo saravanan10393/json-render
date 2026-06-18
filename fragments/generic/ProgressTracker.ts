@@ -18,7 +18,8 @@ const Params = z
 type P = z.infer<typeof Params>;
 
 export const ProgressTracker: Fragment<P> = {
-  name: "ProgressTracker",
+  id: "fragment-progress-tracker",
+  name: "Progress Tracker",
   version: "1.0.0",
   description:
     "Metric-vs-target progress card (e.g. 'Done tasks vs target 20'). ONE ungrouped aggregation; " +

@@ -27,7 +27,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const StatsRow: Fragment<P> = {
-  name: "StatsRow",
+  id: "fragment-stats-row",
+  name: "Stats Row",
   version: "1.0.0",
   description:
     "Row of KPI stat cards (Grid), one bdo.metric per stat: { label, type: COUNT|SUM|AVG|MIN|MAX|DISTINCT_COUNT, " +

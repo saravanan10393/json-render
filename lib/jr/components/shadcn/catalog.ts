@@ -98,11 +98,19 @@ export const shadcnComponentDefinitions = {
 			items: z.array(
 				z.object({
 					title: z.string().nullable(),
-					description: z.string().nullable()
+					description: z.string().nullable(),
+					image: z.string().nullable()
 				})
-			)
+			),
+			aspectRatio: z
+				.string()
+				.nullable()
+				.describe("Aspect ratio for image slides, e.g. '1/1' or '4/3'.")
 		}),
-		description: "Horizontally scrollable carousel of cards."
+		description:
+			"Horizontally scrollable carousel with prev/next arrows. Each item renders as a card " +
+			"(title/description) OR, when `image` (a URL) is set, a full-width image slide — use " +
+			"`aspectRatio` for image slides (product galleries, banners)."
 	},
 
 	// ==========================================================================
@@ -194,9 +202,12 @@ export const shadcnComponentDefinitions = {
 	Popover: {
 		props: z.object({
 			trigger: z.string(),
-			content: z.string()
+			content: z.string().nullable(),
+			badge: z.string().nullable()
 		}),
-		description: "Popover that appears on click of trigger."
+		slots: ["default"],
+		description:
+			"Popover on click of a trigger button. Pass CHILDREN for rich content (e.g. a filter facet: a CheckboxGroup or RangeSlider); `content` is a plain-text fallback used only when there are no children. `badge` shows a small count/indicator in the trigger (e.g. active filter count)."
 	},
 
 	// ==========================================================================

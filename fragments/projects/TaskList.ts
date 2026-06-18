@@ -29,7 +29,8 @@ const STATUSES = ["Todo", "In Progress", "Review", "Done"];
 const PRIORITIES = ["Low", "Medium", "High"];
 
 export const TaskList: Fragment<P> = {
-  name: "TaskList",
+  id: "fragment-task-list",
+  name: "Task List",
   version: "1.0.0",
   description:
     "Project-management task table: Title/Assignee/Status/Priority/Estimate/DueDate columns, " +

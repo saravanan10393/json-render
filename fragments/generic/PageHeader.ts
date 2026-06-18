@@ -24,7 +24,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const PageHeader: Fragment<P> = {
-  name: "PageHeader",
+  id: "fragment-page-header",
+  name: "Page Header",
   version: "1.0.0",
   description:
     "Page title + subtitle + action buttons. Actions: kind 'navigate' (target = page name) or " +

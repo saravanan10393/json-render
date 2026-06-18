@@ -34,7 +34,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const PostGrid: Fragment<P> = {
-  name: "PostGrid",
+  id: "fragment-post-grid",
+  name: "Post Grid",
   version: "1.0.0",
   description:
     "Blog/CMS post card grid: cards showing cover image, Title, Excerpt, AuthorName, Status badge, and Category. " +

@@ -46,7 +46,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const DealStats: Fragment<P> = {
-  name: "DealStats",
+  id: "fragment-deal-stats",
+  name: "Deal Stats",
   version: "1.0.0",
   description:
     "CRM KPI stat card row for deal dashboards — each stat is a bdo.metric (COUNT/SUM/AVG/MAX/MIN with optional EQ filter). " +

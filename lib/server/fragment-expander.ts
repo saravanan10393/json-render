@@ -60,12 +60,12 @@ export function expandFragments(
       );
       continue;
     }
-    const { $fragment: name, params: rawParams } = parsedRef.data;
+    const { $fragment: id, params: rawParams } = parsedRef.data;
 
-    const fragment = registry[name] as Fragment<unknown> | undefined;
+    const fragment = registry[id] as Fragment<unknown> | undefined;
     if (!fragment) {
       issues.push(
-        `elements.${ns}: unknown fragment "${name}". Available: [${Object.keys(registry).join(", ")}]`,
+        `elements.${ns}: unknown fragment "${id}". Available: [${Object.keys(registry).join(", ")}]`,
       );
       continue;
     }
@@ -74,7 +74,7 @@ export function expandFragments(
     if (!paramsResult.success) {
       for (const issue of paramsResult.error.issues.slice(0, 6)) {
         issues.push(
-          `elements.${ns} ($fragment ${name}) params${issue.path.length ? "." + issue.path.join(".") : ""}: ${issue.message}`,
+          `elements.${ns} ($fragment ${id}) params${issue.path.length ? "." + issue.path.join(".") : ""}: ${issue.message}`,
         );
       }
       continue;
@@ -85,7 +85,7 @@ export function expandFragments(
       output = fragment.build(paramsResult.data, ns);
     } catch (error) {
       issues.push(
-        `elements.${ns} ($fragment ${name}): build() threw — ${error instanceof Error ? error.message : String(error)}`,
+        `elements.${ns} ($fragment ${id}): build() threw — ${error instanceof Error ? error.message : String(error)}`,
       );
       continue;
     }
@@ -93,12 +93,12 @@ export function expandFragments(
     const invariantProblems = checkNsInvariants(output, ns);
     if (invariantProblems.length > 0) {
       issues.push(
-        `elements.${ns} ($fragment ${name}): ${invariantProblems.join("; ")}`,
+        `elements.${ns} ($fragment ${id}): ${invariantProblems.join("; ")}`,
       );
       continue;
     }
 
-    const boundaryId = `${name}:${ns}`;
+    const boundaryId = `${id}:${ns}`;
 
     // elements — replace the ref; root key === ns keeps parent children valid
     delete elements[ns];
@@ -106,7 +106,7 @@ export function expandFragments(
     for (const [key, element] of Object.entries(output.elements)) {
       if (key in elements) {
         issues.push(
-          `elements.${ns} ($fragment ${name}): emitted element "${key}" collides with an existing element`,
+          `elements.${ns} ($fragment ${id}): emitted element "${key}" collides with an existing element`,
         );
         collided = true;
         continue;
@@ -127,7 +127,7 @@ export function expandFragments(
     for (const [dsName, ds] of Object.entries(output.datasources ?? {})) {
       if (dsName in datasources) {
         issues.push(
-          `elements.${ns} ($fragment ${name}): datasource "${dsName}" collides with an existing datasource`,
+          `elements.${ns} ($fragment ${id}): datasource "${dsName}" collides with an existing datasource`,
         );
         continue;
       }
@@ -139,7 +139,7 @@ export function expandFragments(
     }
 
     // state — deep merge of subtrees ({ ui: { [ns]: {...} } } → /ui/<ns>/*)
-    deepMergeState(state, output.state ?? {}, issues, `$fragment ${name} (${ns})`);
+    deepMergeState(state, output.state ?? {}, issues, `$fragment ${id} (${ns})`);
 
     // init — appended; record contributed indices
     const initIndices: number[] = [];
@@ -149,6 +149,7 @@ export function expandFragments(
     }
 
     boundaries[boundaryId] = {
+      fragmentId: fragment.id,
       fragmentName: fragment.name,
       fragmentVersion: fragment.version,
       instanceId: ns,
@@ -159,7 +160,7 @@ export function expandFragments(
       datasourceIds,
       initIndices,
     };
-    expanded.push(`${name} → ${ns}`);
+    expanded.push(`${id} → ${ns}`);
   }
 
   spec.elements = elements;

@@ -43,7 +43,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const StepperForm: Fragment<P> = {
-  name: "StepperForm",
+  id: "fragment-stepper-form",
+  name: "Stepper Form",
   version: "1.0.0",
   description:
     "Multi-step CREATE wizard rendered as a page-level Card. " +

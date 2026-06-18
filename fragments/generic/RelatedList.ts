@@ -14,7 +14,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const RelatedList: Fragment<P> = {
-  name: "RelatedList",
+  id: "fragment-related-list",
+  name: "Related List",
   version: "1.0.0",
   description:
     "Child-record table scoped by <parentField> EQ the id at <parentIdPath> — for master-detail pages " +

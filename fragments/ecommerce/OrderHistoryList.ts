@@ -14,20 +14,24 @@ const Params = z.object({
   showStatusFilter: z.boolean().default(true),
   pageSize: z.number().int().min(5).max(50).default(20),
   title: z.string().default("Order history"),
+  currency: z.string().nullable().default(null).describe("ISO 4217 code for totals (default USD)."),
 });
 
 type P = z.infer<typeof Params>;
 
 export const OrderHistoryList: Fragment<P> = {
-  name: "OrderHistoryList",
-  version: "1.0.0",
+  id: "fragment-order-history-list",
+  section: "account",
+  name: "Order History List",
+  version: "1.1.0",
   description:
     "Paginated order history with status filter and color-coded badges. Requires Order fields: CustomerName, Status, Total; PlacedAt (date) recommended for ordering.",
   whenToUse:
     "Use for 'my orders' / order-tracking pages: list of past orders with status filter, color-coded status badges, totals, and dates.",
   category: "account",
+  previewParams: {},
   params: Params as z.ZodType<P>,
-  build: ({ orderBdo, statuses, showStatusFilter, pageSize, title }, ns) => {
+  build: ({ orderBdo, statuses, showStatusFilter, pageSize, title, currency }, ns) => {
     const items = `${ns}-orders`;
     const filters = `/filters/${ns}`;
 
@@ -117,17 +121,8 @@ export const OrderHistoryList: Fragment<P> = {
           },
         },
         [`${ns}-row-total`]: {
-          type: "Stack",
-          props: { direction: "horizontal", gap: "none", align: "center" },
-          children: [`${ns}-row-total-symbol`, `${ns}-row-total-value`],
-        },
-        [`${ns}-row-total-symbol`]: {
-          type: "Text",
-          props: { text: "$", variant: "lead" },
-        },
-        [`${ns}-row-total-value`]: {
-          type: "Text",
-          props: { text: { $item: "Total" }, variant: "lead" },
+          type: "Money",
+          props: { value: { $item: "Total" }, currency, locale: null, compareAt: null, showDiscount: null, size: "md", className: "font-semibold" },
         },
         [`${ns}-empty`]: {
           type: "Empty",

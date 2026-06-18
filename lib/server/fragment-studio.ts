@@ -201,6 +201,7 @@ export interface DraftEvalResult {
   ok: boolean;
   issues: string[];
   meta?: {
+    id: string;
     name: string;
     category: string;
     version: string;
@@ -258,10 +259,18 @@ export async function promoteSession(sessionId: string, category: string): Promi
   if (!evaluation.ok) {
     return { ok: false, issues: ["draft does not pass validation:", ...evaluation.issues], actions: [] };
   }
-  if (evaluation.meta && evaluation.meta.name !== draft.name) {
+  // The machine id must match the file name (id = "fragment-" + kebab(FileName)).
+  // `name` is a freeform human label and is intentionally NOT checked.
+  const expectedId = `fragment-${draft.name
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")}`;
+  if (evaluation.meta && evaluation.meta.id !== expectedId) {
     return {
       ok: false,
-      issues: [`fragment name "${evaluation.meta.name}" must match the draft file name "${draft.name}"`],
+      issues: [`fragment id "${evaluation.meta.id}" must be "${expectedId}" (derived from file name "${draft.name}")`],
       actions: [],
     };
   }

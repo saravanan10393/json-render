@@ -2,8 +2,9 @@ import { fragmentRegistry } from "@/fragments";
 import { COMPONENT_REFERENCE } from "./component-reference.generated";
 import { designPresetReference } from "./tools";
 
-/** Names only — full docs come from the searchFragments tool at runtime. */
-const FRAGMENT_NAMES = Object.keys(fragmentRegistry).join(", ");
+/** Fragment IDS (the values emitted as `$fragment`) — full docs come from the
+ *  searchFragments tool at runtime. */
+const FRAGMENT_IDS = Object.keys(fragmentRegistry).join(", ");
 
 const DESIGN_SECTION = `## DESIGN SYSTEM & NAVIGATION (pick per app domain)
 
@@ -27,39 +28,42 @@ const FRAGMENTS_SECTION = `## FRAGMENTS — prebuilt blocks (STRONGLY PREFERRED 
 
 A fragment is a prebuilt, tested block (grid + datasources + state + wiring) you reference with ONE element instead of hand-building dozens. At save time it expands to primitives automatically.
 
-RETRIEVAL: full fragment docs are NOT in this prompt. Fetch PER PAGE, just-in-time: right before building each page, call \`searchFragments\` with that page's concrete design — purpose, sections, and widgets (e.g. "tickets list with status filters and edit dialog"), not a generic phrase. Richer page-specific queries retrieve more accurate fragment sets. Use the returned params schemas verbatim, then savePage while they're fresh. Do NOT batch all searches upfront. Available fragment names: ${FRAGMENT_NAMES}.
+RETRIEVAL: full fragment docs are NOT in this prompt. Fetch PER PAGE, just-in-time: right before building each page, call \`searchFragments\` with that page's concrete design — purpose, sections, and widgets (e.g. "tickets list with status filters and edit dialog"), not a generic phrase. Richer page-specific queries retrieve more accurate fragment sets. Use the returned params schemas verbatim, then savePage while they're fresh. Do NOT batch all searches upfront. Available fragment ids (emit one verbatim as \`$fragment\`): ${FRAGMENT_IDS}.
 
-Emission shape — the element KEY becomes the instance id (its namespace):
+Emission shape — the element KEY becomes the instance id (its namespace). The
+\`$fragment\` VALUE is the fragment's id (kebab-case, \`fragment-\` prefixed) — use the
+\`id\` field from each searchFragments result; the human labels (e.g. "Product Grid") are display only:
 
 \`\`\`json
-"products-grid": { "$fragment": "ProductGrid", "params": { "columns": 3, "cartRefresh": ["cart-panel-items"] } }
+"products-grid": { "$fragment": "fragment-product-grid", "params": { "columns": 3, "cartRefresh": ["cart-panel-items"] } }
 \`\`\`
 
 Rules:
 - The ref element has NO type/props/children — just \`$fragment\` and \`params\`. Reference it from a parent's \`children\` like any element.
-- Instance ids: short kebab-case, unique per page (e.g. "products-grid", "cart-panel").
-- Params are validated against the fragment's schema; omitted params take their defaults. Unknown fragment names and bad params come back as savePage issues.
+- Instance ids: short kebab-case, unique per page (e.g. "products-grid", "cart-panel") — these are ELEMENT KEYS, distinct from the fragment id in \`$fragment\`.
+- Params are validated against the fragment's schema; omitted params take their defaults. Unknown fragment ids and bad params come back as savePage issues.
 - Cross-fragment wiring is by instance id (ns). GENERIC KIT pairing rules:
   - Lists: DataTable (typed columns + rowActions) or CardGrid. Filters: add a FilterBar with targetNs = the list's instance id AND matching filterBindings on the list (numberRange → GTE '<Field>Min' + LTE '<Field>Max'; dateRange → '<Field>From'/'<Field>To'; select/boolean/reference → the field id). If the FilterBar has a search kind, set the list's searchable=false.
   - Forms: RecordFormDialog opens from DataTable rowActions 'edit' (set formDialogNs) or PageHeader/DetailHeader actions kind 'openDialog' (target = the dialog's instance id). ALWAYS pass the page's list/stat/chart datasource names in the dialog's refresh (e.g. ["<tableNs>-list", "<statsNs>-stat-0"]) so the page updates after save. FormCard = full-page create form.
   - Dashboards: StatsRow + ChartCard / Leaderboard / ProgressTracker + RecentList / ActivityTimeline.
   - Detail (master-detail on ONE page): DetailHeader / RecordView / RelatedList all read a record id from an idPath state path (e.g. /ui/selectedId). Seed it in page state and write it from a hand-built row press (setState with {"$template": "\${_id}"}) — list fragments do not write it for you.
-  - e-commerce wiring: ProductFilters/CategoryNav take targetGridNs; ProductGrid's cartRefresh takes a CartSummary's datasource names ["<cartNs>-items", "<cartNs>-total"]; CheckoutForm takes cartSummaryNs.
+  - e-commerce wiring: fragment-product-filters/fragment-category-nav take targetGridNs; fragment-product-grid's cartRefresh takes a fragment-cart-summary's datasource names ["<cartNs>-items", "<cartNs>-total"]; fragment-checkout-form takes cartSummaryNs.
 - Fragments handle their own init/datasources — do NOT add datasource.refresh for a fragment's datasources.
 - You can freely mix fragments with hand-built primitive elements on the same page.
 
 ENTITY CONTRACTS — e-commerce fragments expect entities with EXACTLY these field ids (define + seed them first):
-- Product: Name(text), Description(text), Price(number), Category(select), ImageUrl(text), Rating(number), Stock(number)
-- CartItem: ProductId(text), Name(text), Price(number), Quantity(number), LineTotal(number)  — seed it EMPTY (no records)
+- Product: Name(text), Description(text), Price(number), Category(select), ImageUrl(text), Rating(number), Stock(number); OPTIONAL for richer PDPs: Brand(text), CompareAtPrice(number), ReviewCount(number), Colors(text[] of CSS colors), Sizes(text[]), Images([{image}] gallery objects)
+- CartItem: ProductId(text), Name(text), Price(number), Quantity(number), LineTotal(number); OPTIONAL: ImageUrl(text) for a line thumbnail  — seed it EMPTY (no records)
 - Order: CustomerName(text), Email(text), Address(text), City(text), Zip(text), Status(select: Placed|Shipped|Delivered|Cancelled), Total(number), PlacedAt(date)
+- Review: ProductId(text), Author(text), Rating(number), Title(text), Body(text), CreatedAt(date) — for Review Summary / Review List / Write Review Form
 For ImageUrl seeds use https://picsum.photos/seed/<something-unique>/400/300.
 The generic kit (DataTable, FilterBar, RecordFormDialog, StatsRow, …) is entity-AGNOSTIC — pass your own entity + field ids through params.
 
-Canonical e-commerce app from fragments (4 pages):
-1. Shop (home): HeroBanner + CategoryNav(targetGridNs) + Stack[ ProductFilters(targetGridNs) | ProductGrid ]
-2. Cart: CartSummary(checkoutTarget: "Checkout") + ProductGrid(small, recommendations)
-3. Checkout: CartSummary instance + CheckoutForm(cartSummaryNs, successTarget: "Orders")
-4. Orders: OrderHistoryList — and an admin Dashboard page can use SalesStats.
+Canonical e-commerce app from fragments (4 pages) — $fragment ids shown:
+1. Shop (home): fragment-hero-banner + fragment-category-nav(targetGridNs) + Stack[ fragment-product-filters(targetGridNs) | fragment-product-grid ]
+2. Cart: fragment-cart-summary(checkoutTarget: "Checkout") + fragment-product-grid(small, recommendations)
+3. Checkout: fragment-cart-summary instance + fragment-checkout-form(cartSummaryNs, successTarget: "Orders")
+4. Orders: fragment-order-history-list — and an admin Dashboard page can use fragment-sales-stats.
 `;
 
 const SEARCH_TOOL_LINE = `- \`searchFragments({ query })\` — semantic search over the prebuilt fragment library; returns relevant fragments with their params schemas. Call once PER PAGE, immediately before building that page.

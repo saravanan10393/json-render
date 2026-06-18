@@ -21,7 +21,8 @@ const Params = z
 type P = z.infer<typeof Params>;
 
 export const ChartCard: Fragment<P> = {
-  name: "ChartCard",
+  id: "fragment-chart-card",
+  name: "Chart Card",
   version: "1.0.0",
   description:
     "Dashboard chart card: bar | line | area | donut | pie over ONE aggregation grouped by a field " +

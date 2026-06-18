@@ -75,11 +75,11 @@ const searchFragments = createTool({
     "Semantic search over the existing fragment library — check whether something similar already exists before authoring from scratch.",
   inputSchema: z.object({ query: z.string().min(3) }),
   outputSchema: z.object({
-    matches: z.array(z.object({ name: z.string(), doc: z.string(), score: z.number() })),
+    matches: z.array(z.object({ id: z.string(), name: z.string(), doc: z.string(), score: z.number() })),
   }),
   execute: async (input) => {
     const matches = await searchFragmentIndex(fragmentRegistry, input.query);
-    return { matches: matches.map((m) => ({ name: m.name, doc: m.doc, score: m.score })) };
+    return { matches: matches.map((m) => ({ id: m.id, name: m.name, doc: m.doc, score: m.score })) };
   },
 });
 
@@ -95,7 +95,7 @@ THIS CONVERSATION IS ABOUT EXACTLY ONE FRAGMENT. The system context tells you th
 2. Write the COMPLETE fragment .ts source and call saveDraft. If issues come back, fix the source and saveDraft again (full file each time) until ok.
 3. Tell the user what you built and which params they can play with (the studio has a params playground + source panel). Iterate on their feedback by re-saving the draft.
 4. The USER promotes the fragment into the library from the studio UI — you never do.
-5. EDIT sessions: the draft starts as a fork of the published source (or readFragment it when the session was already promoted and has no draft). Keep the SAME fragment name and BUMP the patch version (1.0.0 → 1.0.1) on every promoted edit.
+5. EDIT sessions: the draft starts as a fork of the published source (or readFragment it when the session was already promoted and has no draft). Keep the SAME id + export/file name and BUMP the patch version (1.0.0 → 1.0.1) on every promoted edit.
 
 ## The Fragment contract
 
@@ -109,10 +109,12 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const MyFragment: Fragment<P> = {
-  name: "MyFragment",          // MUST equal the export + file/draft name
+  id: "fragment-my-fragment",  // MACHINE key (emitted as $fragment) — MUST be "fragment-" + kebab(FileName)
+  name: "My Fragment",         // human label, WITH spaces — display only, freeform
   version: "1.0.0",
   description: "What it renders + WHICH ENTITY FIELDS it requires.",
   whenToUse: "Use when the user wants … (retrieval hint, user vocabulary).",
+  section: "browse",           // journey grouping within the bundle (drilldown) — freeform per domain
   category: "display",         // product-display|browse|cart-checkout|account|promotion|review|layout|form|display
   // REQUIRED whenever params has required fields without .default(): sample
   // values the live preview + promote gate evaluate with.

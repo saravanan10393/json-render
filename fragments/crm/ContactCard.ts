@@ -20,7 +20,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const ContactCard: Fragment<P> = {
-  name: "ContactCard",
+  id: "fragment-contact-card",
+  name: "Contact Card",
   version: "1.0.0",
   description:
     "CRM contact grid: cards showing Name, Title, Company, and Status badge. " +

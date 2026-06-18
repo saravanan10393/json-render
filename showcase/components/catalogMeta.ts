@@ -228,7 +228,22 @@ const CATEGORY: Record<string, Category> = {
 	Toaster: "Feedback",
 	// System / Outlets
 	PageOutlet: "System / Outlets",
-	ModalOutlet: "System / Outlets"
+	ModalOutlet: "System / Outlets",
+	// Long-tail primitives (ours)
+	Icon: "Primitives",
+	CopyButton: "Primitives",
+	CheckboxGroup: "Forms & Inputs",
+	TagInput: "Forms & Inputs",
+	TimePicker: "Forms & Inputs",
+	DateRangePicker: "Forms & Inputs",
+	RangeSlider: "Forms & Inputs",
+	ColorPicker: "Forms & Inputs",
+	StatusDot: "Feedback",
+	ProgressCircle: "Feedback",
+	Tree: "Data Display",
+	Money: "Data Display",
+	SwatchGroup: "Forms & Inputs",
+	ImageGallery: "Data Display"
 }
 
 // ---------------------------------------------------------------------------
@@ -630,6 +645,67 @@ const DEMOS: Record<string, Demo> = {
 		placeholder: "1234 5678 9012 3456"
 	}),
 	Counter: bound("Counter", "value", "/qty", 1, { label: "Quantity", min: 1, max: 99, className: "max-w-40" }),
+	CheckboxGroup: bound("CheckboxGroup", "value", "/cats", ["Audio"], {
+		label: "Category",
+		options: ["Audio", "Wearables", "Accessories", "Home"],
+	}),
+	TagInput: bound("TagInput", "value", "/tags", ["urgent", "billing"], {
+		label: "Tags",
+		placeholder: "Add tag…"
+	}),
+	TimePicker: bound("TimePicker", "value", "/meetingTime", "09:30", { label: "Start time", className: "max-w-48" }),
+	DateRangePicker: bound(
+		"DateRangePicker",
+		"value",
+		"/period",
+		{ from: "2026-06-01", to: "2026-06-12" },
+		{ placeholder: "Pick a date range" }
+	),
+	RangeSlider: bound("RangeSlider", "value", "/priceRange", [20, 80], {
+		label: "Price",
+		min: 0,
+		max: 100,
+		step: 5
+	}),
+	ColorPicker: bound("ColorPicker", "value", "/accent", "#6d28d9", {
+		label: "Accent color",
+		presets: ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#6d28d9"]
+	}),
+	Tree: bound("Tree", "value", "/selectedNode", "reports", {
+		nodes: [
+			{
+				id: "docs",
+				label: "Documents",
+				icon: "folder",
+				children: [
+					{ id: "reports", label: "Reports", children: [{ id: "q1", label: "Q1 summary.pdf", icon: "file-text" }] },
+					{ id: "invoices", label: "Invoices" }
+				]
+			},
+			{ id: "media", label: "Media", icon: "image" }
+		],
+		defaultExpanded: ["docs"]
+	}),
+	Icon: { props: { name: "circle-check", size: 24, color: "#16a34a" } },
+	StatusDot: { props: { variant: "success", label: "Operational", pulse: true } },
+	ProgressCircle: { props: { value: 72, size: 56 } },
+	CopyButton: { props: { text: "npm install json-render", label: "Copy command" } },
+	Money: { props: { value: 1299.5, currency: "USD", compareAt: 1599, size: "lg" } },
+	SwatchGroup: bound("SwatchGroup", "value", "/color", "#1f2937", {
+		label: "Color",
+		swatch: true,
+		options: ["#1f2937", "#b91c1c", "#1d4ed8", "#15803d"],
+	}),
+	ImageGallery: {
+		props: {
+			aspectRatio: "1/1",
+			images: [
+				"https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=320",
+				"https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=320",
+				"https://images.unsplash.com/photo-1565636192335-2eea4f5d3e0e?w=320",
+			],
+		},
+	},
 	DropdownMenu: {
 		props: {
 			label: "Options",

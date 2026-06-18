@@ -31,7 +31,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const PostEditor: Fragment<P> = {
-  name: "PostEditor",
+  id: "fragment-post-editor",
+  name: "Post Editor",
   version: "1.0.0",
   description:
     "Blog/CMS create/edit Post dialog form. " +

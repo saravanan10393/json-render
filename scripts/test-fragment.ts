@@ -2,8 +2,9 @@
  * Single-fragment test harness — expand + validate one fragment in isolation
  * and print what it ejects to, without touching any app.
  *
- *   bun run fragment:test <Name> [paramsJson] [--full]
- *   bun run fragment:test ProductGrid
+ *   bun run fragment:test <NameOrId> [paramsJson] [--full]
+ *   bun run fragment:test ProductGrid               # PascalCase name
+ *   bun run fragment:test fragment-product-grid     # …or the id
  *   bun run fragment:test ProductGrid '{"columns":4,"withDetailSheet":false}'
  *   bun run fragment:test CategoryNav '{"targetGridNs":"grid","categories":["A"]}' --full
  *
@@ -19,16 +20,28 @@ import { STANDARD_ENTITIES } from "../lib/server/standard-entities";
 
 const args = process.argv.slice(2).filter((a) => a !== "--full");
 const full = process.argv.includes("--full");
-const [name, paramsJson] = args;
+const [arg, paramsJson] = args;
 
-if (!name) {
-  console.error("usage: bun run fragment:test <Name> [paramsJson] [--full]");
+if (!arg) {
+  console.error("usage: bun run fragment:test <NameOrId> [paramsJson] [--full]");
   console.error(`available: ${Object.keys(fragmentRegistry).join(", ")}`);
   process.exit(1);
 }
-const fragment = fragmentRegistry[name];
+// Accept either the fragment id (registry key) or the PascalCase export name —
+// derive the id from a PascalCase name the same way the contract does.
+const toId = (s: string) =>
+  s.startsWith("fragment-")
+    ? s
+    : `fragment-${s
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")}`;
+const id = toId(arg);
+const fragment = fragmentRegistry[id];
 if (!fragment) {
-  console.error(`unknown fragment "${name}". Available: ${Object.keys(fragmentRegistry).join(", ")}`);
+  console.error(`unknown fragment "${arg}" (id "${id}"). Available: ${Object.keys(fragmentRegistry).join(", ")}`);
   process.exit(1);
 }
 
@@ -53,13 +66,13 @@ const page = {
       props: { direction: "vertical", gap: "lg", className: "p-8" },
       children: [ns],
     },
-    [ns]: { $fragment: name, params },
+    [ns]: { $fragment: id, params },
   },
 };
 
 const { spec, issues, expanded } = expandFragments(page, fragmentRegistry);
 if (issues.length > 0) {
-  console.error(`✗ expansion FAILED for ${name}:`);
+  console.error(`✗ expansion FAILED for ${id}:`);
   for (const issue of issues) console.error("  -", issue);
   process.exit(1);
 }

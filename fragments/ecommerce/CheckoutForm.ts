@@ -26,13 +26,16 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const CheckoutForm: Fragment<P> = {
-  name: "CheckoutForm",
-  version: "1.0.0",
+  id: "fragment-checkout-form",
+  section: "checkout",
+  name: "Checkout Form",
+  version: "1.1.0",
   description:
     "Checkout form (name, email, address, city, zip) that saves an Order with Status 'Placed' on submit. Requires Order fields: CustomerName, Email, Address, City, Zip, Status, Total. Pair with a same-page CartSummary via cartSummaryNs to capture the cart total.",
   whenToUse:
     "Use for the checkout/purchase step: shipping and contact form that places the order, captures the cart total, and clears/navigates on success.",
   category: "cart-checkout",
+  previewParams: { title: "Checkout" },
   params: Params as z.ZodType<P>,
   build: ({ orderBdo, cartSummaryNs, successTarget, title }, ns) => {
     const form = `/form/${ns}`;
@@ -46,11 +49,14 @@ export const CheckoutForm: Fragment<P> = {
       type: "Input",
       props: {
         label,
-        name: `${ns}-${key}`,
         type,
         placeholder,
         value: { $bindState: `${form}/${key}` },
       },
+    });
+    const heading = (text: string) => ({
+      type: "Text",
+      props: { text, variant: "caption", className: "uppercase tracking-wide text-muted-foreground" },
     });
 
     return {
@@ -65,13 +71,17 @@ export const CheckoutForm: Fragment<P> = {
           type: "Stack",
           props: { direction: "vertical", gap: "md" },
           children: [
+            `${ns}-contact-heading`,
             `${ns}-name`,
             `${ns}-email`,
+            `${ns}-shipping-heading`,
             `${ns}-address`,
             `${ns}-city-row`,
             `${ns}-submit`,
           ],
         },
+        [`${ns}-contact-heading`]: heading("Contact"),
+        [`${ns}-shipping-heading`]: heading("Shipping address"),
         [`${ns}-name`]: field("CustomerName", "Full name", "text", "Jane Smith"),
         [`${ns}-email`]: field("Email", "Email", "email", "jane@example.com"),
         [`${ns}-address`]: field("Address", "Address", "text", "221B Baker Street"),

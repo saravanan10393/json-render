@@ -7,8 +7,9 @@ reference and the **eject-on-write expander** materialises it to primitives
 when the page is saved:
 
 ```jsonc
-// what the agent emits inside spec.elements — the KEY becomes ns
-"products-grid": { "$fragment": "ProductGrid", "params": { "columns": 3 } }
+// what the agent emits inside spec.elements — the KEY becomes ns,
+// the $fragment VALUE is the fragment's id (not its display name)
+"products-grid": { "$fragment": "fragment-product-grid", "params": { "columns": 3 } }
 ```
 
 Fragment **docs are not in the agent's prompt**. They live in a vector index
@@ -73,7 +74,10 @@ Edit the generated file. The contract (`Fragment<P>` in `lib/jr/schema/types.ts`
 
 | Field | Purpose |
 |---|---|
-| `name`, `version`, `category` | identity; category is a coarse grouping for telemetry/prompts |
+| `id` | unique MACHINE key — kebab-case, `fragment-` prefixed (`fragment-cart-summary`). The registry key, the value the agent emits as `$fragment`, the vector-index PK. MUST equal `fragment-` + kebab(file/export name). |
+| `name` | human display label, WITH spaces (`"Cart Summary"`) — shown in the showcase/studio + folded into retrieval text; never a key |
+| `section` | optional journey grouping within the bundle — the single bucket the block lives under in the showcase drilldown (Tier → Bundle → Section → Block). Freeform per domain (ecommerce: `discovery`/`browse`/`product-detail`/`reviews`/`cart`/`checkout`/`account`/`promotion`/`admin`). |
+| `version`, `category` | identity; category is a coarse grouping for telemetry/prompts |
 | `description` | what it renders + WHICH ENTITY FIELDS it requires — shown to the agent on retrieval |
 | `whenToUse` | retrieval hint, "Use when the user wants …" — embedded for semantic search |
 | `params` | Zod schema; declare defaults IN the schema (`.default()`), use `.describe()` on every param |

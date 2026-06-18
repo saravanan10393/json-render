@@ -30,7 +30,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const DealPipeline: Fragment<P> = {
-  name: "DealPipeline",
+  id: "fragment-deal-pipeline",
+  name: "Deal Pipeline",
   version: "1.0.0",
   description:
     "CRM Kanban board for Deals by Stage: one column per stage, cards show Name/Value/Owner, " +

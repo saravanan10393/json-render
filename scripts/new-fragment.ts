@@ -18,6 +18,14 @@ if (!category || !name || !/^[A-Z][A-Za-z0-9]*$/.test(name)) {
   process.exit(1);
 }
 
+// Identity split: `name` (the PascalCase arg) is the export/file name; derive
+// the human display label (with spaces) and the machine id (kebab, prefixed).
+const displayName = name
+  .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+  .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+  .trim();
+const fragmentId = `fragment-${displayName.toLowerCase().replace(/\s+/g, "-")}`;
+
 const categoryDir = path.join(FRAGMENTS_ROOT, category);
 const fragmentFile = path.join(categoryDir, `${name}.ts`);
 
@@ -38,16 +46,20 @@ import { z } from "zod";
 import type { Fragment } from "@/lib/jr/schema";
 
 const Params = z.object({
-  title: z.string().default("${name}"),
+  title: z.string().default("${displayName}"),
 });
 
 type P = z.infer<typeof Params>;
 
 export const ${name}: Fragment<P> = {
-  name: "${name}",
+  id: "${fragmentId}",
+  name: "${displayName}",
   version: "1.0.0",
   description: "TODO: what this block renders and which entity fields it requires.",
   whenToUse: "TODO: retrieval hint — 'Use when the user wants …'.",
+  // Journey grouping for the showcase drilldown (e.g. ecommerce: discovery |
+  // browse | product-detail | reviews | cart | checkout | account | promotion).
+  section: "TODO",
   category: "display",
   // REQUIRED when params have required fields without defaults — previews,
   // the test harness, and the promote gate evaluate with these.

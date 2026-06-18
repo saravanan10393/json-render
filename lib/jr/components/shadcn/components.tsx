@@ -253,20 +253,33 @@ export const shadcnComponents = {
 
 	Carousel: ({ props }: BaseComponentProps<ShadcnProps<"Carousel">>) => {
 		const items = props.items ?? []
+		const imageMode = items.some((it) => it.image)
+		const ar = props.aspectRatio
 		return (
 			<CarouselPrimitive className="w-full">
 				<CarouselContent>
 					{items.map((item, i) => (
-						<CarouselItem key={i} className="basis-3/4 md:basis-1/2 lg:basis-1/3">
-							<div className="border border-border rounded-lg p-4 bg-card h-full">
-								{item.title && <h4 className="font-semibold text-sm mb-1">{item.title}</h4>}
-								{item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
-							</div>
+						<CarouselItem key={i} className={imageMode ? "basis-full" : "basis-3/4 md:basis-1/2 lg:basis-1/3"}>
+							{item.image ? (
+								<div
+									className="overflow-hidden rounded-xl border border-border bg-muted"
+									style={ar ? { aspectRatio: ar } : undefined}
+								>
+									{/* biome-ignore lint/a11y/useAltText: alt falls back to title */}
+									<img src={item.image} alt={item.title ?? ""} className="h-full w-full object-cover" />
+								</div>
+							) : (
+								<div className="border border-border rounded-lg p-4 bg-card h-full">
+									{item.title && <h4 className="font-semibold text-sm mb-1">{item.title}</h4>}
+									{item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
+								</div>
+							)}
 						</CarouselItem>
 					))}
 				</CarouselContent>
-				<CarouselPrevious />
-				<CarouselNext />
+				{/* Inset arrows over the image in image mode (default sits outside the content). */}
+				<CarouselPrevious className={imageMode ? "left-2" : undefined} />
+				<CarouselNext className={imageMode ? "right-2" : undefined} />
 			</CarouselPrimitive>
 		)
 	},
@@ -380,16 +393,22 @@ export const shadcnComponents = {
 		)
 	},
 
-	Popover: ({ props }: BaseComponentProps<ShadcnProps<"Popover">>) => {
+	Popover: ({ props, children }: BaseComponentProps<ShadcnProps<"Popover">>) => {
+		const hasBadge = props.badge != null && props.badge !== ""
 		return (
 			<PopoverPrimitive>
 				<PopoverTrigger asChild>
 					<Button variant="outline" className="text-sm">
 						{props.trigger}
+						{hasBadge && (
+							<Badge variant="secondary" className="ml-1.5">
+								{props.badge}
+							</Badge>
+						)}
 					</Button>
 				</PopoverTrigger>
-				<PopoverContent className="w-64">
-					<p className="text-sm">{props.content}</p>
+				<PopoverContent className="w-72">
+					{props.content != null ? <p className="text-sm">{props.content}</p> : children}
 				</PopoverContent>
 			</PopoverPrimitive>
 		)

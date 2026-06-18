@@ -39,7 +39,8 @@ const Params = z.object({
 type P = z.infer<typeof Params>;
 
 export const DetailHeader: Fragment<P> = {
-  name: "DetailHeader",
+  id: "fragment-detail-header",
+  name: "Detail Header",
   version: "1.0.0",
   description:
     "Detail-page header for ONE record (id read from idPath): big title, optional subtitle/status badge, " +
