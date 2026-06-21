@@ -58,7 +58,7 @@ const shopPage = {
       children: ["hero", "category-nav", "main"],
     },
     hero: {
-      $fragment: "HeroBanner",
+      $fragment: "fragment-hero-banner",
       params: {
         title: "Gear up for summer",
         subtitle: "Up to 40% off headphones and wearables.",
@@ -67,7 +67,7 @@ const shopPage = {
       },
     },
     "category-nav": {
-      $fragment: "CategoryNav",
+      $fragment: "fragment-category-nav",
       params: { targetGridNs: "products-grid", categories: ["Audio", "Wearables"] },
     },
     main: {
@@ -76,15 +76,15 @@ const shopPage = {
       children: ["filters-panel", "products-grid"],
     },
     "filters-panel": {
-      $fragment: "ProductFilters",
+      $fragment: "fragment-product-filters",
       params: { targetGridNs: "products-grid", categories: ["Audio", "Wearables"] },
     },
     "products-grid": {
-      $fragment: "ProductGrid",
+      $fragment: "fragment-product-grid",
       params: { columns: 3, cartRefresh: ["cart-panel-items", "cart-panel-total"] },
     },
     "cart-panel": {
-      $fragment: "CartSummary",
+      $fragment: "fragment-cart-summary",
       params: { checkoutTarget: "Checkout" },
     },
   },
