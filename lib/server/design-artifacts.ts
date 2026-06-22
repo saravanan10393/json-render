@@ -103,8 +103,7 @@ function designDir(appId: string): string {
 /** Remove every page mockup (incl. legacy blobs) — for a "rerun mockups" pass. */
 export function clearMockups(appId: string): void {
   for (const f of ["mockups.json", "artifact.json"]) {
-    const p = path.join(designDir(appId), f);
-    if (existsSync(p)) rmSync(p);
+    rmSync(path.join(designDir(appId), f), { force: true });
   }
 }
 
@@ -116,8 +115,7 @@ export function clearMockups(appId: string): void {
  * never a window where the preview has no theme.
  */
 export function clearDesignArtifacts(appId: string): void {
-  const sitemap = path.join(designDir(appId), "sitemap.json");
-  if (existsSync(sitemap)) rmSync(sitemap);
+  rmSync(path.join(designDir(appId), "sitemap.json"), { force: true });
   clearMockups(appId);
 }
 

@@ -21,9 +21,11 @@ import {
 } from "./design-review";
 import { FragmentAnalyzer } from "./fragment-analyzer";
 import {
+  activeView,
   PipelineBar,
   type RunState,
   type Stage,
+  VIEW_LABEL,
   type ViewKey,
 } from "./pipeline-bar";
 import { ThemeTweaker } from "./theme-tweaker";
@@ -37,21 +39,14 @@ interface AppModel {
   pagesStale?: boolean;
 }
 
-const VIEW_LABEL: Record<ViewKey, string> = {
-  backend: "Data model",
-  design: "Design",
-  analyzer: "Analyzer",
-  frontend: "Build",
+/** Confirm-dialog wording per design-rerun scope — module-scope to avoid
+ *  rebuilding the map on every render. */
+const RERUN_LABEL: Record<DesignScope, string> = {
+  all: "the whole design (theme, sitemap, and all mockups)",
+  theme: "the theme",
+  sitemap: "the sitemap",
+  mockups: "all page mockups",
 };
-
-/** The view the live run sits on (Analyzer is a side-view, not a run stage). */
-function activeView(stage: Stage): ViewKey {
-  return stage === "backend"
-    ? "backend"
-    : stage === "design"
-      ? "design"
-      : "frontend";
-}
 
 const AppRuntime = dynamic(
   () => import("@/lib/runtime/app-shell").then((m) => m.AppRuntime),
@@ -228,15 +223,9 @@ export function AppBuilder({ app, initialMessages }: AppBuilderProps) {
   // it discards the current artifact(s).
   const rerunDesign = useCallback(
     (scope: DesignScope) => {
-      const what: Record<DesignScope, string> = {
-        all: "the whole design (theme, sitemap, and all mockups)",
-        theme: "the theme",
-        sitemap: "the sitemap",
-        mockups: "all page mockups",
-      };
       if (
         !window.confirm(
-          `Regenerate ${what[scope]} from scratch? This discards the current ${scope === "all" ? "design" : scope}.`,
+          `Regenerate ${RERUN_LABEL[scope]} from scratch? This discards the current ${scope === "all" ? "design" : scope}.`,
         )
       ) {
         return;

@@ -38,6 +38,18 @@ const MOCKUP_PER_PAGE_BUDGET: Record<"text" | "html", number> = {
   text: 5000,
   html: 20000,
 };
+/** Compact `ENTITIES:` block — shared across backend / design / app contexts. */
+function formatEntities(entities: ReturnType<typeof listEntities>): string {
+  return entities
+    .map(
+      (e) =>
+        `- ${e.name} (${e.label}): ${e.fields
+          .map((f) => `${f.id}:${f.type}${f.options ? `[${f.options.join("|")}]` : ""}`)
+          .join(", ")}`,
+    )
+    .join("\n");
+}
+
 function formatMockups(sel: ReturnType<typeof selectedMockups>): string {
   if (!sel) return "";
   if (sel.mode === "image") {
@@ -66,14 +78,8 @@ export function buildAppContext(
     return `App "${appName}" (id: ${appId}) is EMPTY — nothing built yet. Follow the NEW APP workflow.`;
   }
 
-  const entitySummary = entities
-    .map(
-      (e) =>
-        `- ${e.name} (${e.label}): ${e.fields
-          .map((f) => `${f.id}:${f.type}${f.options ? `[${f.options.join("|")}]` : ""}`)
-          .join(", ")}`,
-    )
-    .join("\n");
+  const entitySummary = formatEntities(entities);
+  const theme = getAppTheme(appId);
 
   const pageSummary = pages
     .map((p) => `- id "${p.id}" name "${p.name}" role "${p.role}" entity "${p.businessEntity}"`)
@@ -136,11 +142,8 @@ export function buildAppContext(
       `App "${appName}" (id: ${appId}) — FRESH BUILD. The data model + design are approved (below); existing pages have been wiped. Build EVERY page in the sitemap from scratch (one savePage per sitemap page), then call saveAppIndex once with the full navigation. Use the page ids from the sitemap.`,
       `\nENTITIES:\n${entitySummary || "(none)"}`,
       `\nDESIGN SYSTEM: ${
-        getAppTheme(appId)
-          ? (() => {
-              const theme = getAppTheme(appId)!;
-              return `${theme.name} (preset ${theme.preset}, fonts ${theme.fonts.heading}/${theme.fonts.body}) — applied; do NOT call applyDesignSystem.`;
-            })()
+        theme
+          ? `${theme.name} (preset ${theme.preset}, fonts ${theme.fonts.heading}/${theme.fonts.body}) — applied; do NOT call applyDesignSystem.`
           : "(missing — should not happen during rebuild)"
       }`,
       sitemap
@@ -156,11 +159,8 @@ export function buildAppContext(
     `\nPAGES:\n${pageSummary || "(none)"}`,
     `\nAPP INDEX (app.json):\n${index ? JSON.stringify(index) : "(not written yet — call saveAppIndex)"}`,
     `\nDESIGN SYSTEM: ${
-      getAppTheme(appId)
-        ? (() => {
-            const theme = getAppTheme(appId)!;
-            return `${theme.name} (preset ${theme.preset}, fonts ${theme.fonts.heading}/${theme.fonts.body}) — applied; re-run applyDesignSystem only if the user wants a different look.`;
-          })()
+      theme
+        ? `${theme.name} (preset ${theme.preset}, fonts ${theme.fonts.heading}/${theme.fonts.body}) — applied; re-run applyDesignSystem only if the user wants a different look.`
         : "none yet — call applyDesignSystem first."
     }`,
     sitemap
@@ -179,16 +179,7 @@ export function buildDesignContext(appId: string, appName: string): string {
   const sitemap = readSitemap(appId);
   const mockups = readMockups(appId);
   const slots = listMockupSlots(appId);
-  const entitySummary = entities.length
-    ? entities
-        .map(
-          (e) =>
-            `- ${e.name} (${e.label}): ${e.fields
-              .map((f) => `${f.id}:${f.type}${f.options ? `[${f.options.join("|")}]` : ""}`)
-              .join(", ")}`,
-        )
-        .join("\n")
-    : "(none)";
+  const entitySummary = formatEntities(entities) || "(none)";
 
   // Per-page slot summary (which (pageId, mode) already exist).
   const slotSummary =
@@ -262,16 +253,7 @@ export async function runBuilderTurn({
  *  agent owns it; with the designer off, the app keeps the default theme. */
 export function buildBackendContext(appId: string, appName: string): string {
   const entities = listEntities(appId);
-  const entitySummary = entities.length
-    ? entities
-        .map(
-          (e) =>
-            `- ${e.name} (${e.label}): ${e.fields
-              .map((f) => `${f.id}:${f.type}${f.options ? `[${f.options.join("|")}]` : ""}`)
-              .join(", ")}`,
-        )
-        .join("\n")
-    : "(none yet)";
+  const entitySummary = formatEntities(entities) || "(none yet)";
   return [
     `App "${appName}" (id: ${appId}) — BACKEND STAGE: define the data model. The Frontend agent builds pages once the user approves the model.`,
     `\nENTITIES:\n${entitySummary}`,

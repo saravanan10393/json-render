@@ -49,12 +49,22 @@ const VIEW_STEPS: { key: ViewKey; label: string }[] = [
 
 const VIEW_INDEX: Record<ViewKey, number> = { backend: 0, design: 1, analyzer: 2, frontend: 3 };
 
-/** The view index the live run sits on (Analyzer is never a run stage). */
-function activeViewIndex(stage: Stage): number {
-  if (stage === "backend") return 0;
-  if (stage === "design") return 1;
-  return 3; // frontend / done → Build
-}
+/** Run stage → live view. Analyzer is a side-view, never a run stage; `done`
+ *  shares the Build view with `frontend`. */
+export const STAGE_VIEW: Record<Stage, ViewKey> = {
+  backend: "backend",
+  design: "design",
+  frontend: "frontend",
+  done: "frontend",
+};
+
+/** Map of every view key to its display label — derived once from VIEW_STEPS. */
+export const VIEW_LABEL: Record<ViewKey, string> = Object.fromEntries(
+  VIEW_STEPS.map((s) => [s.key, s.label]),
+) as Record<ViewKey, string>;
+
+/** The view the live run sits on. */
+export const activeView = (stage: Stage): ViewKey => STAGE_VIEW[stage];
 
 function Toggle({
   label,
@@ -124,7 +134,7 @@ export function PipelineBar({
   onModelChange: (role: ModelRole, modelId: string | undefined) => void;
 }) {
   if (!run) return null;
-  const cur = activeViewIndex(run.stage);
+  const cur = VIEW_INDEX[activeView(run.stage)];
   const viewed = VIEW_INDEX[shownView];
   const atGate = run.stage === "backend" || run.stage === "design";
 

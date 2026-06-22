@@ -3,7 +3,12 @@
 import { Loader2, Maximize2, Palette, RefreshCw, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TOKEN_GROUPS } from "@/lib/jr/theme-options";
-import { cn } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
+
+// Mirrors LEGACY_APP_PAGE_ID in lib/server/design-artifacts.ts — kept here
+// because that module is server-only (imports node:fs) and can't be brought
+// into the client bundle. Update in lockstep.
+const LEGACY_PAGE_ID = "_app";
 
 export interface ThemeInfo {
   name: string;
@@ -55,13 +60,8 @@ export interface MockupsInfo {
   >;
 }
 
-/** Compact duration label — sub-second in ms, otherwise seconds with one decimal. */
-export function formatDuration(ms: number): string {
-  return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)}s`;
-}
 
 const MOCKUP_MODES: DesignMode[] = ["text", "html", "image"];
-const LEGACY_PAGE_ID = "_app";
 
 /** Which slice of the design phase a rerun regenerates. */
 export type DesignScope = "all" | "theme" | "sitemap" | "mockups";
@@ -293,38 +293,34 @@ function MockupContent({
    *  otherwise uses the compact in-panel height. */
   fullscreen?: boolean;
 }) {
+  // Iframe + raw raster need a hard height (no intrinsic line count); text
+  // gets a max-height so short markdown doesn't waste space.
+  const fixedH = fullscreen ? "h-full" : "h-96";
+  const maxH = fullscreen ? "h-full" : "max-h-96";
   if (mode === "html")
     return (
       <iframe
         title="Design mockup"
         srcDoc={renderIcons(content)}
-        className={cn(
-          "w-full rounded-lg border border-border bg-white",
-          fullscreen ? "h-full" : "h-96",
-        )}
+        className={cn("w-full rounded-lg border border-border bg-white", fixedH)}
       />
     );
-  if (mode === "image") {
+  if (mode === "image")
     // The image-gen path stores content as a `data:image/...;base64,...` URL
-    // — render it directly as an <img>. (Legacy SVG content was removed; any
-    // pre-existing image slots from before the prompt clean-up still work.)
+    // — render directly as an <img>. (Legacy SVG content was removed.)
     return (
       // eslint-disable-next-line @next/next/no-img-element -- data URL, not a hosted asset; Image/Next can't optimise it
       <img
         alt="Design mockup"
         src={content}
-        className={cn(
-          "block w-full rounded-lg border border-border bg-white",
-          fullscreen ? "h-full object-contain" : "max-h-96 object-contain",
-        )}
+        className={cn("block w-full rounded-lg border border-border bg-white object-contain", maxH)}
       />
     );
-  }
   return (
     <pre
       className={cn(
         "w-full overflow-auto whitespace-pre-wrap rounded-lg bg-muted/40 p-3 font-mono text-[11px] leading-relaxed",
-        fullscreen ? "h-full" : "max-h-96",
+        maxH,
       )}
     >
       {content}
@@ -408,11 +404,12 @@ function MockupTabs({
   const [tab, setTab] = useState<DesignMode>(mockups.selected);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const presentModes = MOCKUP_MODES.filter((m) => slots[m]);
-  const activeMode: DesignMode = slots[tab]
-    ? tab
-    : slots[mockups.selected]
-      ? mockups.selected
-      : (presentModes[0] ?? mockups.selected);
+  // Pick the first mode that's actually present, preferring (in order): the
+  // user-selected tab, the global selected mode, anything we have content for.
+  // Falls back to the global selected even when absent (the empty-tab UI uses it).
+  const activeMode: DesignMode =
+    [tab, mockups.selected, presentModes[0]].find((m): m is DesignMode => !!m && !!slots[m]) ??
+    mockups.selected;
   const rep = slots[activeMode];
 
   // Per-page totals so a glance shows coverage across pages.

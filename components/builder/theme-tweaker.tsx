@@ -182,15 +182,10 @@ export function ThemeTweaker({
   );
 
   const setColor = (token: string, value: string) => {
-    if (mode === "light") {
-      const next = { ...light, [token]: value };
-      setLight(next);
-      apply({ light: next });
-    } else {
-      const next = { ...dark, [token]: value };
-      setDark(next);
-      apply({ dark: next });
-    }
+    const [palette, setPalette] = mode === "light" ? [light, setLight] : [dark, setDark];
+    const next = { ...palette, [token]: value };
+    setPalette(next);
+    apply({ [mode]: next });
   };
 
   const applyPreset = (presetId: string) => {

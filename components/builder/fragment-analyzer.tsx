@@ -2,8 +2,7 @@
 
 import { Boxes, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { formatDuration } from "./design-review";
-import { cn } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
 
 interface Coverage {
   sections: { page: string; section: string; fragmentName: string | null; score: number; gap: boolean }[];
