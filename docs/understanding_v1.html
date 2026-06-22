@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>patchwork* — how the builder works now (v1)</title>
+<style>
+  :root{
+    --ink:#1e293b; --muted:#64748b; --line:#e2e8f0; --bg:#ffffff; --soft:#f8fafc;
+    --page:#6366f1; --page-fill:#eef2ff; --page-stroke:#c7d2fe;
+    --api:#0d9488;  --api-fill:#f0fdfa;  --api-stroke:#99f6e4;
+    --agent:#7c3aed;--agent-fill:#f5f3ff;--agent-stroke:#ddd6fe;
+    --store:#d97706;--store-fill:#fffbeb;--store-stroke:#fde68a;
+    --rt:#16a34a;   --rt-fill:#f0fdf4;   --rt-stroke:#bbf7d0;
+    --orc:#0ea5e9;  --orc-fill:#e0f2fe;  --orc-stroke:#7dd3fc;
+    --gate:#f59e0b; --gate-fill:#fffbeb; --gate-stroke:#fcd34d;
+    --amber:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  code,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.9em;}
+  a{color:var(--page);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px 96px}
+  header.top{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#fbfbfd);}
+  .head-inner{max-width:1120px;margin:0 auto;padding:34px 24px 26px}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+  h1 .star{color:var(--amber)}
+  .sub{color:var(--muted);max-width:820px;margin:0}
+  .pill{display:inline-block;font:600 11px/1 ui-monospace,monospace;text-transform:uppercase;
+    letter-spacing:.12em;color:var(--amber);border:1px solid var(--store-stroke);
+    background:var(--store-fill);padding:6px 9px;border-radius:999px;margin-bottom:14px}
+  .pill a{color:var(--amber)}
+  nav.toc{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);}
+  .toc-inner{max-width:1120px;margin:0 auto;padding:10px 24px;display:flex;gap:6px;flex-wrap:wrap}
+  .toc-inner a{font:600 12px/1 ui-sans-serif,system-ui;color:var(--muted);
+    padding:6px 10px;border-radius:8px;border:1px solid transparent}
+  .toc-inner a:hover{color:var(--ink);background:var(--soft);border-color:var(--line);text-decoration:none}
+  section{padding-top:46px}
+  h2{font-size:21px;margin:0 0 4px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+    border-radius:8px;background:var(--ink);color:#fff;font:700 13px/1 ui-monospace,monospace}
+  h3{font-size:15px;margin:20px 0 6px;letter-spacing:-.01em}
+  .route{font:600 12px/1 ui-monospace,monospace;color:var(--page);background:var(--page-fill);
+    border:1px solid var(--page-stroke);padding:5px 8px;border-radius:7px}
+  .lead{color:var(--muted);margin:8px 0 18px;max-width:840px}
+  .diagram{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:18px;margin:0 0 16px}
+  .diagram svg{width:100%;height:auto;display:block}
+  ul.notes{margin:0;padding-left:18px}
+  ul.notes li{margin:5px 0}
+  ul.notes b{color:var(--ink)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 22px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:4px;border:1px solid}
+  .sw.page{background:var(--page-fill);border-color:var(--page-stroke)}
+  .sw.api{background:var(--api-fill);border-color:var(--api-stroke)}
+  .sw.agent{background:var(--agent-fill);border-color:var(--agent-stroke)}
+  .sw.store{background:var(--store-fill);border-color:var(--store-stroke)}
+  .sw.rt{background:var(--rt-fill);border-color:var(--rt-stroke)}
+  .sw.orc{background:var(--orc-fill);border-color:var(--orc-stroke)}
+  .sw.gate{background:var(--gate-fill);border-color:var(--gate-stroke)}
+  .callout{border-left:3px solid var(--amber);background:#fffdf5;padding:10px 14px;border-radius:0 8px 8px 0;
+    margin:14px 0;color:#713f12;font-size:13.5px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  table.tbl{border-collapse:collapse;width:100%;margin:6px 0 8px;font-size:13px}
+  table.tbl th,table.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  table.tbl th{background:var(--soft);font-weight:700;color:var(--ink)}
+  table.tbl td code{color:var(--api)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:13px}
+  svg text{font-family:ui-sans-serif,system-ui;fill:var(--ink)}
+  svg .box{stroke-width:1.4}
+  svg .page{fill:var(--page-fill);stroke:var(--page-stroke)}
+  svg .api{fill:var(--api-fill);stroke:var(--api-stroke)}
+  svg .agent{fill:var(--agent-fill);stroke:var(--agent-stroke)}
+  svg .store{fill:var(--store-fill);stroke:var(--store-stroke)}
+  svg .rt{fill:var(--rt-fill);stroke:var(--rt-stroke)}
+  svg .orc{fill:var(--orc-fill);stroke:var(--orc-stroke)}
+  svg .gate{fill:var(--gate-fill);stroke:var(--gate-stroke)}
+  svg .neu{fill:#f1f5f9;stroke:#cbd5e1}
+  svg .t{font-size:13px;font-weight:600}
+  svg .s{font-size:11px;fill:var(--muted);font-weight:500}
+  svg .lbl{font-size:11px;fill:var(--muted);font-weight:600}
+  svg .edge{stroke:#94a3b8;stroke-width:1.5;fill:none}
+  svg .edge-dash{stroke:#94a3b8;stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+  svg .edge-g{stroke:var(--gate);stroke-width:1.6;fill:none}
+  svg .gl{font-size:10px;fill:var(--gate);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  svg .title{font-size:12px;font-weight:700;fill:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="head-inner">
+    <div class="pill">Implemented · how it works now · v1</div>
+    <h1>patchwork<span class="star">*</span> — how the builder works now</h1>
+    <p class="sub">The staged design pipeline is live. One agent that did everything is now an <b>orchestrated pipeline of three
+    agents</b> — Backend · Design · Frontend — with <b>human approval gates</b> between them, a view-only <b>Analyzer</b> step,
+    and a real <b>product-designer</b> stage that owns the theme, the sitemap, and a per-page layout mockup the frontend rebuilds
+    from. This documents the system as built. Sibling docs:
+    <a href="understanding.html">understanding.html</a> (before) and
+    <a href="design-pipeline.html">design-pipeline.html</a> (the plan).</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#overview">Overview</a>
+    <a href="#run">1 · Run state</a>
+    <a href="#orchestrator">2 · Orchestrator</a>
+    <a href="#agents">3 · Three agents</a>
+    <a href="#design">4 · Design outputs</a>
+    <a href="#theme">5 · Theme system</a>
+    <a href="#analyzer">6 · Analyzer</a>
+    <a href="#handoff">7 · Frontend handoff</a>
+    <a href="#ui">8 · Builder UI</a>
+    <a href="#actions">9 · System actions</a>
+    <a href="#stores">10 · Storage &amp; routes</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="legend" style="margin-top:22px">
+    <span><i class="sw orc"></i> Orchestrator (chat route)</span>
+    <span><i class="sw api"></i> Backend agent</span>
+    <span><i class="sw agent"></i> Design agent</span>
+    <span><i class="sw rt"></i> Frontend agent / runtime</span>
+    <span><i class="sw gate"></i> Approval gate (human)</span>
+    <span><i class="sw store"></i> Storage</span>
+  </div>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section id="overview">
+    <h2><span class="n">0</span> The pipeline in one picture</h2>
+    <p class="lead">One conversation, routed. The orchestrator reads the run's <b>stage</b> and hands each chat turn to the
+    right agent. Two human gates bracket the Design stage; a view-only Analyzer sits between Design and Build. Each stage
+    persists its own artifacts; the Frontend agent rebuilds the real app from the data model + the approved design.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 400" role="img" aria-label="Staged pipeline overview">
+        <defs><marker id="a0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+        <marker id="a0g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker></defs>
+
+        <!-- user + orchestrator -->
+        <g><rect class="box page" x="30" y="34" width="150" height="48" rx="8"/><text class="t" x="46" y="56">User chat</text><text class="s" x="46" y="74">prompt + edits</text></g>
+        <g><rect class="box orc" x="210" y="32" width="760" height="52" rx="9"/><text class="t" x="228" y="54">Orchestrator — POST /api/apps/[id]/chat → runStageTurn(stage)</text>
+          <text class="s" x="228" y="72">routes the turn to the active stage's agent · enforces gates · run state &amp; toggles in SQLite</text></g>
+        <line class="edge" x1="180" y1="58" x2="210" y2="58" marker-end="url(#a0)"/>
+
+        <!-- stages row -->
+        <g><rect class="box api" x="30" y="150" width="150" height="74" rx="9"/><text class="t" x="46" y="180">Backend agent</text><text class="s" x="46" y="200">data model</text><text class="s" x="46" y="216">+ seed records</text></g>
+        <polygon class="box gate" points="214,162 246,188 214,214 182,188"/><text class="gl" x="186" y="236">approve</text>
+        <g><rect class="box agent" x="270" y="150" width="160" height="74" rx="9"/><text class="t" x="286" y="180">Design agent</text><text class="s" x="286" y="200">theme · sitemap</text><text class="s" x="286" y="216">+ per-page mockup</text></g>
+        <polygon class="box gate" points="464,162 496,188 464,214 432,188"/><text class="gl" x="438" y="236">approve</text>
+        <g><rect class="box neu" x="520" y="150" width="140" height="74" rx="9"/><text class="t" x="536" y="180">Analyzer</text><text class="s" x="536" y="200">fragment coverage</text><text class="s" x="536" y="216">(view-only)</text></g>
+        <g><rect class="box rt" x="700" y="150" width="140" height="74" rx="9"/><text class="t" x="716" y="180">Frontend agent</text><text class="s" x="716" y="200">pages + nav</text></g>
+        <g><rect class="box page" x="860" y="150" width="110" height="74" rx="9"/><text class="t" x="876" y="180">Live app</text><text class="s" x="876" y="200">runtime</text></g>
+
+        <!-- stage flow -->
+        <line class="edge" x1="180" y1="188" x2="182" y2="188" marker-end="url(#a0)"/>
+        <line class="edge-g" x1="246" y1="188" x2="270" y2="188" marker-end="url(#a0g)"/>
+        <line class="edge" x1="430" y1="188" x2="432" y2="188" marker-end="url(#a0)"/>
+        <line class="edge-g" x1="496" y1="188" x2="520" y2="188" marker-end="url(#a0g)"/>
+        <line class="edge-dash" x1="660" y1="188" x2="700" y2="188" marker-end="url(#a0)"/>
+        <line class="edge" x1="840" y1="188" x2="860" y2="188" marker-end="url(#a0)"/>
+
+        <!-- orchestrator routes down -->
+        <path class="edge-dash" d="M250 84 L250 120 L105 120 L105 150" marker-end="url(#a0)"/>
+        <line class="edge-dash" x1="350" y1="84" x2="350" y2="150" marker-end="url(#a0)"/>
+        <line class="edge-dash" x1="770" y1="84" x2="770" y2="150" marker-end="url(#a0)"/>
+
+        <!-- artifacts -->
+        <text class="title" x="30" y="288">Persisted per app</text>
+        <g><rect class="box store" x="30" y="298" width="150" height="52" rx="8"/><text class="s" x="46" y="320">entities + records</text><text class="s" x="46" y="338">SQLite</text></g>
+        <g><rect class="box store" x="270" y="298" width="220" height="52" rx="8"/><text class="s" x="286" y="320">DESIGN.md · theme.json</text><text class="s" x="286" y="338">design/sitemap · mockups · coverage</text></g>
+        <g><rect class="box store" x="700" y="298" width="270" height="52" rx="8"/><text class="s" x="716" y="320">page specs *.json + app.json</text><text class="s" x="716" y="338">data/&lt;id&gt;/</text></g>
+        <line class="edge" x1="105" y1="224" x2="105" y2="298" marker-end="url(#a0)"/>
+        <line class="edge" x1="350" y1="224" x2="350" y2="298" marker-end="url(#a0)"/>
+        <line class="edge" x1="770" y1="224" x2="770" y2="298" marker-end="url(#a0)"/>
+
+        <!-- reference handoffs -->
+        <path class="edge-dash" d="M180 322 C220 322 235 250 270 212" marker-end="url(#a0)"/><text class="lbl" x="150" y="262">data model →</text>
+        <path class="edge-dash" d="M490 324 C620 324 660 250 700 214" marker-end="url(#a0)"/><text class="lbl" x="520" y="276">sitemap + mockup + coverage →</text>
+      </svg>
+    </div>
+    <ul class="notes">
+      <li>The whole pipeline is two toggles wide: <b>Designer on/off</b> and <b>Fragments on/off</b>. Designer off = the
+      original Backend → Frontend path; the Design &amp; Analyzer steps disappear and the app loads the neutral
+      <b>default preset</b> theme — no LLM picks a theme, but it's still fully editable by hand in the theme tweaker.</li>
+      <li>Nothing here replaces the runtime. The Frontend agent still writes the same <b>json-render</b> page specs the
+      react-router runtime renders against real local datasources — the pre-pipeline contract is unchanged.</li>
+      <li>The combined <code>appBuilderAgent</code> still exists, unused by the UI, kept as the benchmark baseline.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== RUN STATE ===================== -->
+  <section id="run">
+    <h2><span class="n">1</span> Run state machine <span class="route">lib/server/runs.ts</span></h2>
+    <p class="lead">One <code>runs</code> row per app holds the current <b>stage</b> and the <b>config</b> toggles. Stages double
+    as their own approval gates, which keeps the orchestrator a lookup rather than a workflow engine.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Run state machine">
+        <defs><marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+        <marker id="r1g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker></defs>
+        <g><rect class="box api" x="40" y="70" width="160" height="60" rx="9"/><text class="t" x="56" y="98">backend</text><text class="s" x="56" y="116">gate · approve →</text></g>
+        <g><rect class="box agent" x="280" y="70" width="160" height="60" rx="9"/><text class="t" x="296" y="98">design</text><text class="s" x="296" y="116">gate · approve →</text></g>
+        <g><rect class="box rt" x="520" y="70" width="160" height="60" rx="9"/><text class="t" x="536" y="98">frontend</text><text class="s" x="536" y="116">builds the app</text></g>
+        <g><rect class="box neu" x="760" y="70" width="160" height="60" rx="9"/><text class="t" x="776" y="98">done</text><text class="s" x="776" y="116">terminal</text></g>
+        <line class="edge-g" x1="200" y1="100" x2="280" y2="100" marker-end="url(#r1g)"/>
+        <line class="edge-g" x1="440" y1="100" x2="520" y2="100" marker-end="url(#r1g)"/>
+        <line class="edge" x1="680" y1="100" x2="760" y2="100" marker-end="url(#r1)"/>
+        <!-- designer off skip -->
+        <path class="edge-dash" d="M120 70 C120 24 520 24 560 64" marker-end="url(#r1)"/>
+        <text class="lbl" x="300" y="22">designer OFF: backend → frontend (skips design)</text>
+        <!-- reset / rebuild -->
+        <path class="edge-dash" d="M560 130 C560 196 120 196 120 134" marker-end="url(#r1)"/>
+        <text class="lbl" x="300" y="214">Reset → back to backend (keeps toggles) · Rebuild → re-run frontend in place</text>
+      </svg>
+    </div>
+    <ul class="notes">
+      <li><b>STAGES</b> = <code>backend → design → frontend → done</code>. <code>nextStage()</code> honours the designer
+      toggle; <code>isGate()</code> marks <code>backend</code> and <code>design</code> as the two stages that wait for a human Approve.</li>
+      <li><b>RunConfig</b> = <code>{ designer, fragments }</code>. <code>ensureRun()</code> infers a sensible starting stage for
+      pre-pipeline apps (pages already on disk → <code>frontend</code>).</li>
+      <li>Controlled by <span class="route">/api/apps/[id]/run</span>: <code>approve</code> (advance), <code>reset</code>
+      (back to backend), <code>reopen&nbsp;{stage}</code> (jump the live stage earlier to re-run it), and <code>config</code> (toggles).</li>
+    </ul>
+  </section>
+
+  <!-- ===================== ORCHESTRATOR ===================== -->
+  <section id="orchestrator">
+    <h2><span class="n">2</span> Orchestrator = the chat route <span class="route">/api/apps/[id]/chat</span></h2>
+    <p class="lead">There is no separate orchestrator agent (decision D4: keep it simple). The chat route <em>is</em> the
+    orchestrator: it reads the run, picks the stage's agent, builds stage-scoped context, and streams the turn.</p>
+    <ul class="notes">
+      <li>Every chat turn calls <code>runStageTurn({ appId, messages, stage, config })</code> in
+      <span class="route">lib/server/builder-run.ts</span>.</li>
+      <li><code>agentForStage(stage)</code> selects Backend / Design / Frontend; <code>buildBackendContext</code> /
+      <code>buildDesignContext</code> / <code>buildAppContext</code> assemble only what that stage needs (entities, theme,
+      prior design, sitemap).</li>
+      <li>The user always talks to the orchestrator — there is no direct user→agent line. Each agent sees a curated context,
+      not the raw history of the others.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== AGENTS ===================== -->
+  <section id="agents">
+    <h2><span class="n">3</span> The three agents <span class="route">mastra/index.ts</span> · <span class="route">lib/server/models.ts</span></h2>
+    <p class="lead">The old combined agent, split along its tool boundary. Each role resolves to its own OpenRouter model
+    (per-app overrides persist in <code>RunConfig.models</code>; defaults below). Mastra agents accept a <code>model</code>
+    parameter, and <code>resolveModel(role, override)</code> = override → env → <code>DEFAULT_MODELS</code>.</p>
+    <table class="tbl">
+      <tr><th>Agent</th><th>Owns</th><th>Tools</th><th>Default model</th></tr>
+      <tr><td><b>Backend</b><br><code>makeBackendAgent({model})</code></td><td>Data model + seed data — never the theme</td><td><code>defineEntity</code>, <code>seedRecords</code></td><td><code>z-ai/glm-5.2</code> · cheap, strong tool calling</td></tr>
+      <tr><td><b>Design</b><br><code>makeDesignAgent({model})</code></td><td>Theme · sitemap · per-page layout mockup (text/html)</td><td><code>applyDesignSystem</code>, <code>saveSitemap</code>, <code>saveDesignArtifact</code></td><td><code>google/gemini-3.5-flash</code> · fast, 1M ctx, multimodal input</td></tr>
+      <tr><td><b>Frontend</b><br><code>makeFrontendAgent({fragments, model})</code></td><td>Real page specs + navigation shell</td><td><code>savePage</code>, <code>deletePage</code>, <code>saveAppIndex</code> (+ <code>searchFragments</code> when fragments on)</td><td><code>anthropic/claude-sonnet-4.5</code> · vision-native (reads image mockups directly, no swap), highest tool-call fidelity</td></tr>
+      <tr><td><b>(non-agent) Image gen</b></td><td>One PNG per page when mockup mode is image</td><td>direct <code>/v1/chat/completions</code> with <code>modalities: ["image"]</code></td><td><code>google/gemini-3.1-flash-image</code> · "Nano Banana 2" · ~$0.014/MP</td></tr>
+    </table>
+    <p>Picker: the builder's <b>Models popover</b> (<code>pipeline-bar.tsx</code>) lists every role + its current model. Picking
+    the marked default clears the per-app override; picking anything else persists it. The imageGen slot is filtered to
+    text→image models; text roles only show non-imageGen options.</p>
+    <div class="callout"><b>Why fragment-blind design?</b> Fragments exist to cut build time and lift quality — they are a
+    <em>frontend</em> concern. If the designer knew them, it would design toward them. Instead the design is made freely, then
+    the <b>Analyzer</b> (§6) measures how close it lands to what we have.</div>
+  </section>
+
+  <!-- ===================== DESIGN OUTPUTS ===================== -->
+  <section id="design">
+    <h2><span class="n">4</span> What the Design agent produces</h2>
+    <p class="lead">Three durable artifacts, each a contract for a later stage. The mockup is a "rebuild-from-reference" — a
+    picture/markup the frontend matches, not code it copies.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 270" role="img" aria-label="Design outputs">
+        <defs><marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+        <g><rect class="box agent" x="40" y="100" width="160" height="64" rx="9"/><text class="t" x="56" y="128">Design agent</text><text class="s" x="56" y="148">3 tools</text></g>
+
+        <g><rect class="box store" x="320" y="20" width="300" height="64" rx="9"/><text class="t" x="336" y="46">applyDesignSystem → theme.json</text><text class="s" x="336" y="66">pick a preset · or author DESIGN.md (see §5)</text></g>
+        <g><rect class="box store" x="320" y="100" width="300" height="64" rx="9"/><text class="t" x="336" y="126">saveSitemap → design/sitemap.json</text><text class="s" x="336" y="146">pages + sections + states + navigation (IA)</text></g>
+        <g><rect class="box store" x="320" y="180" width="300" height="64" rx="9"/><text class="t" x="336" y="206">saveDesignArtifact → design/mockups.json</text><text class="s" x="336" y="226">per page: { text? · html? · image? } + selected</text></g>
+
+        <line class="edge" x1="200" y1="120" x2="320" y2="52" marker-end="url(#d1)"/>
+        <line class="edge" x1="200" y1="132" x2="320" y2="132" marker-end="url(#d1)"/>
+        <line class="edge" x1="200" y1="144" x2="320" y2="212" marker-end="url(#d1)"/>
+
+        <g><rect class="box rt" x="720" y="20" width="240" height="64" rx="9"/><text class="t" x="736" y="46">CSS variables</text><text class="s" x="736" y="66">app-shell themeVars() — live preview</text></g>
+        <g><rect class="box rt" x="720" y="140" width="240" height="64" rx="9"/><text class="t" x="736" y="166">Frontend agent input</text><text class="s" x="736" y="186">sitemap + chosen mockup</text></g>
+        <line class="edge" x1="620" y1="52" x2="720" y2="52" marker-end="url(#d1)"/>
+        <line class="edge" x1="620" y1="132" x2="720" y2="168" marker-end="url(#d1)"/>
+        <line class="edge" x1="620" y1="212" x2="720" y2="188" marker-end="url(#d1)"/>
+      </svg>
+    </div>
+    <ul class="notes">
+      <li><b>Theme</b> — usually just <code>theme.json</code> picked from a preset; <code>DESIGN.md</code> is only written
+      when the agent <em>creates</em> a theme from scratch (one path, see §5). Applied as scoped CSS vars at runtime.</li>
+      <li><b>Sitemap</b> — the structural contract: every page (id, name, purpose, sections, states), navigation, home, shellLayout. The frontend
+      agent builds <em>against</em> it; the Analyzer reads it.</li>
+      <li><b>Mockups are per-page</b> — <code>mockups.json</code> = <code>{ selected, pages: { [pageId]: { text?, html?, image? } } }</code>.
+      Each slot also carries <code>durationMs</code> (stamped at write time — see §9). The human picks which mode is "used for build".
+      Generation is a <b>system action</b> (§9), fanned out per page in parallel. <code>text</code> and <code>html</code> are written by the design agent's
+      <code>saveDesignArtifact</code> tool; <code>image</code> bypasses the agent entirely — a direct text→image call to
+      <code>google/gemini-3.1-flash-image</code> with a prompt synthesized from the sitemap + theme.</li>
+      <li><b>Per-tool timing</b> — each design tool stamps <code>durationMs</code> onto its artifact at fire time (theme,
+      sitemap, mockup). Works for chat-driven turns AND the scoped Rerun buttons. See <code>lib/server/design-timing.ts</code>.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== THEME ===================== -->
+  <section id="theme">
+    <h2><span class="n">5</span> The theme system</h2>
+    <p class="lead">One preset library, three modes. A preset is a <b>complete look</b> (colors + fonts + radius, light+dark)
+    that both the design agent and the human pick by description. The agent either <b>picks</b> a preset or <b>creates</b> one
+    from scratch; the human <b>picks</b> or <b>edits</b> live in the tweaker. <b>DESIGN.md is written on one path only —
+    create-from-scratch.</b></p>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 300" role="img" aria-label="Theme system">
+        <defs><marker id="t1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+        <!-- actors / source -->
+        <g><rect class="box neu" x="30" y="20" width="250" height="58" rx="9"/><text class="t" x="46" y="44">32 theme presets</text><text class="s" x="46" y="64">lib/jr/theme-presets.ts · default · 6 domain · 25 tweakcn</text></g>
+        <g><rect class="box agent" x="30" y="104" width="250" height="54" rx="9"/><text class="t" x="46" y="130">Design agent</text><text class="s" x="46" y="148">PICK a preset · or CREATE</text></g>
+        <g><rect class="box agent" x="30" y="180" width="250" height="54" rx="9"/><text class="t" x="46" y="206">Human tweaker</text><text class="s" x="46" y="224">PICK a preset · or EDIT (+ shuffle)</text></g>
+
+        <!-- modes: CREATE (top, agent-only) · PICK (mid, shared) · EDIT (bottom, tweaker-only) -->
+        <g><rect class="box api" x="390" y="24" width="250" height="52" rx="9"/><text class="t" x="406" y="48">CREATE from scratch</text><text class="s" x="406" y="66">authorThemeFromScratch → DESIGN.md</text></g>
+        <g><rect class="box api" x="390" y="116" width="250" height="52" rx="9"/><text class="t" x="406" y="140">PICK preset</text><text class="s" x="406" y="158">pickThemePreset → theme.json</text></g>
+        <g><rect class="box api" x="390" y="208" width="250" height="52" rx="9"/><text class="t" x="406" y="232">EDIT (tweaker only)</text><text class="s" x="406" y="250">applyThemeEdit → theme.json</text></g>
+
+        <!-- library feeds PICK; agent → CREATE+PICK; tweaker → PICK+EDIT -->
+        <line class="edge" x1="280" y1="49" x2="390" y2="142" marker-end="url(#t1)"/>
+        <line class="edge" x1="280" y1="131" x2="390" y2="50" marker-end="url(#t1)"/>
+        <line class="edge" x1="280" y1="131" x2="390" y2="142" marker-end="url(#t1)"/>
+        <line class="edge" x1="280" y1="207" x2="390" y2="142" marker-end="url(#t1)"/>
+        <line class="edge" x1="280" y1="207" x2="390" y2="234" marker-end="url(#t1)"/>
+
+        <!-- outputs -->
+        <g><rect class="box rt" x="740" y="70" width="240" height="52" rx="9"/><text class="t" x="756" y="94">theme.json</text><text class="s" x="756" y="112">scoped CSS vars · light + dark</text></g>
+        <g><rect class="box store" x="740" y="200" width="240" height="52" rx="9"/><text class="t" x="756" y="224">DESIGN.md → theme.json</text><text class="s" x="756" y="242">lint · parse (create only)</text></g>
+        <line class="edge" x1="640" y1="50" x2="740" y2="216" marker-end="url(#t1)"/>
+        <line class="edge" x1="640" y1="142" x2="740" y2="92" marker-end="url(#t1)"/>
+        <line class="edge" x1="640" y1="234" x2="740" y2="100" marker-end="url(#t1)"/>
+        <line class="edge" x1="860" y1="200" x2="860" y2="122" marker-end="url(#t1)"/>
+      </svg>
+    </div>
+    <ul class="notes">
+      <li><b>One library — 32 presets</b> in <code>lib/jr/theme-presets.ts</code>: the neutral <code>default</code> baseline,
+      the 6 domain presets (<code>commerce-warm · ops-utility · editorial · studio-bold · finance-trust · wellness-soft</code>,
+      folded in from the old <code>design/presets/*.DESIGN.md</code> — they kept their curated fonts), and 25 real tweakcn
+      palettes (cyberpunk, claude, vercel, supabase, …). Every entry is a complete look: <code>id · label · description ·
+      fonts · radius · light · dark</code>. <code>themePresetReference()</code> (in <code>theme-catalog.ts</code>) feeds the
+      agent's pick list and the tweaker tile tooltip from the same descriptions.</li>
+      <li><b>PICK</b> — <code>applyDesignSystem({ preset })</code> → <code>pickThemePreset</code> builds <code>theme.json</code>
+      straight from the entry. No DESIGN.md. (The tweaker's tile click hits this path too, replacing the theme's identity.)</li>
+      <li><b>EDIT</b> — the human tweaker's token/font/radius changes → <code>applyThemeEdit</code> overlays them on the current
+      theme in place. No DESIGN.md; identity preserved.</li>
+      <li><b>CREATE from scratch</b> — only when no preset fits: <code>applyDesignSystem({ colors, headingFont, bodyFont,
+      radius })</code> → <code>authorThemeFromScratch</code> writes a <code>DESIGN.md</code> spec artifact (per the
+      <a href="https://github.com/google-labs-code/design.md">design.md</a> schema), lints it, then parses to
+      <code>theme.json</code>. <b>The one and only DESIGN.md writer.</b></li>
+      <li><b>The tweaker</b> (<code>theme-tweaker.tsx</code>) — preset grid (active-state highlighted), deterministic Shuffle,
+      grouped token editing, font dropdowns, a radius slider, instant preview, all via
+      <span class="route">/api/apps/[id]/theme</span>.</li>
+      <li>The same token set + font list + radius range is documented to the agent (<code>mastra/instructions.ts</code>) and
+      shown in the tweaker — one shared source of truth in <code>lib/jr/theme-options.ts</code>.</li>
+      <li><b>Chart tokens</b> — every preset defines <code>chart-1..5</code>. For the 9 presets that don't (default, the 6
+      domain presets, neumorphism, claymorphism), <code>themeVars()</code> (<code>lib/runtime/app-shell.tsx</code>) <b>derives</b>
+      a ramp from <code>primary</code> at render time (small ±hue + lightness shifts) so charts inherit the theme's hue
+      family instead of falling back to grayscale. Recharts cells read the var via inline <code>fill="var(--chart-1)"</code>.</li>
+      <li><b>Shadows + categories</b> — presets are grouped by visual <code>category</code> (Minimal · Soft · Bold · Editorial ·
+      Brutalism · Neumorphism · Claymorphism). Each category ships its own <code>shadow-2xs … shadow-2xl</code> scale wired
+      to the Tailwind <code>shadow-*</code> utilities (flat shadcn, soft blur, hard offset, dual-shadow, puffy inset).
+      The tweaker preset grid is grouped by category for browsing.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== ANALYZER ===================== -->
+  <section id="analyzer">
+    <h2><span class="n">6</span> The Analyzer <span class="route">/api/apps/[id]/analyzer</span></h2>
+    <p class="lead">The bridge between a fragment-blind design and a fragment-aware build. A view-only step (not a run stage)
+    that measures how well the approved design maps onto our prebuilt fragments — and surfaces gaps.</p>
+    <ul class="notes">
+      <li><code>computeFragmentCoverage()</code> (<span class="route">lib/server/fragment-coverage.ts</span>) does a semantic
+      match of each sitemap section against the fragment library, cached by sitemap hash to <code>design/coverage.json</code>.</li>
+      <li>The result is <b>preponed</b> into the Frontend agent's context as a head start ("these sections likely map to these
+      fragments"); a 0% match is a signal to the developer that we are missing a block.</li>
+      <li>Rendered in the builder as the read-only <b>Analyzer</b> step (<code>fragment-analyzer.tsx</code>), between Design and Build.</li>
+      <li><b>Rerun button</b> — same sitemap = always serves cached results (no embedding cost). The Rerun button in the
+      analyzer header POSTs to <code>/api/apps/[id]/analyzer</code>, which wipes <code>coverage.json</code>, recomputes
+      from scratch, and returns the elapsed wall-clock. Used when the fragment library changes — sitemap-driven invalidation
+      can't see that.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== HANDOFF ===================== -->
+  <section id="handoff">
+    <h2><span class="n">7</span> The Frontend handoff — building from the picture</h2>
+    <p class="lead">On Build (or Rebuild), the Frontend agent receives the requirements, the data model, the sitemap, the
+    fragment coverage, and the approved mockup. The handoff shape depends on which mockup mode the human picked:</p>
+    <table class="tbl">
+      <tr><th>Mockup mode</th><th>What's in the agent's prompt</th><th>How the agent reads it</th></tr>
+      <tr><td><code>text</code></td><td>Inlined markdown per page in the system prompt (5 KB/page budget)</td><td>Plain text — sections + states + real copy</td></tr>
+      <tr><td><code>html</code></td><td>Inlined HTML per page in the system prompt (20 KB/page budget)</td><td>Static HTML/CSS, content area only (max-width 1100px)</td></tr>
+      <tr><td><code>image</code></td><td>System prompt announces "vision input on next message"; a synthetic user message carries one <code>{type:"file", mediaType:"image/...", url:&lt;data URL&gt;}</code> part per page</td><td>Sonnet 4.5 (default frontend) is <b>vision-native</b> — reads each PNG/JPEG directly. <b>No model swap, no rasterisation, no <code>sharp</code></b>.</td></tr>
+    </table>
+    <ul class="notes">
+      <li><b>Image generation flow</b> — when the design step's selected mode is <code>image</code>, the design agent is
+      <em>bypassed</em> for the per-page work. <code>generateMockupRepresentation()</code> synthesises a single-shot prompt
+      (page name + purpose + sections + states + theme name/primary/fonts/radius) and calls <code>generateMockupImage()</code>
+      (<code>lib/server/image-gen.ts</code>) — a direct <code>/v1/chat/completions</code> POST with <code>modalities: ["image"]</code>
+      to the configured image-gen model. Default: <code>google/gemini-3.1-flash-image</code>. The returned base64 PNG is stored
+      as a <code>data:image/...;base64,…</code> URL in the mockup slot and attached as-is to the build handoff.</li>
+      <li><b>Icon contract</b> — both agents speak <a href="https://lucide.dev/icons">lucide</a>. Design emits <code>[icon:&lt;name&gt;]</code>
+      inline in text/html mockups and the <code>icon</code> field in nav. Frontend renders via the Icon component (kebab-case
+      lucide-react names). <b>Zero emoji anywhere.</b> The design-review HTML preview substitutes <code>[icon:&lt;name&gt;]</code>
+      with <code>&lt;img src="https://unpkg.com/lucide-static…/icons/&lt;name&gt;.svg"&gt;</code> for visual fidelity (display only — storage stays in the literal form).</li>
+      <li><b>Empty/loading/error states must be conditional</b> — the design mockup describes WHAT each state shows; the
+      frontend agent's prompt (<code>mastra/instructions.ts</code>) hard-binds them to <code>visible</code> conditions
+      (<code>{"$state": "/queries/&lt;ds&gt;/page/total", "eq": 0}</code> for empty, <code>isLoading</code>, <code>error</code>)
+      so the empty state doesn't render alongside the populated list.</li>
+      <li>The agent then writes real <code>json-render</code> page specs + <code>app.json</code> navigation — the same runtime
+      contract as before. A page may mix fragments and hand-built primitives.</li>
+    </ul>
+    <div class="callout"><b>Resilience note.</b> A Build is the longest, most exposed turn (full context + many tool calls + per-page
+    images). Transient OpenRouter socket drops are retried (<code>maxRetries</code>); if a Build is interrupted, the
+    <b>Rebuild</b> button (§8) re-runs it from the current design as a <b>system action</b> (no chat turn) — wipes the
+    existing page files first so the agent rebuilds cold from the design artifacts instead of refactoring its own prior output.</div>
+  </section>
+
+  <!-- ===================== UI ===================== -->
+  <section id="ui">
+    <h2><span class="n">8</span> The builder UI <span class="route">/apps/[appId]</span></h2>
+    <p class="lead">One screen: chat on the left, a stage-aware panel on the right, and a pipeline bar across the top that is
+    both a progress stepper and the control surface.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Builder UI">
+        <g><rect class="box neu" x="30" y="30" width="940" height="40" rx="8"/>
+          <text class="t" x="46" y="55">Pipeline bar — ① Data model ② Design ③ Analyzer ④ Build · Approve / Rebuild · Reset · Designer + Fragments toggles</text></g>
+        <g><rect class="box page" x="30" y="90" width="280" height="130" rx="9"/><text class="t" x="46" y="118">Chat panel</text><text class="s" x="46" y="138">talks to the orchestrator</text><text class="s" x="46" y="156">streams the active agent</text></g>
+        <g><rect class="box rt" x="340" y="90" width="630" height="130" rx="9"/><text class="t" x="356" y="118">Stage-aware panel (clickable stepper → view any past stage read-only)</text>
+          <text class="s" x="356" y="142">backend → DataModelViewer · design → DesignReview (theme · sitemap · mockup tabs)</text>
+          <text class="s" x="356" y="160">analyzer → FragmentAnalyzer · build → AppRuntime (live preview) · ⌗ ThemeTweaker drawer</text></g>
+      </svg>
+    </div>
+    <ul class="notes">
+      <li><b>Stepper</b> (<code>pipeline-bar.tsx</code>) — Data model · Design · Analyzer · Build. Click any reached step to view
+      its output read-only; a banner offers <b>Re-open</b> to make it the live stage again.</li>
+      <li><b>Gate actions</b> — <i>Approve data model</i> / <i>Approve design</i> at the gates; a persistent <b>Rebuild</b> at the
+      build stage (always available, independent of the design-changed heuristic); <b>Reset</b> back to the data model.
+      Rebuild is now a <b>system action</b> (POST <code>/rebuild</code>) — wipes the page files and re-runs the frontend
+      agent cold; no chat turn.</li>
+      <li><b>Models popover</b> — per-app model picker for each role (backend, design, frontend, imageGen). Picking the default
+      clears the override; picking anything else persists. The imageGen slot only shows text→image models; text slots filter
+      those out.</li>
+      <li><b>Panels</b> — <code>data-model-viewer</code> (entities), <code>design-review</code> (theme card with grouped swatches +
+      light/dark, sitemap, per-page mockup tabs with generate/regenerate + "use for build" + a <b>Fullscreen</b> overlay for the
+      mockup), <code>fragment-analyzer</code> (with Rerun + duration chip), and the <code>AppRuntime</code> live preview.</li>
+      <li><b>Duration chips everywhere</b> — Theme header, Sitemap header, each mockup mode tab, Analyzer header. Sourced
+      from per-tool stamping (§4). On a "Rerun all", a green banner across the design panel summarises the per-stage
+      breakdown plus the (parallel) wall-clock total.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== SYSTEM ACTIONS ===================== -->
+  <section id="actions">
+    <h2><span class="n">9</span> System actions — agent work without a chat turn</h2>
+    <p class="lead">Some work is mechanical regeneration, not conversation. These run the relevant agent (or, for image gen,
+    bypass it) <em>server-side</em> and return updated artifacts — no message in the chat.</p>
+    <table class="tbl">
+      <tr><th>Route</th><th>Does</th></tr>
+      <tr><td><code>POST /mockup/generate</code></td><td>Generate/regenerate ONE mockup representation for ONE page (or all pages, fanned out in parallel). <code>text</code>/<code>html</code> → design agent; <code>image</code> → direct text→image call (bypasses agent). <code>generateMockupRepresentation()</code>.</td></tr>
+      <tr><td><code>POST /design/rerun</code></td><td>Rerun a slice of the design from scratch: <code>scope</code> = <code>all · theme · sitemap · mockups</code>. <code>all</code> uses <code>runDesignParallel</code> — theme + sitemap concurrently, then per-page mockups — and returns per-stage <code>timings</code> the UI banners.</td></tr>
+      <tr><td><code>POST /analyzer</code></td><td>Wipe <code>coverage.json</code>, recompute fragment matches from scratch. Returns the new coverage + wall-clock <code>durationMs</code>. (The cache invalidates automatically on sitemap change — this is for fragment-library changes.)</td></tr>
+      <tr><td><code>POST /rebuild</code></td><td>Wipe page files, run the frontend agent cold against the approved design. The rebuild button on the pipeline bar fires this — it was a chat message before, now a system action so prior page specs don't contaminate the prompt.</td></tr>
+      <tr><td><code>POST /theme</code></td><td>Tweaker changes — <code>{ preset }</code> picks (<code>pickThemePreset</code>) or token/font/radius edits (<code>applyThemeEdit</code>); rewrites theme.json, powers live preview. Never touches DESIGN.md.</td></tr>
+      <tr><td><code>POST /mockup</code></td><td>Set which representation is "used for build".</td></tr>
+    </table>
+    <ul class="notes">
+      <li>Per-tool timing — every design tool stamps <code>durationMs</code> on its artifact at fire time via
+      <code>installDesignTiming(ctx)</code> + <code>stampNextDuration(ctx, set)</code>. Works for chat-driven design AND the
+      scoped reruns. Backend/frontend tools have no timing instrumentation.</li>
+      <li>The chat-driven <b>Build</b> still flows through the orchestrator (§2); <b>Rebuild</b>, image gen, and design reruns
+      are system actions.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== STORAGE ===================== -->
+  <section id="stores">
+    <h2><span class="n">10</span> Storage &amp; routes</h2>
+    <div class="grid2">
+      <div>
+        <h3>SQLite — <code>data/builder.db</code></h3>
+        <ul class="notes">
+          <li><code>apps</code> · <code>chat_messages</code> · <code>entities</code> · <code>records</code></li>
+          <li><b><code>runs</code></b> — per-app stage + config (the pipeline state)</li>
+          <li><code>fragment_sessions</code> · <code>fragment_index</code> (semantic search)</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Filesystem — <code>data/&lt;appId&gt;/</code></h3>
+        <ul class="notes">
+          <li><code>user-&lt;entity&gt;-&lt;page&gt;.json</code> page specs · <code>app.json</code> (nav + roles)</li>
+          <li><code>theme.json</code> always present (preset or authored); <code>DESIGN.md</code> only on the create-from-scratch path (§5)</li>
+          <li><code>design/sitemap.json</code> · <code>design/mockups.json</code> · <code>design/coverage.json</code></li>
+          <li><code>builds/&lt;model-slug&gt;/</code> — auto-snapshot of completed builds per frontend model (A/B archive)</li>
+        </ul>
+      </div>
+    </div>
+    <h3>API routes <span class="route">/api/apps/[appId]/*</span></h3>
+    <ul class="notes">
+      <li><code>chat</code> (orchestrator) · <code>run</code> (state + per-app models config) · <code>model</code> (entities + theme + sitemap + mockups + pagesStale) · <code>bundle</code> (runtime spec)</li>
+      <li><code>theme</code> · <code>mockup</code> · <code>mockup/generate</code> · <code>design/rerun</code> · <code>analyzer</code> (GET + POST) · <code>rebuild</code> · <code>datasource</code></li>
+      <li>Global: <code>/api/models</code> — registry of available models per role + defaults (drives the Models popover).</li>
+    </ul>
+    <div class="callout">Mental model: <b>SQLite = run + data</b>, <b>filesystem = design + pages</b>. The agent writes JSON/markdown;
+    the runtime renders it. The pipeline added a Design stage and its artifacts, but never changed who renders the final app.</div>
+  </section>
+
+  <footer>
+    patchwork* · understanding v1 — the staged design pipeline as built (per-role models · image mockups via Gemini 3.1 Flash Image · per-tool timing). Compare with
+    <a href="understanding.html">understanding.html</a> (before) and <a href="design-pipeline.html">design-pipeline.html</a> (plan).
+  </footer>
+
+</div>
+</body>
+</html>

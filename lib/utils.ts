@@ -26,3 +26,8 @@ export function parseLocalISODate(value: string | null | undefined): Date | unde
   if (!y || !m || !d) return undefined;
   return new Date(y, m - 1, d);
 }
+
+/** Compact wall-clock label: <1s rendered in ms, else seconds with one decimal. */
+export function formatDuration(ms: number): string {
+  return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)}s`;
+}

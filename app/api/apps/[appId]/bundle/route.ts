@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApp, readAllPages, readAppIndex } from "@/lib/server/apps";
-import { getAppTheme } from "@/lib/server/design-md";
+import { getAppThemeOrDefault } from "@/lib/server/design-md";
 
 /** Full app bundle for the runtime: index + every page file + theme. */
 export async function GET(
@@ -14,6 +14,6 @@ export async function GET(
     app,
     index: readAppIndex(appId),
     pages: readAllPages(appId),
-    theme: getAppTheme(appId),
+    theme: getAppThemeOrDefault(appId),
   });
 }

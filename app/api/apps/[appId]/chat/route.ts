@@ -10,7 +10,10 @@ import {
   loadChatMessages,
   saveChatMessage,
 } from "@/lib/server/apps";
-import { runBuilderTurn } from "@/lib/server/builder-run";
+import { runStageTurn } from "@/lib/server/builder-run";
+import { snapshotBuild } from "@/lib/server/builds";
+import { resolveModel } from "@/lib/server/models";
+import { ensureRun } from "@/lib/server/runs";
 
 export const maxDuration = 600;
 
@@ -32,7 +35,15 @@ export async function POST(
 
   const { messages } = (await req.json()) as { messages: UIMessage[] };
 
-  const agentStream = await runBuilderTurn({ appId, appName: app.name, messages });
+  // Orchestrator: route the turn to the active stage's agent.
+  const run = ensureRun(appId);
+  const agentStream = await runStageTurn({
+    appId,
+    appName: app.name,
+    messages,
+    stage: run.stage,
+    config: run.config,
+  });
 
   const stream = createUIMessageStream({
     originalMessages: messages,
@@ -48,6 +59,16 @@ export async function POST(
     onFinish: ({ messages: allMessages }) => {
       for (const message of allMessages) {
         saveChatMessage(appId, message);
+      }
+      // After a frontend (build) turn, stash whatever pages landed under the
+      // model that produced them — enables A/B between models on the same
+      // design artifacts (cheap, idempotent; skipped on non-frontend turns).
+      if (run.stage === "frontend") {
+        try {
+          snapshotBuild(appId, resolveModel("frontend", run.config.models?.frontend));
+        } catch (error) {
+          console.warn("[builds] snapshot failed:", error instanceof Error ? error.message : error);
+        }
       }
     },
   });

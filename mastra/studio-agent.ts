@@ -8,6 +8,7 @@ import {
   saveDraftSource,
 } from "@/lib/server/fragment-studio";
 import { searchFragments as searchFragmentIndex } from "@/lib/server/fragment-index";
+import { resolveModel } from "@/lib/server/models";
 import { COMPONENT_REFERENCE } from "./component-reference.generated";
 
 /**
@@ -154,13 +155,10 @@ Parameterize entity names (e.g. productBdo: z.string().default("Product")) so fr
 ${COMPONENT_REFERENCE}
 `;
 
-const OPENROUTER_MODEL =
-  process.env.OPENROUTER_MODEL ?? "anthropic/claude-sonnet-4.5";
-
 export const fragmentAuthorAgent = new Agent({
   id: "fragment-author",
   name: "Fragment Author",
   instructions: STUDIO_INSTRUCTIONS,
-  model: `openrouter/${OPENROUTER_MODEL}`,
+  model: `openrouter/${resolveModel("frontend")}`,
   tools: { searchFragments, readFragment, saveDraft },
 });

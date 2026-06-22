@@ -7,11 +7,21 @@ import {
   SHELL_VARIANTS,
 } from "@/lib/jr/schema";
 import {
-  applyDesignSystem as applyDesign,
-  listPresets,
+  authorThemeFromScratch,
+  pickThemePreset,
+  setThemeDuration,
 } from "@/lib/server/design-md";
+import {
+  readSitemap,
+  setMockupDuration,
+  setSitemapDuration,
+  writeMockup,
+  writeSitemap,
+} from "@/lib/server/design-artifacts";
+import { stampNextDuration } from "@/lib/server/design-timing";
 import { expandFragments } from "@/lib/server/fragment-expander";
 import { searchFragments as searchFragmentIndex } from "@/lib/server/fragment-index";
+import { getRun } from "@/lib/server/runs";
 import {
   deletePage as deletePageFile,
   listPageIds,
@@ -27,14 +37,24 @@ import {
   saveEntity,
   saveRecord,
 } from "@/lib/server/entity-store";
-import { validatePageSpec } from "@/lib/server/spec-validators";
+import { normalizePageSpec, validatePageSpec } from "@/lib/server/spec-validators";
 
 const slug = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+type ToolContext = { requestContext?: import("@mastra/core/request-context").RequestContext } | undefined;
 
 function appIdFrom(context: { requestContext?: { get: (k: string) => unknown } } | undefined): string {
   const appId = context?.requestContext?.get("appId");
   if (!appId) throw new Error("appId missing from request context");
   return String(appId);
+}
+
+/** Stamp `durationMs` onto the artifact via `set`, if the design-timing ref
+ *  is installed in the tool's RequestContext (chat-driven design turns + the
+ *  scoped reruns both install it). No-op for backend/frontend stage tools. */
+function stampDesignTiming(context: ToolContext, set: (ms: number) => void): void {
+  if (!context?.requestContext) return;
+  stampNextDuration(context.requestContext, set);
 }
 
 // ── Data model ────────────────────────────────────────────────────────────
@@ -125,22 +145,29 @@ export const seedRecords = createTool({
 export const applyDesignSystem = createTool({
   id: "applyDesignSystem",
   description:
-    "Apply a design system (DESIGN.md preset + optional tweaks) to the app. The preview re-themes immediately — colors, fonts, radius, light+dark palettes. Call ONCE per new app (before pages, after understanding the domain) and again only when the user asks for a different look.",
+    "Theme the app — TWO modes, pick ONE: (A) PICK a ready-made preset, or (B) CREATE a theme from scratch. The preview re-themes immediately (colors, fonts, radius, light+dark). Call ONCE per new app, after understanding the domain. Do NOT hand-edit a picked preset's colors — the human refines any theme later in the tweaker.",
   inputSchema: z.object({
     preset: z
       .string()
-      .describe("Preset id — pick by app domain/mood (see instructions)."),
-    colorTweaks: z
+      .nullable()
+      .describe(
+        "MODE A (pick): a theme-preset id from the THEME PRESETS list — applies that preset's complete look (colors + fonts + radius, light+dark) as-is. Omit for MODE B.",
+      ),
+    colors: z
       .record(z.string(), z.string())
       .nullable()
       .describe(
-        'Optional shadcn-token color overrides, e.g. {"primary": "#7C2D9E", "ring": "#7C2D9E"} — prefix "dark-" to adjust the dark palette. Use ONLY when the user asks for specific brand colors.',
+        'MODE B (create from scratch): a FULL shadcn token set you author yourself, e.g. {"background":"...","primary":"...","ring":"...", "dark-background":"...", ...} — prefix "dark-" for the dark palette. Define every required token (see the DESIGN.md SCHEMA in your instructions). Use ONLY when no preset fits; do not combine with `preset`.',
       ),
     headingFont: z
       .string()
       .nullable()
-      .describe("Optional Google Font family override for headings."),
-    bodyFont: z.string().nullable().describe("Optional Google Font family override for body text."),
+      .describe("MODE B: Google Font family for headings (from the allowed list)."),
+    bodyFont: z.string().nullable().describe("MODE B: Google Font family for body text (from the allowed list)."),
+    radius: z
+      .string()
+      .nullable()
+      .describe('MODE B: base corner radius, e.g. "0.5rem" (tighter) or "0.875rem" (rounder).'),
   }),
   outputSchema: z.object({
     ok: z.boolean(),
@@ -149,13 +176,20 @@ export const applyDesignSystem = createTool({
   }),
   execute: async (input, context) => {
     const appId = appIdFrom(context);
-    const result = await applyDesign({
-      appId,
-      preset: input.preset,
-      colorTweaks: input.colorTweaks ?? undefined,
-      headingFont: input.headingFont ?? undefined,
-      bodyFont: input.bodyFont ?? undefined,
-    });
+
+    // MODE A: pick a preset from the unified library (used as-is, no DESIGN.md).
+    // MODE B: author a palette from scratch → writes DESIGN.md, then theme.json.
+    const result = input.colors
+      ? await authorThemeFromScratch({
+          appId,
+          colors: input.colors,
+          headingFont: input.headingFont ?? undefined,
+          bodyFont: input.bodyFont ?? undefined,
+          radius: input.radius ?? undefined,
+        })
+      : pickThemePreset(appId, input.preset ?? "default");
+
+    if (result.ok) stampDesignTiming(context, (ms) => setThemeDuration(appId, ms));
     touchApp(appId);
     return {
       ok: result.ok,
@@ -164,13 +198,6 @@ export const applyDesignSystem = createTool({
     };
   },
 });
-
-/** Compact preset list for the agent prompt. */
-export function designPresetReference(): string {
-  return listPresets()
-    .map((p) => `- ${p.id} — "${p.name}": ${p.mood}`)
-    .join("\n");
-}
 
 // ── Fragment retrieval ────────────────────────────────────────────────────
 
@@ -213,6 +240,105 @@ export const searchFragments = createTool({
   },
 });
 
+// ── Design artifacts (sitemap + layout mockup) ─────────────────────────────
+
+export const saveSitemap = createTool({
+  id: "saveSitemap",
+  description:
+    "Save the app's information architecture: pages, the navigation rail, home, shell layout, and key user flows. The Frontend agent builds pages to this map, so every page the app needs must appear here.",
+  inputSchema: z.object({
+    pages: z
+      .array(
+        z.object({
+          id: z.string().describe("kebab-case page id, e.g. 'dashboard' or 'task-list'."),
+          name: z.string().describe("Screen name, e.g. 'Dashboard'."),
+          role: z.string().nullable().describe("User role; null/omit → 'user'."),
+          purpose: z.string().describe("One line: what this page is for."),
+          primaryEntity: z.string().nullable().describe("Main entity this page works with, or null."),
+          sections: z.array(z.string()).describe("Ordered section intents, top to bottom."),
+          states: z.array(z.string()).describe("Empty/loading/error states to cover (may be [])."),
+        }),
+      )
+      .min(1),
+    navigation: z
+      .array(
+        z.object({
+          label: z.string(),
+          icon: z.string().nullable().describe("lucide icon name, or null."),
+          page: z.string().describe("Target page id (must exist in pages)."),
+        }),
+      )
+      .describe("Top-level nav only — exclude detail/form pages reached via row clicks."),
+    home: z.string().describe("Landing page id (must exist in pages)."),
+    shellLayout: z
+      .string()
+      .nullable()
+      .describe("sidebar | topnav | icon-rail | compact-rail | minimal | split-rail, or null."),
+    flows: z.array(z.string()).describe("Key user flows as short step sequences (may be [])."),
+  }),
+  outputSchema: z.object({ ok: z.boolean(), pages: z.number() }),
+  execute: async (input, context) => {
+    const appId = appIdFrom(context);
+    writeSitemap(appId, {
+      pages: input.pages.map((p) => ({ ...p, role: p.role ?? "user" })),
+      navigation: input.navigation,
+      home: input.home,
+      shellLayout: input.shellLayout,
+      flows: input.flows,
+    });
+    stampDesignTiming(context, (ms) => setSitemapDuration(appId, ms));
+    touchApp(appId);
+    return { ok: true, pages: input.pages.length };
+  },
+});
+
+export const saveDesignArtifact = createTool({
+  id: "saveDesignArtifact",
+  description:
+    "Save (or replace) ONE representation of ONE page's layout mockup. Mockup the page CONTENT only — do NOT draw the nav shell (sidebar/topnav); that's rendered separately from app.json at runtime. Mockups are PER PAGE — call once per (page, representation). Representations coexist (saving one keeps the others). Default to 'text' (markdown layout: sections top-to-bottom, what each shows, real copy); produce 'html' (static HTML/CSS, max-width 1100px) when the user asks. `pageId` MUST match a sitemap page id.",
+  inputSchema: z.object({
+    pageId: z.string().min(1).describe("Sitemap page id this mockup describes (must already exist in saveSitemap pages)."),
+    mode: z.enum(["text", "html"]).describe("Which representation to write: 'text' (markdown layout) or 'html' (full HTML page, content area only, max-width 1100px)."),
+    content: z
+      .string()
+      .min(1)
+      .describe("The mockup for that single page in that representation: sections/hierarchy/intent and real copy."),
+  }),
+  outputSchema: z.object({
+    ok: z.boolean(),
+    issues: z.array(z.string()),
+    pageId: z.string().nullable(),
+    mode: z.string(),
+  }),
+  execute: async (input, context) => {
+    const appId = appIdFrom(context);
+    const sitemap = readSitemap(appId);
+    if (!sitemap) {
+      return {
+        ok: false,
+        issues: ["no sitemap yet — call saveSitemap first so pageId resolves"],
+        pageId: null,
+        mode: input.mode,
+      };
+    }
+    const validIds = sitemap.pages.map((p) => p.id);
+    if (!validIds.includes(input.pageId)) {
+      return {
+        ok: false,
+        issues: [
+          `pageId "${input.pageId}" is not in the sitemap. Valid ids: [${validIds.join(", ")}]`,
+        ],
+        pageId: null,
+        mode: input.mode,
+      };
+    }
+    writeMockup(appId, input.pageId, input.mode, input.content);
+    stampDesignTiming(context, (ms) => setMockupDuration(appId, input.pageId, input.mode, ms));
+    touchApp(appId);
+    return { ok: true, issues: [], pageId: input.pageId, mode: input.mode };
+  },
+});
+
 // ── Pages ─────────────────────────────────────────────────────────────────
 
 export const savePage = createTool({
@@ -248,6 +374,25 @@ export const savePage = createTool({
     const pageId = `${slug(input.role)}-${slug(input.businessEntity)}-${slug(input.name)}`;
     const existing = readAllPages(appId).filter((p) => p.id !== pageId);
 
+    // Fragments-off guard: when the run disables fragments, reject $fragment
+    // refs so the toggle is ENFORCED, not merely suggested by the prompt.
+    const elements = ((input.spec as Record<string, unknown>).elements ?? {}) as Record<
+      string,
+      Record<string, unknown>
+    >;
+    const fragRefs = Object.keys(elements).filter(
+      (k) => elements[k] && typeof elements[k] === "object" && "$fragment" in elements[k],
+    );
+    if (fragRefs.length > 0 && getRun(appId)?.config.fragments === false) {
+      return {
+        ok: false,
+        issues: [
+          `Fragments are disabled for this build — compose from base components instead. Remove the $fragment ref on element(s) [${fragRefs.join(", ")}] and build that UI from primitive components.`,
+        ],
+        pageId: null,
+      };
+    }
+
     // Eject-on-write: materialise $fragment refs to primitives first, then
     // validate the expanded page (so validators see what will actually run).
     const expansion = expandFragments(
@@ -257,6 +402,10 @@ export const savePage = createTool({
     if (expansion.issues.length > 0) {
       return { ok: false, issues: expansion.issues, pageId: null };
     }
+
+    // Repair recurring shape mistakes (e.g. element-level `clickable`) so the
+    // persisted spec is correct and validators see what will actually run.
+    normalizePageSpec(expansion.spec);
 
     const issues = validatePageSpec({
       spec: expansion.spec,

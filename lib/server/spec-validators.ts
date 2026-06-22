@@ -18,6 +18,32 @@ export interface ValidationInput {
   entities: EntityDefinition[];
 }
 
+/**
+ * In-place repairs for the agent's recurring shape mistakes, run BEFORE the
+ * spec is written so the persisted page is correct.
+ *
+ * `clickable` hoist: the agent frequently emits `clickable: true` at the
+ * ELEMENT level (sibling of type/props/on), but components read it from
+ * `props.clickable` (e.g. Stack only wires its press onClick when
+ * `props.clickable` is truthy). Misplaced, the element looks clickable
+ * (cursor-pointer className) but never fires its `on.press` actions. Move it in.
+ */
+export function normalizePageSpec(spec: unknown): void {
+  if (!spec || typeof spec !== "object") return;
+  const elements = (spec as { elements?: unknown }).elements;
+  if (!elements || typeof elements !== "object") return;
+  for (const el of Object.values(elements as Record<string, unknown>)) {
+    if (!el || typeof el !== "object") continue;
+    const e = el as Record<string, unknown>;
+    if ("clickable" in e) {
+      const props = (e.props && typeof e.props === "object" ? e.props : {}) as Record<string, unknown>;
+      if (props.clickable === undefined) props.clickable = e.clickable;
+      e.props = props;
+      delete e.clickable;
+    }
+  }
+}
+
 export function validatePageSpec(input: ValidationInput): string[] {
   const issues: string[] = [];
 
