@@ -48,12 +48,47 @@ function FontLinks({ theme }: { theme: AppTheme }) {
   );
 }
 
+/** Derive 5 themed chart colors from the palette's primary — used when a
+ *  theme (or preset) didn't ship explicit chart-* tokens. Stays in the
+ *  primary's hue family with small ±hue variations + lightness/chroma ramps,
+ *  so charts read as "of this theme" rather than rainbow.
+ *  Input expected to be `oklch(L C H[ / A])`; falls back to no-op for other
+ *  color formats so we never break a theme that uses hex. */
+function deriveChartRamp(oklchPrimary: string, dark: boolean): string[] | null {
+  const m = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)/.exec(oklchPrimary);
+  if (!m) return null;
+  const L = Number(m[1]);
+  const C = Number(m[2]);
+  const H = Number(m[3]);
+  // Variations: small hue shifts (±20°, ±40°) + lightness/chroma steps. The
+  // dark-mode ramp leans lighter for visibility against dark surfaces.
+  const dl = dark ? 0.05 : -0.05;
+  const variants: Array<[number, number, number]> = [
+    [L, C, H],
+    [Math.min(0.92, Math.max(0.18, L + dl * 1.5)), C * 0.85, (H + 20) % 360],
+    [Math.min(0.92, Math.max(0.18, L - dl * 1.5)), C * 0.95, (H - 20 + 360) % 360],
+    [Math.min(0.92, Math.max(0.18, L + dl * 2.5)), C * 0.65, (H + 40) % 360],
+    [Math.min(0.92, Math.max(0.18, L - dl * 2.5)), C * 1.05, (H - 40 + 360) % 360],
+  ];
+  return variants.map(([l, c, h]) => `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${h.toFixed(1)})`);
+}
+
 /** Inline CSS vars: shadcn tokens + fonts + radius for the active palette. */
 function themeVars(theme: AppTheme, dark: boolean): CSSProperties {
   const palette = dark ? theme.dark : theme.light;
   const vars: Record<string, string> = {};
   for (const [token, value] of Object.entries(palette)) {
     vars[`--${token}`] = value;
+  }
+  // Backfill chart-1..5 when the theme didn't ship them (9 presets in the
+  // library + any hand-authored DESIGN.md theme don't define them). Derive
+  // from `primary` so charts inherit the theme's hue family instead of
+  // falling back to globals.css's grayscale defaults.
+  if (!palette["chart-1"] && palette.primary) {
+    const ramp = deriveChartRamp(palette.primary, dark);
+    if (ramp) {
+      for (let i = 0; i < ramp.length; i++) vars[`--chart-${i + 1}`] = ramp[i];
+    }
   }
   vars["--radius"] = theme.radius;
   vars["--font-sans-var"] = `"${theme.fonts.body}", ui-sans-serif, system-ui, sans-serif`;

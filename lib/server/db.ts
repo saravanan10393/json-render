@@ -56,6 +56,13 @@ db.exec(`
     updated_at TEXT NOT NULL,
     PRIMARY KEY (app_id, entity, _id)
   );
+
+  CREATE TABLE IF NOT EXISTS runs (
+    app_id     TEXT PRIMARY KEY REFERENCES apps(id) ON DELETE CASCADE,
+    stage      TEXT NOT NULL DEFAULT 'backend',
+    config     TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT NOT NULL
+  );
 `);
 
 export { db, DATA_ROOT };

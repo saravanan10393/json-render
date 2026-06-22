@@ -21,9 +21,14 @@ export const shadcnComponentDefinitions = {
 			description: z.string().nullable(),
 			maxWidth: z.enum(["sm", "md", "lg", "full"]).nullable(),
 			centered: z.boolean().nullable(),
-			className: z.string().nullable().describe("Additional CSS classes")
+			className: z.string().nullable().describe("Additional CSS classes"),
+			clickable: z
+				.boolean()
+				.nullable()
+				.describe("When true the card emits a press event on click (wire on.press) — e.g. a list card that opens a detail page.")
 		}),
 		slots: ["default"],
+		events: ["press"],
 		description: "Container card for content sections. Use for forms/content boxes, NOT for page headers.",
 		example: { title: "Overview", description: "Your account summary" }
 	},

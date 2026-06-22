@@ -112,7 +112,7 @@ function getPaginationRange(current: number, total: number): Array<number | "ell
 export const shadcnComponents = {
 	// ── Layout ────────────────────────────────────────────────────────────
 
-	Card: ({ props, children }: BaseComponentProps<ShadcnProps<"Card">>) => {
+	Card: ({ props, children, emit }: BaseComponentProps<ShadcnProps<"Card">>) => {
 		const maxWidthClass =
 			props.maxWidth === "sm"
 				? "max-w-xs sm:min-w-[280px]"
@@ -122,9 +122,28 @@ export const shadcnComponents = {
 						? "max-w-md sm:min-w-[360px]"
 						: "w-full"
 		const centeredClass = props.centered ? "mx-auto" : ""
+		// Opt into button semantics + press event when clickable — mirrors Stack,
+		// so list cards that open a detail page work the same whether built from a
+		// Card or a Stack.
+		const clickable = !!props.clickable
 
 		return (
-			<Card className={cn(maxWidthClass, centeredClass, props.className)}>
+			<Card
+				className={cn(maxWidthClass, centeredClass, clickable && "cursor-pointer transition-shadow hover:shadow-md", props.className)}
+				onClick={clickable ? (e) => { e.stopPropagation(); emit("press") } : undefined}
+				role={clickable ? "button" : undefined}
+				tabIndex={clickable ? 0 : undefined}
+				onKeyDown={
+					clickable
+						? (e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault()
+									emit("press")
+								}
+							}
+						: undefined
+				}
+			>
 				{(props.title || props.description) && (
 					<CardHeader>
 						{props.title && <CardTitle>{props.title}</CardTitle>}

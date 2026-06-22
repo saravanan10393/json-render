@@ -12,7 +12,18 @@ import {
 } from "recharts"
 import { z } from "zod"
 
-const PALETTE = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4", "#a855f7", "#84cc16", "#f97316"]
+// Theme-bound palette — resolves to the live app's --chart-1..5 CSS vars,
+// which the theme tweaker / presets populate and the app-shell scopes via
+// themeVars(). Recharts accepts CSS `var()` strings as color values; the
+// vars cascade through SVG inheritance. globals.css has neutral fallbacks
+// for themes that omit chart-*, so this never renders empty.
+const PALETTE = [
+	"var(--chart-1)",
+	"var(--chart-2)",
+	"var(--chart-3)",
+	"var(--chart-4)",
+	"var(--chart-5)",
+]
 
 interface ChartProps {
 	kind: "bar" | "line" | "area" | "donut" | "pie" | "leaderboard"
