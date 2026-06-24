@@ -1,8 +1,24 @@
 import { fragmentRegistry } from "@/fragments";
 import { themePresetReference } from "@/lib/jr/theme-catalog";
 import { DISPLAY_FONTS, MONO_FONTS, RADIUS_MAX, RADIUS_MIN, SANS_FONTS } from "@/lib/jr/theme-options";
+import { SHELL_META } from "@/lib/runtime/shellMeta";
 import { EXTENDED_TOKENS, REQUIRED_TOKENS } from "@/lib/server/design-md";
 import { COMPONENT_REFERENCE } from "./component-reference.generated";
+
+/** Render SHELL_META as the agent-facing nav-shell picking guide. Single
+ *  source of truth — the showcase reads the same array, so the agent and the
+ *  human evaluate every shell against the same brief. */
+function shellPickGuide(): string {
+  return SHELL_META.map((s) => {
+    const avoid = s.avoidWhen ? `\n  Avoid when: ${s.avoidWhen}` : "";
+    return [
+      `- ${s.id} (${s.label}): ${s.description}`,
+      `  Traits: ${s.traits.join(" · ")}`,
+      `  Use when: ${s.useWhen}${avoid}`,
+      `  Examples: ${s.examples.join(", ")}`,
+    ].join("\n");
+  }).join("\n\n");
+}
 
 /** Fragment IDS (the values emitted as `$fragment`) — full docs come from the
  *  searchFragments tool at runtime. */
@@ -34,12 +50,11 @@ Typography & shape (MODE B): set \`headingFont\` and \`bodyFont\` to a Google Fo
 Pair a characterful heading with a readable body. Pass \`radius\` as a rem value between ${RADIUS_MIN} and ${RADIUS_MAX} (e.g. "0", "0.5rem", "1rem") — tight for dense/technical apps, larger for friendly/consumer ones.`;
 
 const NAV_SHELL_SECTION = `## NAVIGATION SHELL — set \`shellLayout\` in saveAppIndex
-- sidebar: classic left nav with labels — default for 3+ page business apps
-- topnav: horizontal header nav — consumer-facing apps (shops, blogs)
-- icon-rail: slim icon-only rail — dense ops/admin tools where space matters
-- compact-rail: icons + tiny labels — dashboards with 4-6 sections
-- minimal: no chrome, floating page switcher — single-purpose or landing-style apps
-- split-rail: icon rail + secondary label panel — large multi-module apps
+
+Pick the shell that matches the app's MENTAL MODEL — read every option's "use when" and "avoid when" before choosing. Do not default to \`sidebar\`; it is one option among many, and it's wrong for consumer-facing flows, dense ops tools, or single-purpose apps.
+
+${shellPickGuide()}
+
 Give every navigation entry a lucide \`icon\` name (e.g. layout-dashboard, shopping-cart, ticket, users, settings).`;
 
 const DESIGN_SECTION = `${THEME_SECTION}
@@ -281,10 +296,10 @@ export function buildDesignInstructions(): string {
   - 'html' mode rules: emit a single \`<html>\` document for the page CONTENT only — no \`<nav class="sidebar">\` or topnav markup. Style with inline \`<style>\` using theme CSS vars (background, primary, etc.) so the preview matches the app theme. Body width: \`max-width: 1100px; margin: 0 auto;\` — the shell wraps it at runtime.
 
 ## Workflow
-(1) applyDesignSystem — pick/refine the theme from the app's domain. (2) saveSitemap — enumerate every page (id, name, purpose, primary entity, ordered SECTIONS, and STATE coverage: empty/loading/error), the navigation rail + home + shellLayout, and the key user FLOWS. (3) saveDesignArtifact — call ONCE PER PAGE in the sitemap, default representation 'text' (a concise markdown layout for that page: sections top-to-bottom, what each shows). If the user asks for 'html', also produce that representation per page (they coexist). 'image' mockups are generated outside this agent — don't author them. Always use real copy (headings, labels, empty-state text). (4) reply with a SHORT summary and tell the user to review the design; the Frontend agent builds it once approved.
+(1) applyDesignSystem — pick/refine the theme from the app's domain. (2) saveSitemap — enumerate every page (id, name, purpose, primary entity, ordered SECTIONS), the navigation rail + home + shellLayout, and the key user FLOWS. (3) saveDesignArtifact — call ONCE PER PAGE in the sitemap, default representation 'text' (a concise markdown layout for that page: sections top-to-bottom, what each shows). If the user asks for 'html', also produce that representation per page (they coexist). 'image' mockups are generated outside this agent — don't author them. Always use real copy (headings, labels, empty-state text). (4) reply with a SHORT summary and tell the user to review the design; the Frontend agent builds it once approved.
 
 ## Design guidance
-- Pages: 2-4 is typical (a dashboard, a list, a form/detail). Each page gets a clear purpose, ordered sections, and the empty/loading/error states it needs.
+- Pages: 2-4 is typical (a dashboard, a list, a form/detail). Each page gets a clear purpose and an ordered list of sections.
 - Navigation: top-level pages only in the rail (dashboards, lists, settings); detail/form pages are reached via row clicks. Always set a home page and a shellLayout.
 - Describe UX INTENT, not specific components or fragments. Use real copy, never lorem ipsum. NEVER use emoji anywhere (no decorative emoji either — no 👋/✓/🔥). Every icon goes by its kebab-case lucide name (lucide.dev/icons): inline in text/html mockups as \`[icon:<lucide-name>]\` (e.g. \`[icon:droplet]\`); in nav as the \`icon\` field on each entry. The Frontend agent renders these with the Icon component (same library).
 

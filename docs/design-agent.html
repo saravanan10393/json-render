@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>patchwork* — the Design agent</title>
+<style>
+  :root{
+    --ink:#1e293b; --muted:#64748b; --line:#e2e8f0; --bg:#ffffff; --soft:#f8fafc;
+    --page:#6366f1; --page-fill:#eef2ff; --page-stroke:#c7d2fe;
+    --api:#0d9488;  --api-fill:#f0fdfa;  --api-stroke:#99f6e4;
+    --agent:#7c3aed;--agent-fill:#f5f3ff;--agent-stroke:#ddd6fe;
+    --store:#d97706;--store-fill:#fffbeb;--store-stroke:#fde68a;
+    --rt:#16a34a;   --rt-fill:#f0fdf4;   --rt-stroke:#bbf7d0;
+    --orc:#0ea5e9;  --orc-fill:#e0f2fe;  --orc-stroke:#7dd3fc;
+    --gate:#f59e0b; --gate-fill:#fffbeb; --gate-stroke:#fcd34d;
+    --amber:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  code,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.9em;}
+  a{color:var(--page);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px 96px}
+  header.top{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#fbfbfd);}
+  .head-inner{max-width:1120px;margin:0 auto;padding:34px 24px 26px}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+  h1 .star{color:var(--amber)}
+  .sub{color:var(--muted);max-width:820px;margin:0}
+  .pill{display:inline-block;font:600 11px/1 ui-monospace,monospace;text-transform:uppercase;
+    letter-spacing:.12em;color:var(--agent);border:1px solid var(--agent-stroke);
+    background:var(--agent-fill);padding:6px 9px;border-radius:999px;margin-bottom:14px}
+  nav.toc{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);}
+  .toc-inner{max-width:1120px;margin:0 auto;padding:10px 24px;display:flex;gap:6px;flex-wrap:wrap}
+  .toc-inner a{font:600 12px/1 ui-sans-serif,system-ui;color:var(--muted);
+    padding:6px 10px;border-radius:8px;border:1px solid transparent}
+  .toc-inner a:hover{color:var(--ink);background:var(--soft);border-color:var(--line);text-decoration:none}
+  section{padding-top:46px}
+  h2{font-size:21px;margin:0 0 4px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+    border-radius:8px;background:var(--ink);color:#fff;font:700 13px/1 ui-monospace,monospace}
+  h3{font-size:15px;margin:20px 0 6px;letter-spacing:-.01em}
+  .route{font:600 12px/1 ui-monospace,monospace;color:var(--page);background:var(--page-fill);
+    border:1px solid var(--page-stroke);padding:5px 8px;border-radius:7px}
+  .tool{font:600 12px/1 ui-monospace,monospace;color:var(--api);background:var(--api-fill);
+    border:1px solid var(--api-stroke);padding:5px 8px;border-radius:7px}
+  .lead{color:var(--muted);margin:8px 0 18px;max-width:840px}
+  .diagram{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:18px;margin:0 0 16px}
+  .diagram svg{width:100%;height:auto;display:block}
+  ul.notes{margin:0;padding-left:18px}
+  ul.notes li{margin:5px 0}
+  ul.notes b{color:var(--ink)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 22px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:4px;border:1px solid}
+  .sw.api{background:var(--api-fill);border-color:var(--api-stroke)}
+  .sw.agent{background:var(--agent-fill);border-color:var(--agent-stroke)}
+  .sw.store{background:var(--store-fill);border-color:var(--store-stroke)}
+  .sw.rt{background:var(--rt-fill);border-color:var(--rt-stroke)}
+  .sw.gate{background:var(--gate-fill);border-color:var(--gate-stroke)}
+  .callout{border-left:3px solid var(--amber);background:#fffdf5;padding:10px 14px;border-radius:0 8px 8px 0;
+    margin:14px 0;color:#713f12;font-size:13.5px}
+  .callout.purple{border-left-color:var(--agent);background:#faf5ff;color:#581c87}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  table.tbl{border-collapse:collapse;width:100%;margin:6px 0 8px;font-size:13px}
+  table.tbl th,table.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  table.tbl th{background:var(--soft);font-weight:700;color:var(--ink)}
+  table.tbl td code{color:var(--api)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:13px}
+  svg text{font-family:ui-sans-serif,system-ui;fill:var(--ink)}
+  svg .box{stroke-width:1.4}
+  svg .api{fill:var(--api-fill);stroke:var(--api-stroke)}
+  svg .agent{fill:var(--agent-fill);stroke:var(--agent-stroke)}
+  svg .store{fill:var(--store-fill);stroke:var(--store-stroke)}
+  svg .rt{fill:var(--rt-fill);stroke:var(--rt-stroke)}
+  svg .gate{fill:var(--gate-fill);stroke:var(--gate-stroke)}
+  svg .neu{fill:#f1f5f9;stroke:#cbd5e1}
+  svg .t{font-size:13px;font-weight:600}
+  svg .s{font-size:11px;fill:var(--muted);font-weight:500}
+  svg .lbl{font-size:11px;fill:var(--muted);font-weight:600}
+  svg .edge{stroke:#94a3b8;stroke-width:1.5;fill:none}
+  svg .edge-dash{stroke:#94a3b8;stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+  svg .title{font-size:12px;font-weight:700;fill:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  pre.snippet{background:#0f172a;color:#e2e8f0;padding:14px 16px;border-radius:10px;
+    font:12.5px/1.6 ui-monospace,monospace;overflow:auto;margin:8px 0 14px}
+  pre.snippet .k{color:#93c5fd}
+  pre.snippet .s{color:#86efac}
+  pre.snippet .c{color:#94a3b8;font-style:italic}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="head-inner">
+    <div class="pill">Design agent · v1 · how it works now</div>
+    <h1>patchwork<span class="star">*</span> — the Design agent</h1>
+    <p class="sub">The middle agent in the staged pipeline. Owns the <b>theme</b>, the <b>sitemap</b>, and the per-page
+    <b>layout mockup</b> the Frontend agent rebuilds from. Deliberately fragment-blind — designs at the level of intent.
+    This documents the design agent as built. Sibling docs:
+    <a href="understanding_v1.html">understanding_v1.html</a> (whole system),
+    <a href="embedding-analyser.html">embedding-analyser.html</a> (analyzer).</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#overview">Overview</a>
+    <a href="#tools">1 · Tools</a>
+    <a href="#theme">2 · Theme</a>
+    <a href="#sitemap">3 · Sitemap</a>
+    <a href="#mockups">4 · Mockups</a>
+    <a href="#image-gen">5 · Image gen (external)</a>
+    <a href="#html-screenshot">6 · HTML screenshot pipeline</a>
+    <a href="#parallel">7 · Parallel orchestration</a>
+    <a href="#timing">8 · Timing capture</a>
+    <a href="#handoff">9 · Multimodal handoff</a>
+    <a href="#files">10 · File map</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="legend" style="margin-top:22px">
+    <span><i class="sw agent"></i> Design agent</span>
+    <span><i class="sw api"></i> Tool call</span>
+    <span><i class="sw store"></i> Artifact written</span>
+    <span><i class="sw rt"></i> Downstream consumer</span>
+    <span><i class="sw gate"></i> Human gate</span>
+  </div>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section id="overview">
+    <h2><span class="n">0</span> The design agent in one picture</h2>
+    <p class="lead">It runs after the Backend agent's data model is approved and before the Frontend agent builds pages.
+    Three tool calls (one per artifact) produce the three things the Frontend agent reads from the system context.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1080 380" role="img" aria-label="Design agent overview">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+
+        <!-- Approval gate before -->
+        <rect class="box gate" x="20" y="160" width="120" height="60" rx="10"/>
+        <text class="t" x="80" y="186" text-anchor="middle">Backend approved</text>
+        <text class="s" x="80" y="204" text-anchor="middle">data model ready</text>
+
+        <!-- Design agent core -->
+        <rect class="box agent" x="200" y="120" width="260" height="140" rx="14"/>
+        <text class="title" x="330" y="146" text-anchor="middle">Design agent</text>
+        <text class="t" x="330" y="172" text-anchor="middle">makeDesignAgent()</text>
+        <text class="s" x="330" y="192" text-anchor="middle">Gemini 3.5 Flash (default)</text>
+        <text class="s" x="330" y="210" text-anchor="middle">3 tools · fragment-blind</text>
+        <text class="s" x="330" y="232" text-anchor="middle">buildDesignInstructions()</text>
+
+        <!-- Three tool calls -->
+        <rect class="box api" x="510" y="40" width="200" height="60" rx="10"/>
+        <text class="t" x="610" y="66" text-anchor="middle">applyDesignSystem</text>
+        <text class="s" x="610" y="84" text-anchor="middle">pick preset · or author</text>
+
+        <rect class="box api" x="510" y="160" width="200" height="60" rx="10"/>
+        <text class="t" x="610" y="186" text-anchor="middle">saveSitemap</text>
+        <text class="s" x="610" y="204" text-anchor="middle">pages + nav + flows</text>
+
+        <rect class="box api" x="510" y="280" width="200" height="60" rx="10"/>
+        <text class="t" x="610" y="306" text-anchor="middle">saveDesignArtifact</text>
+        <text class="s" x="610" y="324" text-anchor="middle">per-page mockup · text/html</text>
+
+        <line class="edge" x1="460" y1="170" x2="510" y2="70" marker-end="url(#arr)"/>
+        <line class="edge" x1="460" y1="190" x2="510" y2="190" marker-end="url(#arr)"/>
+        <line class="edge" x1="460" y1="210" x2="510" y2="310" marker-end="url(#arr)"/>
+
+        <!-- Three artifacts -->
+        <rect class="box store" x="770" y="40" width="200" height="60" rx="10"/>
+        <text class="t" x="870" y="66" text-anchor="middle">theme.json</text>
+        <text class="s" x="870" y="84" text-anchor="middle">DESIGN.md (create only)</text>
+
+        <rect class="box store" x="770" y="160" width="200" height="60" rx="10"/>
+        <text class="t" x="870" y="186" text-anchor="middle">design/sitemap.json</text>
+        <text class="s" x="870" y="204" text-anchor="middle">IA + navigation + flows</text>
+
+        <rect class="box store" x="770" y="280" width="200" height="60" rx="10"/>
+        <text class="t" x="870" y="306" text-anchor="middle">design/mockups.json</text>
+        <text class="s" x="870" y="324" text-anchor="middle">per-page representations</text>
+
+        <line class="edge" x1="710" y1="70" x2="770" y2="70" marker-end="url(#arr)"/>
+        <line class="edge" x1="710" y1="190" x2="770" y2="190" marker-end="url(#arr)"/>
+        <line class="edge" x1="710" y1="310" x2="770" y2="310" marker-end="url(#arr)"/>
+
+        <!-- Gate after -->
+        <rect class="box gate" x="200" y="290" width="260" height="56" rx="10"/>
+        <text class="t" x="330" y="316" text-anchor="middle">Human approves design</text>
+        <text class="s" x="330" y="334" text-anchor="middle">→ Frontend agent reads sitemap + mockups</text>
+
+        <line class="edge" x1="140" y1="190" x2="200" y2="190" marker-end="url(#arr)"/>
+        <line class="edge" x1="330" y1="260" x2="330" y2="290" marker-end="url(#arr)"/>
+      </svg>
+    </div>
+
+    <ul class="notes">
+      <li><b>Position</b>: backend → <b>design</b> → frontend. Stage advances on explicit human approval; it never runs as a side-effect.</li>
+      <li><b>Fragment-blind on purpose</b>: no <code>searchFragments</code> tool. The agent designs at the level of UX intent — sections, copy, layout, state coverage — and the Frontend agent picks fragments later. This keeps the designer from over-fitting to whatever happens to be prebuilt.</li>
+      <li><b>One agent invocation per tool</b> when run as a system action (rerun-theme, rerun-sitemap, generate-mockup-per-page). One bigger <code>agent.stream</code> call when triggered via chat. Both paths land in the same three artifacts.</li>
+      <li><b>Default model</b>: <code>google/gemini-3.5-flash</code> (multimodal, 1M ctx, fast at text). Override per-app in the Models popover. Required: tool/function calling support.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== TOOLS ===================== -->
+  <section id="tools">
+    <h2><span class="n">1</span> Tools <span class="route">mastra/tools.ts</span></h2>
+    <p class="lead">Three tools. Everything else (no <code>defineEntity</code>, no <code>seedRecords</code>, no <code>savePage</code>,
+    no <code>searchFragments</code>) is deliberately absent — the design agent's blast radius is exactly these three artifacts.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Tool</th><th>What it writes</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>applyDesignSystem({ preset } | { colors, headingFont, bodyFont, radius })</code></td>
+          <td><code>theme.json</code> (and <code>DESIGN.md</code> when authored from scratch)</td>
+          <td>Two modes. PICK a preset from <code>theme-presets.ts</code> (32 entries, complete looks) — no DESIGN.md.
+              CREATE authors a full token set; writes DESIGN.md, lints with <code>@google/design.md</code>, parses to theme.json.</td>
+        </tr>
+        <tr>
+          <td><code>saveSitemap({ pages, navigation, home, shellLayout, flows })</code></td>
+          <td><code>design/sitemap.json</code></td>
+          <td>The information architecture. Every page gets an id, name, purpose, primary entity, ordered <em>sections</em>,
+              and state coverage (empty / loading / error). Navigation shell is one of 6 layouts.</td>
+        </tr>
+        <tr>
+          <td><code>saveDesignArtifact({ pageId, mode, content })</code></td>
+          <td><code>design/mockups.json</code> (per page · per mode)</td>
+          <td>Mode is <code>text</code> (markdown layout) or <code>html</code> (static styled page). <code>pageId</code> must
+              match a saveSitemap page id — orphan ids reject. Image mockups are generated by an external image-gen model;
+              the agent never passes <code>mode:'image'</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout purple">
+      <b>Why no <code>searchFragments</code>?</b> Two reasons. (1) If the agent saw the fragment library it would design
+      <em>toward</em> what exists, biasing every app toward the same handful of layouts. (2) The Analyzer step measures
+      coverage <em>after</em> the design lands — gaps are valuable signal for what new fragments to build, and you only
+      get that signal if the design wasn't anchored to the existing set.
+    </div>
+
+    <h3>What the prompt actually tells the agent</h3>
+    <ul class="notes">
+      <li><b>Role</b>: "You are the Designer in a staged app-building pipeline — you act as a product designer."</li>
+      <li><b>Scope</b>: design at the level of INTENT (layout, hierarchy, copy). No knowledge of components or fragments.</li>
+      <li><b>No emoji rule</b>: never <em>any</em> emoji — not decorative (👋), not status (✓), not category (🔥). Every icon goes by its
+        kebab-case lucide name (<code>lucide.dev/icons</code>): inline in text/html mockups as <code>[icon:droplet]</code>;
+        in nav as the <code>icon</code> field on each entry.</li>
+      <li><b>Mockup ONLY the page CONTENT area</b> — never draw sidebar/topnav inside a mockup. The runtime renders the
+        nav shell from <code>app.json</code> + <code>shellLayout</code>; drawing chrome inside a page mockup leads the Frontend
+        agent to build duplicate navigation inside each page.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== THEME ===================== -->
+  <section id="theme">
+    <h2><span class="n">2</span> Theme — pick or create</h2>
+    <p class="lead">A theme is colors + fonts + radius (light & dark palettes). The agent either <b>picks</b> one of 32 ready-made
+    presets, or <b>creates</b> one from scratch as a DESIGN.md spec.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1000 240" role="img" aria-label="Theme pipeline">
+        <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <rect class="box agent" x="30" y="100" width="160" height="64" rx="10"/>
+        <text class="t" x="110" y="128" text-anchor="middle">Design agent</text>
+        <text class="s" x="110" y="146" text-anchor="middle">applyDesignSystem(...)</text>
+
+        <rect class="box api" x="240" y="30" width="220" height="56" rx="10"/>
+        <text class="t" x="350" y="56" text-anchor="middle">MODE A · PICK</text>
+        <text class="s" x="350" y="74" text-anchor="middle">{ preset: "modern-minimal" }</text>
+
+        <rect class="box api" x="240" y="180" width="220" height="56" rx="10"/>
+        <text class="t" x="350" y="206" text-anchor="middle">MODE B · CREATE</text>
+        <text class="s" x="350" y="224" text-anchor="middle">{ colors, fonts, radius }</text>
+
+        <line class="edge" x1="190" y1="120" x2="240" y2="56" marker-end="url(#arr2)"/>
+        <line class="edge" x1="190" y1="148" x2="240" y2="208" marker-end="url(#arr2)"/>
+
+        <rect class="box neu" x="510" y="30" width="220" height="56" rx="10"/>
+        <text class="t" x="620" y="56" text-anchor="middle">themePresetToAppTheme</text>
+        <text class="s" x="620" y="74" text-anchor="middle">(no DESIGN.md)</text>
+
+        <rect class="box neu" x="510" y="180" width="220" height="56" rx="10"/>
+        <text class="t" x="620" y="206" text-anchor="middle">authorThemeFromScratch</text>
+        <text class="s" x="620" y="224" text-anchor="middle">write + lint DESIGN.md</text>
+
+        <line class="edge" x1="460" y1="56" x2="510" y2="56" marker-end="url(#arr2)"/>
+        <line class="edge" x1="460" y1="208" x2="510" y2="208" marker-end="url(#arr2)"/>
+
+        <rect class="box store" x="780" y="100" width="180" height="64" rx="10"/>
+        <text class="t" x="870" y="128" text-anchor="middle">theme.json</text>
+        <text class="s" x="870" y="146" text-anchor="middle">scoped CSS vars</text>
+
+        <line class="edge" x1="730" y1="60" x2="780" y2="120" marker-end="url(#arr2)"/>
+        <line class="edge" x1="730" y1="204" x2="780" y2="148" marker-end="url(#arr2)"/>
+      </svg>
+    </div>
+
+    <ul class="notes">
+      <li><b>32 presets</b> in <code>lib/jr/theme-presets.ts</code> — neutral default + 6 domain presets (commerce-warm, ops-utility,
+        editorial, studio-bold, finance-trust, wellness-soft) + 25 tweakcn palettes. Each is a complete look: <code>id · label ·
+        description · fonts · radius · light · dark</code>.</li>
+      <li><b>Domain → preset guide</b> baked into the prompt: shops/food/retail → commerce-warm · helpdesk/CRM/ops → ops-utility ·
+        blogs/content → editorial · project/creative → studio-bold · finance/legal → finance-trust · wellness/education → wellness-soft.
+        The rest are brand/aesthetic palettes the agent picks by description.</li>
+      <li><b>CREATE mode contract</b>: every <code>REQUIRED_TOKEN</code> (background, foreground, card, primary, …) must be set;
+        prefix any with <code>dark-</code> for the dark palette. Fonts MUST come from the curated Google Fonts list (loaded by the
+        runtime via <code>&lt;link&gt;</code>). Radius is a rem value in [0, 2].</li>
+      <li><b>DESIGN.md is only written on CREATE</b>. PICK goes straight to theme.json (no spec round-trip). The tweaker's
+        token/font/radius edits go through <code>applyThemeEdit</code> — also no DESIGN.md.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== SITEMAP ===================== -->
+  <section id="sitemap">
+    <h2><span class="n">3</span> Sitemap — IA + navigation</h2>
+    <p class="lead">The sitemap is a structural contract: every page the Frontend agent will build, in the order the navigation
+    surfaces them, with explicit empty/loading/error coverage.</p>
+
+    <pre class="snippet"><span class="c">// sitemap.json shape (zod-validated by saveSitemap):</span>
+{
+  <span class="k">"pages"</span>: [
+    { <span class="k">"id"</span>: <span class="s">"dashboard"</span>, <span class="k">"name"</span>: <span class="s">"Today's Checklist"</span>,
+      <span class="k">"purpose"</span>: <span class="s">"Track today's habit completions and view streaks."</span>,
+      <span class="k">"primaryEntity"</span>: <span class="s">"Habit"</span>,
+      <span class="k">"sections"</span>: [<span class="s">"Greeting header"</span>, <span class="s">"Today's habits"</span>, <span class="s">"Streak summary"</span>],
+      <span class="k">"states"</span>: [<span class="s">"empty"</span>, <span class="s">"loading"</span>],
+      <span class="k">"icon"</span>: <span class="s">"layout-dashboard"</span>      <span class="c">// lucide name</span>
+    },
+    <span class="c">/* ... habits, journal, etc. */</span>
+  ],
+  <span class="k">"home"</span>: <span class="s">"dashboard"</span>,             <span class="c">// id of the home page</span>
+  <span class="k">"shellLayout"</span>: <span class="s">"sidebar"</span>,        <span class="c">// 1 of 6 layouts (see table)</span>
+  <span class="k">"navigation"</span>: [<span class="s">"dashboard"</span>, <span class="s">"habits"</span>, <span class="s">"journal"</span>],  <span class="c">// top-level only</span>
+  <span class="k">"flows"</span>: [
+    <span class="s">"Add habit: dashboard → '+ New habit' → form → back to dashboard"</span>,
+    <span class="s">"View streak detail: dashboard tile → detail drawer"</span>
+  ],
+  <span class="k">"durationMs"</span>: <span class="s">9450</span>           <span class="c">// stamped by installDesignTiming</span>
+}</pre>
+
+    <h3>The 6 shell layouts</h3>
+    <table class="tbl">
+      <thead><tr><th><code>shellLayout</code></th><th>What it is</th><th>Use it for</th></tr></thead>
+      <tbody>
+        <tr><td><code>sidebar</code></td><td>Classic left nav with labels</td><td>Default for 3+ page business apps</td></tr>
+        <tr><td><code>topnav</code></td><td>Horizontal header nav</td><td>Consumer-facing apps (shops, blogs)</td></tr>
+        <tr><td><code>icon-rail</code></td><td>Slim icon-only rail</td><td>Dense ops/admin tools where space matters</td></tr>
+        <tr><td><code>compact-rail</code></td><td>Icons + tiny labels</td><td>Dashboards with 4-6 sections</td></tr>
+        <tr><td><code>minimal</code></td><td>No chrome, floating page switcher</td><td>Single-purpose or landing-style apps</td></tr>
+        <tr><td><code>split-rail</code></td><td>Icon rail + secondary label panel</td><td>Large multi-module apps</td></tr>
+      </tbody>
+    </table>
+
+    <ul class="notes">
+      <li><b>Top-level navigation only</b>: dashboards, lists, settings. Detail/form pages are reached via row clicks, not nav entries.</li>
+      <li><b>Every nav entry needs a lucide <code>icon</code> name</b> — the runtime renders it via the Icon component (same library).</li>
+      <li><b>States matter</b>: the empty/loading/error states a page declares are surfaced to the Frontend agent so it builds the
+        right binding paths (e.g. an explicit empty-list panel, not a blank table).</li>
+    </ul>
+  </section>
+
+  <!-- ===================== MOCKUPS ===================== -->
+  <section id="mockups">
+    <h2><span class="n">4</span> Mockups — per page, three modes</h2>
+    <p class="lead">Each sitemap page gets up to three mockup representations. They coexist — saving one (pageId, mode) keeps the
+    others — and the human picks ONE mode as the "used for build" via the radio in the design review.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Mode</th><th>What it is</th><th>Authored by</th><th>Build budget</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td>Concise markdown — sections top-to-bottom + state coverage, real copy</td>
+          <td>Design agent · <code>saveDesignArtifact</code></td>
+          <td>5,000 chars / page</td>
+        </tr>
+        <tr>
+          <td><code>html</code></td>
+          <td>Full self-contained styled HTML — inline <code>&lt;style&gt;</code> using theme CSS vars, 1100px content width.
+            <b>Auto-renders to a PNG screenshot</b> (see §6) cached alongside the html, attached to the build as a vision input
+            so the agent gets <em>both</em> the markup AND the spatial truth.</td>
+          <td>Design agent · <code>saveDesignArtifact</code></td>
+          <td>40,000 chars / page + screenshot (~150-220 KB PNG attached)</td>
+        </tr>
+        <tr>
+          <td><code>image</code></td>
+          <td>Generated PNG/JPEG (<code>data:image/...</code> URL)</td>
+          <td>External — Gemini 3.1 Flash Image (see §5)</td>
+          <td>Attached as image part (no truncation)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b>Why "content only"?</b> The Frontend agent builds nav shells from <code>app.json</code> + <code>shellLayout</code>, not
+      from the mockup. If the mockup includes a sidebar, the Frontend agent ends up duplicating navigation inside every page.
+      The prompt forbids this explicitly: "Mockup ONLY the page CONTENT area — the body inside the nav shell."
+    </div>
+
+    <h3>Per-page parallel generation</h3>
+    <p class="lead"><code>generateMockupRepresentation()</code> fans out across pages with <code>Promise.all</code> — one
+    <code>agent.generate</code> per page (each <code>maxSteps: 6</code>), all running concurrently. Wall-clock is bounded by the
+    slowest page, not the sum.</p>
+
+    <pre class="snippet"><span class="c">// builder-run.ts — generateMockupRepresentation</span>
+await Promise.all(
+  targetIds.map(<span class="k">async</span> (id) => {
+    <span class="k">const</span> page = sitemap.pages.find(p => p.id === id);
+    <span class="k">const</span> agent = makeDesignAgent({ model });
+    <span class="k">const</span> startMs = performance.now();
+    await agent.generate(
+      [{ role: <span class="s">"user"</span>, content: <span class="s">`Generate the ${mode} mockup for "${page.name}".`</span> }],
+      { maxSteps: 6, context: [{ role: <span class="s">"system"</span>, content: sysContent }], ... }
+    );
+    setMockupDuration(appId, page.id, mode,
+      Math.round(performance.now() - startMs));   <span class="c">// stamp durationMs on the slot</span>
+  })
+);</pre>
+
+    <h3>Mode-specific shaping</h3>
+    <p class="lead">The per-page system prompt appends mode-specific guidance:</p>
+    <ul class="notes">
+      <li><b>text</b>: a markdown bullet list — sections in render order + a "states" subsection for empty/loading/error.</li>
+      <li><b>html</b>: single <code>&lt;html&gt;</code> document, no <code>&lt;nav class="sidebar"&gt;</code>, inline <code>&lt;style&gt;</code>
+        referencing theme CSS vars (<code>var(--background)</code>, <code>var(--primary)</code>, …) so the preview matches the live
+        theme. Body styled <code>max-width: 1100px; margin: 0 auto;</code> — the shell wraps it at runtime.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== IMAGE GEN (EXTERNAL) ===================== -->
+  <section id="image-gen">
+    <h2><span class="n">5</span> Image mockups — external <span class="route">lib/server/image-gen.ts</span></h2>
+    <p class="lead">Image mode bypasses the design agent. A text→image model (<code>google/gemini-3.1-flash-image</code> by
+    default) is called directly with a synthesized prompt built from the sitemap + theme.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1000 230" role="img" aria-label="Image gen flow">
+        <defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <rect class="box agent" x="20" y="80" width="200" height="64" rx="10"/>
+        <text class="t" x="120" y="108" text-anchor="middle">/mockup/generate</text>
+        <text class="s" x="120" y="126" text-anchor="middle">mode: "image"</text>
+
+        <rect class="box neu" x="260" y="80" width="220" height="64" rx="10"/>
+        <text class="t" x="370" y="108" text-anchor="middle">buildImageMockupPrompt</text>
+        <text class="s" x="370" y="126" text-anchor="middle">sitemap page + theme</text>
+
+        <rect class="box api" x="520" y="80" width="220" height="64" rx="10"/>
+        <text class="t" x="630" y="108" text-anchor="middle">generateMockupImage</text>
+        <text class="s" x="630" y="126" text-anchor="middle">openrouter chat completions</text>
+        <text class="s" x="630" y="142" text-anchor="middle">modalities: ["image"]</text>
+
+        <rect class="box store" x="780" y="80" width="200" height="64" rx="10"/>
+        <text class="t" x="880" y="108" text-anchor="middle">writeMockup(image)</text>
+        <text class="s" x="880" y="126" text-anchor="middle">data:image/...;base64,...</text>
+
+        <line class="edge" x1="220" y1="112" x2="260" y2="112" marker-end="url(#arr3)"/>
+        <line class="edge" x1="480" y1="112" x2="520" y2="112" marker-end="url(#arr3)"/>
+        <line class="edge" x1="740" y1="112" x2="780" y2="112" marker-end="url(#arr3)"/>
+      </svg>
+    </div>
+
+    <ul class="notes">
+      <li><b>Why external</b>: text→image models don't expose tool calling — they can't call <code>saveDesignArtifact</code>.
+        Image gen happens in a dedicated <code>POST /v1/chat/completions</code> with <code>modalities: ["image"]</code>.</li>
+      <li><b>Default model</b>: <code>google/gemini-3.1-flash-image</code> — overridable in the Models popover. The prompt
+        is synthesized from the sitemap page (sections + purpose) and the theme (primary, background, fonts, radius) so the
+        rendered image reflects the actual design system, not a generic mockup.</li>
+      <li><b>Storage</b>: the response image is base64-encoded and stored as a <code>data:image/...</code> URL in
+        <code>mockups.json</code>. No filesystem image file — keeps the snapshot self-contained.</li>
+      <li><b>Frontend handoff</b>: when image is the selected mode, <code>runStageTurn</code> attaches the data URL as a
+        <code>type: "file"</code> message part. Sonnet 4.5 (the default frontend model) reads it natively as vision input.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== HTML SCREENSHOT PIPELINE ===================== -->
+  <section id="html-screenshot">
+    <h2><span class="n">6</span> HTML screenshot pipeline <span class="route">lib/server/html-renderer.ts</span></h2>
+    <p class="lead">Every <code>html</code> mockup the agent saves also gets rendered to a PNG and cached on disk. The
+    rendered image is handed to the frontend agent <em>alongside</em> the inlined HTML text — multimodal: text for copy
+    fidelity (verbatim quotes), image for spatial truth (proportions, alignment, visual rhythm). Neither alone is enough;
+    together they close the design-to-code failure modes that pure-text or pure-image handoffs leak.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1000 240" role="img" aria-label="HTML → PNG pipeline">
+        <defs><marker id="arr-html" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <rect class="box agent" x="20" y="80" width="200" height="64" rx="10"/>
+        <text class="t" x="120" y="108" text-anchor="middle">Design agent</text>
+        <text class="s" x="120" y="126" text-anchor="middle">saveDesignArtifact(mode=html)</text>
+
+        <rect class="box store" x="250" y="20" width="200" height="64" rx="10"/>
+        <text class="t" x="350" y="48" text-anchor="middle">writeMockup</text>
+        <text class="s" x="350" y="66" text-anchor="middle">design/mockups.json</text>
+
+        <rect class="box api" x="250" y="140" width="200" height="64" rx="10"/>
+        <text class="t" x="350" y="168" text-anchor="middle">cacheHtmlScreenshot</text>
+        <text class="s" x="350" y="186" text-anchor="middle">fire-and-forget · puppeteer-core</text>
+
+        <rect class="box neu" x="480" y="140" width="200" height="64" rx="10"/>
+        <text class="t" x="580" y="168" text-anchor="middle">renderHtmlToPng</text>
+        <text class="s" x="580" y="186" text-anchor="middle">system Chrome · 1400×900</text>
+
+        <rect class="box store" x="710" y="80" width="270" height="64" rx="10"/>
+        <text class="t" x="845" y="108" text-anchor="middle">mockup-screenshots/&lt;pageId&gt;.png</text>
+        <text class="s" x="845" y="126" text-anchor="middle">cached sibling artifact</text>
+
+        <line class="edge" x1="220" y1="100" x2="250" y2="60" marker-end="url(#arr-html)"/>
+        <line class="edge" x1="220" y1="124" x2="250" y2="170" marker-end="url(#arr-html)"/>
+        <line class="edge" x1="450" y1="170" x2="480" y2="170" marker-end="url(#arr-html)"/>
+        <line class="edge" x1="680" y1="170" x2="710" y2="120" marker-end="url(#arr-html)"/>
+      </svg>
+    </div>
+
+    <h3>How it fires</h3>
+    <p class="lead">The hook lives inside the <code>saveDesignArtifact</code> tool execute: right after
+    <code>writeMockup(..., "html", content)</code> persists the html, a <code>void cacheHtmlScreenshot(appId, pageId, content)</code>
+    kicks off the render asynchronously and returns immediately. The tool result goes back to the agent without waiting;
+    the screenshot lands on disk a couple of seconds later. The next rebuild that runs with <code>selected === "html"</code>
+    reads the cached file and attaches it.</p>
+
+    <pre class="snippet"><span class="c">// mastra/tools.ts — saveDesignArtifact.execute (excerpt)</span>
+writeMockup(appId, input.pageId, input.mode, input.content);
+stampDesignTiming(context, ms =&gt; setMockupDuration(appId, input.pageId, input.mode, ms));
+touchApp(appId);
+
+<span class="c">// Async render — does not block the tool response.</span>
+<span class="k">if</span> (input.mode === <span class="s">"html"</span>) {
+  <span class="k">void</span> cacheHtmlScreenshot(appId, input.pageId, input.content).<span class="k">catch</span>((err) =&gt;
+    console.warn(<span class="s">`[saveDesignArtifact] html→png cache failed for </span>${input.pageId}<span class="s">:`</span>, err)
+  );
+}</pre>
+
+    <h3>The renderer</h3>
+    <p class="lead"><code>renderHtmlToPng()</code> uses <code>puppeteer-core</code> with the system Chrome binary — not the
+    bundled Chromium. That's a ~165 MB lighter install at the cost of one assumption (Chrome present on Mac, where it
+    almost always is). The <code>CHROME_PATH</code> env var overrides the auto-detected location for CI / non-standard
+    setups. The browser instance is cached across renders inside a process so puppeteer's ~400 ms launch cost is amortized
+    after the first page.</p>
+
+    <ul class="notes">
+      <li><b>Viewport</b>: 1400×900 desktop by default (matches what the user sees in design review). <code>deviceScaleFactor: 1</code>
+        keeps PNGs around 100–250 KB; bump to 2 if Retina sharpness matters more than file size.</li>
+      <li><b>Wait condition</b>: <code>setContent</code> with <code>waitUntil: "domcontentloaded"</code> plus a 300 ms
+        settle. The alternative (<code>networkidle0</code>) would hang on external font CDNs the mockup may reference.</li>
+      <li><b>Full-page</b>: screenshots use <code>fullPage: true</code> so long mockups aren't viewport-clipped.</li>
+      <li><b>Graceful disable</b>: when no Chrome binary is found, <code>renderHtmlToPng</code> returns null; the saved
+        mockup still works, the build just falls back to text-only handoff for that page (better than failing the save).</li>
+    </ul>
+
+    <h3>Cache layout</h3>
+    <pre class="snippet"><span class="c">// Per-app screenshot cache — sibling to the existing design/ artifacts.</span>
+data/&lt;appId&gt;/
+  design/
+    mockups.json
+    mockup-screenshots/
+      &lt;pageId&gt;.png    <span class="c">// auto-rendered after each html save · ~150-250 KB</span>
+      ...</pre>
+
+    <div class="callout purple">
+      <b>Why a cached file, not inline base64.</b> Three reasons. (1) Keeps <code>mockups.json</code> lean — 5 inlined
+      screenshots would push the JSON past 1 MB. (2) Lets a future "Open mockup" link in the UI serve the PNG directly.
+      (3) Easy A/B: re-running the renderer with a different viewport / scale just overwrites the file; no schema work.
+    </div>
+  </section>
+
+  <!-- ===================== PARALLEL ===================== -->
+  <section id="parallel">
+    <h2><span class="n">7</span> Parallel orchestration <span class="route">runDesignParallel</span></h2>
+    <p class="lead">When the user clicks "Rerun all design" (or design runs as a system action), the three artifacts are
+    produced in two parallel waves — theme + sitemap concurrently, then all per-page mockups concurrently.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1080 280" role="img" aria-label="Parallel orchestration">
+        <defs><marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <text class="title" x="60" y="32">Wave 1 (parallel)</text>
+        <rect class="box agent" x="40" y="50" width="200" height="56" rx="10"/>
+        <text class="t" x="140" y="76" text-anchor="middle">runDesignScope("theme")</text>
+        <text class="s" x="140" y="94" text-anchor="middle">applyDesignSystem</text>
+
+        <rect class="box agent" x="40" y="130" width="200" height="56" rx="10"/>
+        <text class="t" x="140" y="156" text-anchor="middle">runDesignScope("sitemap")</text>
+        <text class="s" x="140" y="174" text-anchor="middle">saveSitemap</text>
+
+        <!-- barrier -->
+        <line class="edge-dash" x1="280" y1="20" x2="280" y2="260"/>
+        <text class="lbl" x="290" y="32">await both</text>
+
+        <text class="title" x="340" y="32">Wave 2 (parallel · per page)</text>
+        <rect class="box agent" x="320" y="50" width="220" height="44" rx="9"/>
+        <text class="t" x="430" y="76" text-anchor="middle">generateMockup(page 1)</text>
+
+        <rect class="box agent" x="320" y="106" width="220" height="44" rx="9"/>
+        <text class="t" x="430" y="132" text-anchor="middle">generateMockup(page 2)</text>
+
+        <rect class="box agent" x="320" y="162" width="220" height="44" rx="9"/>
+        <text class="t" x="430" y="188" text-anchor="middle">generateMockup(page N)</text>
+
+        <line class="edge" x1="240" y1="78" x2="320" y2="72" marker-end="url(#arr4)"/>
+        <line class="edge" x1="240" y1="158" x2="320" y2="128" marker-end="url(#arr4)"/>
+        <line class="edge" x1="240" y1="158" x2="320" y2="184" marker-end="url(#arr4)"/>
+
+        <!-- result -->
+        <rect class="box store" x="600" y="100" width="200" height="56" rx="10"/>
+        <text class="t" x="700" y="126" text-anchor="middle">Design ready</text>
+        <text class="s" x="700" y="144" text-anchor="middle">theme · sitemap · N mockups</text>
+
+        <line class="edge" x1="540" y1="128" x2="600" y2="128" marker-end="url(#arr4)"/>
+
+        <!-- timings -->
+        <rect class="box rt" x="840" y="100" width="200" height="56" rx="10"/>
+        <text class="t" x="940" y="126" text-anchor="middle">DesignTimings</text>
+        <text class="s" x="940" y="144" text-anchor="middle">theme/sitemap/mockups/total</text>
+
+        <line class="edge" x1="800" y1="128" x2="840" y2="128" marker-end="url(#arr4)"/>
+      </svg>
+    </div>
+
+    <ul class="notes">
+      <li><b>No data dependency between theme and sitemap</b> → fire them as two concurrent <code>agent.generate</code> calls.
+        Each is a single <code>maxSteps: 8</code> turn.</li>
+      <li><b>Mockups wait on the sitemap only</b> (they need page ids). Once the sitemap lands, every page's mockup is
+        generated concurrently via the same parallel-per-page mechanism as standalone mockup regen.</li>
+      <li><b>Why bother?</b> Sequential "all" takes <code>theme + sitemap + max(per-page mockup)</code>. Parallel takes
+        <code>max(theme, sitemap) + max(per-page mockup)</code> — measured ~28% wall-clock savings on a 5-page app.</li>
+      <li><b>Returned timings</b>: <code>{ theme, sitemap, mockups, total }</code> in ms. The builder UI shows the breakdown
+        as a banner after the rerun finishes.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== TIMING ===================== -->
+  <section id="timing">
+    <h2><span class="n">8</span> Timing capture <span class="route">installDesignTiming</span></h2>
+    <p class="lead">Every artifact carries a <code>durationMs</code> stamp — useful for spotting slow stages without opening logs.
+    Two paths: chat-driven (tool-level instrumentation) and system-action (wall-clock outside the agent).</p>
+
+    <table class="tbl">
+      <thead><tr><th>Path</th><th>How duration is measured</th><th>Where stamped</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Chat turn</td>
+          <td><code>installDesignTiming(requestContext)</code> records a baseline at agent start; each tool's <code>execute</code>
+              hook computes <code>now - lastTimestamp</code> at completion (so theme = think+output time, sitemap = time
+              between theme done and sitemap done).</td>
+          <td>Tool's writer (applyDesignSystem → theme.json, saveSitemap → sitemap.json)</td>
+        </tr>
+        <tr>
+          <td>System action (rerun-theme / rerun-sitemap)</td>
+          <td>Wall-clock wrapped around the entire <code>agent.generate</code> call.</td>
+          <td>Same writer, same shape — UI doesn't care which path produced it.</td>
+        </tr>
+        <tr>
+          <td>Per-page mockup</td>
+          <td>Wall-clock wrapped around each <code>agent.generate</code> in the parallel fan-out.</td>
+          <td><code>setMockupDuration(appId, pageId, mode, ms)</code> patches the slot.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="lead">In the UI: a small monospace chip next to the artifact title — Theme shows
+    <code>3.2s</code>, Sitemap shows <code>9.5s</code>, each mockup tab shows its own (e.g. <code>html 17.4s</code>).</p>
+  </section>
+
+  <!-- ===================== HANDOFF ===================== -->
+  <section id="handoff">
+    <h2><span class="n">9</span> Multimodal handoff to the Frontend agent</h2>
+    <p class="lead">Once the human approves, the Frontend agent reads three things from its system context: the data model
+    (entities + sample rows), the theme summary (preset/fonts/radius), and the approved sitemap + selected mockup.</p>
+
+    <pre class="snippet"><span class="c">// builder-run.ts — formatMockups (the block the Frontend agent receives):</span>
+
+APPROVED DESIGN MOCKUPS (html, one per page) — build each faithfully in real components:
+
+### Page: dashboard
+&lt;!DOCTYPE html&gt;
+&lt;html&gt; ... 18,000-40,000 chars of inlined html per page ... &lt;/html&gt;
+
+### Page: habits
+...</pre>
+
+    <ul class="notes">
+      <li><b>Text mode handoff</b>: the markdown is inlined verbatim into the system prompt (5KB/page budget). Distinct
+        copy shows up byte-identical in the built spec — the Frontend agent quotes it directly. <em>Single-modal</em>:
+        no vision attached.</li>
+      <li><b>HTML mode handoff (multimodal)</b>: the html source is inlined into the system prompt (40KB/page) AND the
+        cached PNG screenshot (§6) is attached as a <code>type: "file"</code> vision part on a separate user message.
+        Multimodal beats either alone — text alone misses spatial layout, image alone OCRs copy badly. The pair gives the
+        Frontend agent verbatim copy fidelity AND faithful layout reproduction.</li>
+      <li><b>Image mode handoff</b>: no text inlined; the generated PNG is attached as a vision part. Sonnet 4.5 (the
+        default frontend model) reads file parts natively — no model swap.</li>
+      <li><b>The sitemap also flows through</b> as JSON so the Frontend agent knows the page ids, sections, states, and the
+        navigation shell to build.</li>
+      <li><b>Single helper, three modes</b>: <code>buildImageMockupMessage(appId, sel)</code> in
+        <code>lib/server/builder-run.ts</code> handles all three handoff shapes — image (data URL), html (read cached PNG
+        from disk + base64 encode), text (returns null → text-only). Shared by both the chat path (<code>runStageTurn</code>)
+        and the system-action rebuild path (<code>runRebuild</code>).</li>
+      <li><b>Built page ids come from the page NAME, not the sitemap id</b>: <code>savePage</code> derives the file id as
+        <code>&lt;role&gt;-&lt;entity&gt;-&lt;slug(name)&gt;</code>. So sitemap <code>dashboard</code> with name
+        "Today's Checklist & Coach" ends up as file <code>user-checkin-todays-checklist-coach.json</code>. The mapping is
+        deterministic but not visually obvious.</li>
+    </ul>
+
+    <div class="callout">
+      <b>Measured impact of the multimodal handoff.</b> On a 3-page habit-tracker test (same Sonnet 4.5 model, same
+      design artifacts, only the <code>selected</code> mode changes):
+      <ul style="margin:6px 0 0 0; padding-left:18px">
+        <li><b>text-mode build</b> reproduced ~55% of the intent's section count, ~30% of titles verbatim, swapped
+          card+form patterns for tables, missed entire sections.</li>
+        <li><b>html-mode build (text + screenshot)</b> reproduced ~100% of section count, ~100% of titles verbatim,
+          matched the intent's pattern choices (cards + filter pills + inline create form), and flagged the one
+          component it genuinely couldn't build (heatmap grid) as an explicit placeholder in-spec.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== FILE MAP ===================== -->
+  <section id="files">
+    <h2><span class="n">10</span> Where to find what</h2>
+
+    <table class="tbl">
+      <thead><tr><th>File</th><th>What's there</th></tr></thead>
+      <tbody>
+        <tr><td><code>mastra/index.ts</code></td><td><code>makeDesignAgent({ model })</code> — agent factory.</td></tr>
+        <tr><td><code>mastra/instructions.ts</code></td><td><code>buildDesignInstructions()</code> — the system prompt; THEME_SECTION + NAV_SHELL_SECTION.</td></tr>
+        <tr><td><code>mastra/tools.ts</code></td><td>The 3 tools: <code>applyDesignSystem</code>, <code>saveSitemap</code>, <code>saveDesignArtifact</code>.</td></tr>
+        <tr><td><code>lib/server/builder-run.ts</code></td><td><code>buildDesignContext</code> (per-turn context), <code>generateMockupRepresentation</code> (per-page parallel mockups), <code>runDesignParallel</code> (theme ║ sitemap → mockups), <code>runDesignScope</code> (single-slice rerun).</td></tr>
+        <tr><td><code>lib/server/design-md.ts</code></td><td>Theme pipeline: <code>pickThemePreset</code>, <code>applyThemeEdit</code>, <code>authorThemeFromScratch</code>, DESIGN.md lint via <code>@google/design.md</code>.</td></tr>
+        <tr><td><code>lib/server/design-artifacts.ts</code></td><td>Mockup storage: <code>writeMockup</code>, <code>readMockups</code>, <code>setMockupDuration</code>, <code>setSelectedMockup</code>, <code>selectedMockups</code>.</td></tr>
+        <tr><td><code>lib/server/image-gen.ts</code></td><td><code>generateMockupImage</code> + <code>buildImageMockupPrompt</code> — external text→image path.</td></tr>
+        <tr><td><code>lib/server/html-renderer.ts</code></td><td><code>renderHtmlToPng</code> · <code>cacheHtmlScreenshot</code> · <code>readCachedScreenshotPath</code> — html→PNG via puppeteer-core + system Chrome (see §6).</td></tr>
+        <tr><td><code>lib/jr/theme-presets.ts</code></td><td>The 32 preset library (default + 6 domain + 25 tweakcn).</td></tr>
+        <tr><td><code>lib/jr/theme-options.ts</code></td><td>Curated Google Fonts list + radius range — shared by agent prompt and theme tweaker UI.</td></tr>
+        <tr><td><code>app/api/apps/[id]/design/rerun/route.ts</code></td><td>Rerun system action — handles <code>all</code>, <code>theme</code>, <code>sitemap</code>, <code>mockups</code> scopes.</td></tr>
+        <tr><td><code>app/api/apps/[id]/mockup/generate/route.ts</code></td><td>Generate ONE mockup (single page · single mode) as a system action.</td></tr>
+        <tr><td><code>components/builder/design-review.tsx</code></td><td>The design-review panel — Theme, Sitemap, Layout mockup cards + per-stage rerun buttons + duration chips.</td></tr>
+      </tbody>
+    </table>
+
+  </section>
+
+  <footer>
+    <p>Companion docs: <a href="understanding_v1.html">understanding_v1.html</a> (whole system) ·
+      <a href="embedding-analyser.html">embedding-analyser.html</a> (analyzer + scoring) ·
+      <a href="design-pipeline.html">design-pipeline.html</a> (original plan, historical).</p>
+  </footer>
+
+</div>
+</body>
+</html>

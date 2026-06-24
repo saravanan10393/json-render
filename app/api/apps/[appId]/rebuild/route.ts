@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getApp, touchApp } from "@/lib/server/apps";
 import { runRebuild } from "@/lib/server/builder-run";
 import { snapshotBuild } from "@/lib/server/builds";
+import { readMockups } from "@/lib/server/design-artifacts";
 import { resolveModel } from "@/lib/server/models";
 import { ensureRun } from "@/lib/server/runs";
 
@@ -29,7 +30,10 @@ export async function POST(
   // Auto-snapshot under whichever model just produced this build, so a later
   // Rebuild on a different model preserves this one for comparison.
   const usedModel = resolveModel("frontend", run.config.models?.frontend);
-  snapshotBuild(appId, usedModel);
+  // Stamp the mockup mode the agent was handed for this build, so the Build
+  // view can show "Built from <mode>" without having to diff specs later.
+  const usedMode = readMockups(appId)?.selected;
+  snapshotBuild(appId, usedModel, usedMode);
   touchApp(appId);
 
   return NextResponse.json({ pageIds: result.pageIds, modelSlug: usedModel });

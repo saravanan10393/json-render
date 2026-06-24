@@ -12,6 +12,7 @@ import {
 } from "@/lib/server/apps";
 import { runStageTurn } from "@/lib/server/builder-run";
 import { snapshotBuild } from "@/lib/server/builds";
+import { readMockups } from "@/lib/server/design-artifacts";
 import { resolveModel } from "@/lib/server/models";
 import { ensureRun } from "@/lib/server/runs";
 
@@ -65,7 +66,8 @@ export async function POST(
       // design artifacts (cheap, idempotent; skipped on non-frontend turns).
       if (run.stage === "frontend") {
         try {
-          snapshotBuild(appId, resolveModel("frontend", run.config.models?.frontend));
+          const usedMode = readMockups(appId)?.selected;
+          snapshotBuild(appId, resolveModel("frontend", run.config.models?.frontend), usedMode);
         } catch (error) {
           console.warn("[builds] snapshot failed:", error instanceof Error ? error.message : error);
         }

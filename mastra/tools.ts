@@ -19,6 +19,7 @@ import {
   writeSitemap,
 } from "@/lib/server/design-artifacts";
 import { stampNextDuration } from "@/lib/server/design-timing";
+import { cacheHtmlScreenshot } from "@/lib/server/html-renderer";
 import { expandFragments } from "@/lib/server/fragment-expander";
 import { searchFragments as searchFragmentIndex } from "@/lib/server/fragment-index";
 import { getRun } from "@/lib/server/runs";
@@ -179,10 +180,11 @@ export const applyDesignSystem = createTool({
 
     // MODE A: pick a preset from the unified library (used as-is, no DESIGN.md).
     // MODE B: author a palette from scratch → writes DESIGN.md, then theme.json.
-    const result = input.colors
+    const isCreate = !!input.colors;
+    const result = isCreate
       ? await authorThemeFromScratch({
           appId,
-          colors: input.colors,
+          colors: input.colors ?? {},
           headingFont: input.headingFont ?? undefined,
           bodyFont: input.bodyFont ?? undefined,
           radius: input.radius ?? undefined,
@@ -256,7 +258,6 @@ export const saveSitemap = createTool({
           purpose: z.string().describe("One line: what this page is for."),
           primaryEntity: z.string().nullable().describe("Main entity this page works with, or null."),
           sections: z.array(z.string()).describe("Ordered section intents, top to bottom."),
-          states: z.array(z.string()).describe("Empty/loading/error states to cover (may be [])."),
         }),
       )
       .min(1),
@@ -335,6 +336,19 @@ export const saveDesignArtifact = createTool({
     writeMockup(appId, input.pageId, input.mode, input.content);
     stampDesignTiming(context, (ms) => setMockupDuration(appId, input.pageId, input.mode, ms));
     touchApp(appId);
+    // HTML mockups also get a rendered PNG cached — the build handoff attaches
+    // it as a vision input alongside the inlined html text (multimodal: text
+    // for copy fidelity, image for spatial truth). Fire-and-forget so the
+    // tool returns immediately; the screenshot lands a couple seconds later
+    // and is picked up on the next build. Graceful if Chrome's unreachable.
+    if (input.mode === "html") {
+      void cacheHtmlScreenshot(appId, input.pageId, input.content).catch((error) => {
+        console.warn(
+          `[saveDesignArtifact] html→png cache failed for ${input.pageId}:`,
+          error instanceof Error ? error.message : error,
+        );
+      });
+    }
     return { ok: true, issues: [], pageId: input.pageId, mode: input.mode };
   },
 });

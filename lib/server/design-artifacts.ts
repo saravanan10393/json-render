@@ -22,7 +22,6 @@ export const SitemapPageSchema = z.object({
   purpose: z.string().describe("One line: what this page is for."),
   primaryEntity: z.string().nullable().default(null),
   sections: z.array(z.string()).default([]).describe("Ordered section intents, top to bottom."),
-  states: z.array(z.string()).default([]).describe("Empty / loading / error states to cover."),
 });
 
 export const SitemapNavSchema = z.object({

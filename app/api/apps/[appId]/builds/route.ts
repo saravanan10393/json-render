@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApp, touchApp } from "@/lib/server/apps";
 import { listBuilds, restoreBuild, snapshotBuild } from "@/lib/server/builds";
+import { readMockups } from "@/lib/server/design-artifacts";
 
 /**
  * Per-model build snapshots — read the list, switch the active build, or take
@@ -42,7 +43,7 @@ export async function POST(
   }
 
   if (body.action === "snapshot" && body.modelSlug) {
-    const snap = snapshotBuild(appId, body.modelSlug);
+    const snap = snapshotBuild(appId, body.modelSlug, readMockups(appId)?.selected);
     return NextResponse.json({ ok: !!snap, snapshot: snap, builds: listBuilds(appId) });
   }
 
