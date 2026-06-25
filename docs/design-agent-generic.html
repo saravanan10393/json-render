@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Agentic Design Agent — generic reference</title>
+<style>
+  :root{
+    --ink:#1e293b; --muted:#64748b; --line:#e2e8f0; --bg:#ffffff; --soft:#f8fafc;
+    --page:#6366f1; --page-fill:#eef2ff; --page-stroke:#c7d2fe;
+    --api:#0d9488;  --api-fill:#f0fdfa;  --api-stroke:#99f6e4;
+    --agent:#7c3aed;--agent-fill:#f5f3ff;--agent-stroke:#ddd6fe;
+    --store:#d97706;--store-fill:#fffbeb;--store-stroke:#fde68a;
+    --rt:#16a34a;   --rt-fill:#f0fdf4;   --rt-stroke:#bbf7d0;
+    --gate:#f59e0b; --gate-fill:#fffbeb; --gate-stroke:#fcd34d;
+    --human:#db2777;--human-fill:#fdf2f8;--human-stroke:#fbcfe8;
+    --amber:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  code,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.9em;}
+  a{color:var(--page);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px 96px}
+  header.top{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#fbfbfd);}
+  .head-inner{max-width:1120px;margin:0 auto;padding:34px 24px 26px}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+  h1 .star{color:var(--amber)}
+  .sub{color:var(--muted);max-width:880px;margin:0}
+  .pill{display:inline-block;font:600 11px/1 ui-monospace,monospace;text-transform:uppercase;
+    letter-spacing:.12em;color:var(--agent);border:1px solid var(--agent-stroke);
+    background:var(--agent-fill);padding:6px 9px;border-radius:999px;margin-bottom:14px}
+  nav.toc{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);}
+  .toc-inner{max-width:1120px;margin:0 auto;padding:10px 24px;display:flex;gap:6px;flex-wrap:wrap}
+  .toc-inner a{font:600 12px/1 ui-sans-serif,system-ui;color:var(--muted);
+    padding:6px 10px;border-radius:8px;border:1px solid transparent}
+  .toc-inner a:hover{color:var(--ink);background:var(--soft);border-color:var(--line);text-decoration:none}
+  section{padding-top:46px}
+  h2{font-size:21px;margin:0 0 4px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+    border-radius:8px;background:var(--ink);color:#fff;font:700 13px/1 ui-monospace,monospace}
+  h3{font-size:15px;margin:20px 0 6px;letter-spacing:-.01em}
+  .route{font:600 12px/1 ui-monospace,monospace;color:var(--page);background:var(--page-fill);
+    border:1px solid var(--page-stroke);padding:5px 8px;border-radius:7px}
+  .tool{font:600 12px/1 ui-monospace,monospace;color:var(--api);background:var(--api-fill);
+    border:1px solid var(--api-stroke);padding:5px 8px;border-radius:7px}
+  .lead{color:var(--muted);margin:8px 0 18px;max-width:880px}
+  .diagram{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:18px;margin:0 0 16px}
+  .diagram svg{width:100%;height:auto;display:block}
+  ul.notes{margin:0;padding-left:18px}
+  ul.notes li{margin:5px 0}
+  ul.notes b{color:var(--ink)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 22px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:4px;border:1px solid}
+  .sw.api{background:var(--api-fill);border-color:var(--api-stroke)}
+  .sw.agent{background:var(--agent-fill);border-color:var(--agent-stroke)}
+  .sw.store{background:var(--store-fill);border-color:var(--store-stroke)}
+  .sw.rt{background:var(--rt-fill);border-color:var(--rt-stroke)}
+  .sw.gate{background:var(--gate-fill);border-color:var(--gate-stroke)}
+  .sw.human{background:var(--human-fill);border-color:var(--human-stroke)}
+  .callout{border-left:3px solid var(--amber);background:#fffdf5;padding:10px 14px;border-radius:0 8px 8px 0;
+    margin:14px 0;color:#713f12;font-size:13.5px}
+  .callout.purple{border-left-color:var(--agent);background:#faf5ff;color:#581c87}
+  .callout.pink{border-left-color:var(--human);background:#fdf2f8;color:#831843}
+  .callout cite{display:block;margin-top:6px;font-size:11px;font-style:normal;color:inherit;opacity:.7}
+  .callout cite a{color:inherit;text-decoration:underline;text-decoration-style:dotted}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  table.tbl{border-collapse:collapse;width:100%;margin:6px 0 8px;font-size:13px}
+  table.tbl th,table.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  table.tbl th{background:var(--soft);font-weight:700;color:var(--ink)}
+  table.tbl td code{color:var(--api)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:13px}
+  svg text{font-family:ui-sans-serif,system-ui;fill:var(--ink)}
+  svg .box{stroke-width:1.4}
+  svg .api{fill:var(--api-fill);stroke:var(--api-stroke)}
+  svg .agent{fill:var(--agent-fill);stroke:var(--agent-stroke)}
+  svg .store{fill:var(--store-fill);stroke:var(--store-stroke)}
+  svg .rt{fill:var(--rt-fill);stroke:var(--rt-stroke)}
+  svg .gate{fill:var(--gate-fill);stroke:var(--gate-stroke)}
+  svg .human{fill:var(--human-fill);stroke:var(--human-stroke)}
+  svg .neu{fill:#f1f5f9;stroke:#cbd5e1}
+  svg .t{font-size:13px;font-weight:600}
+  svg .s{font-size:11px;fill:var(--muted);font-weight:500}
+  svg .lbl{font-size:11px;fill:var(--muted);font-weight:600}
+  svg .edge{stroke:#94a3b8;stroke-width:1.5;fill:none}
+  svg .edge-dash{stroke:#94a3b8;stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+  svg .title{font-size:12px;font-weight:700;fill:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  pre.snippet{background:#0f172a;color:#e2e8f0;padding:14px 16px;border-radius:10px;
+    font:12.5px/1.6 ui-monospace,monospace;overflow:auto;margin:8px 0 14px}
+  pre.snippet .k{color:#93c5fd}
+  pre.snippet .s{color:#86efac}
+  pre.snippet .c{color:#94a3b8;font-style:italic}
+  .refs{font-size:13px}
+  .refs li{margin:4px 0}
+  .refs cite{font-style:normal;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="head-inner">
+    <div class="pill">Generic reference · opinionated ideal · agent-ownable slice</div>
+    <h1>The agentic design agent</h1>
+    <p class="sub">A target architecture for an AI design agent inside an application-building platform — what it should be
+    composed of, what artifacts it owns, what loops it runs, where humans gate it, and how to evaluate its output.
+    Tool-agnostic. Prescriptive, not a survey. Scope: only the parts an autonomous agent can do well today; classic
+    designer responsibilities that should stay human are explicitly called out in <a href="#human-only">§9</a>.</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#north-star">North star</a>
+    <a href="#phases">1 · Phases</a>
+    <a href="#artifacts">2 · Artifacts</a>
+    <a href="#decomposition">3 · Decomposition</a>
+    <a href="#tools">4 · Tool surface</a>
+    <a href="#mockup">5 · Mockup representation</a>
+    <a href="#loops">6 · Loops</a>
+    <a href="#qa">7 · Design QA</a>
+    <a href="#gates">8 · Human gates</a>
+    <a href="#human-only">9 · Stays human</a>
+    <a href="#eval">10 · Evaluation</a>
+    <a href="#refs">References</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="legend" style="margin-top:22px">
+    <span><i class="sw agent"></i> Agent / sub-agent</span>
+    <span><i class="sw api"></i> Tool call</span>
+    <span><i class="sw store"></i> Durable artifact</span>
+    <span><i class="sw rt"></i> Downstream consumer</span>
+    <span><i class="sw gate"></i> Approval gate</span>
+    <span><i class="sw human"></i> Human-only</span>
+  </div>
+
+  <!-- ===================== NORTH STAR ===================== -->
+  <section id="north-star">
+    <h2><span class="n">0</span> The north star</h2>
+    <p class="lead">A design agent's job inside an app-building platform is to convert
+    <b>intent</b> (a brief, a domain, a few sentences) into <b>durable, machine-readable design artifacts</b> that a
+    downstream build agent can faithfully implement, while ceding the parts that need real users or human taste back to
+    a human at well-defined gates. The agent designs at the <em>level of intent</em> — sections, hierarchy, copy,
+    interaction — not at the level of components or framework code.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1080 230" role="img" aria-label="The design agent in one picture">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+        </defs>
+        <rect class="box human" x="20" y="80" width="160" height="64" rx="10"/>
+        <text class="t" x="100" y="108" text-anchor="middle">Intent in</text>
+        <text class="s" x="100" y="126" text-anchor="middle">brief · domain · brand</text>
+
+        <rect class="box agent" x="220" y="40" width="340" height="160" rx="14"/>
+        <text class="title" x="390" y="64" text-anchor="middle">Design agent (this doc)</text>
+        <text class="s" x="390" y="92" text-anchor="middle">phases · artifacts · loops · gates</text>
+        <text class="t" x="390" y="128" text-anchor="middle">decompose · ground · critique</text>
+        <text class="s" x="390" y="156" text-anchor="middle">plan → execute → reflect → write</text>
+        <text class="s" x="390" y="180" text-anchor="middle">approve · iterate</text>
+
+        <rect class="box store" x="600" y="40" width="220" height="56" rx="10"/>
+        <text class="t" x="710" y="66" text-anchor="middle">Design tokens</text>
+        <text class="s" x="710" y="84" text-anchor="middle">W3C DTCG JSON</text>
+
+        <rect class="box store" x="600" y="120" width="220" height="56" rx="10"/>
+        <text class="t" x="710" y="146" text-anchor="middle">IA / sitemap</text>
+        <text class="s" x="710" y="164" text-anchor="middle">pages · sections · nav · flows</text>
+
+        <rect class="box store" x="600" y="200" width="220" height="56" rx="10"/>
+        <text class="t" x="710" y="226" text-anchor="middle">Per-page mockups</text>
+        <text class="s" x="710" y="244" text-anchor="middle">multimodal · structured + image</text>
+
+        <rect class="box rt" x="860" y="120" width="200" height="56" rx="10"/>
+        <text class="t" x="960" y="146" text-anchor="middle">Build agent</text>
+        <text class="s" x="960" y="164" text-anchor="middle">codegen · component synth</text>
+
+        <line class="edge" x1="180" y1="112" x2="220" y2="112" marker-end="url(#arr)"/>
+        <line class="edge" x1="560" y1="68" x2="600" y2="68" marker-end="url(#arr)"/>
+        <line class="edge" x1="560" y1="112" x2="600" y2="148" marker-end="url(#arr)"/>
+        <line class="edge" x1="560" y1="156" x2="600" y2="224" marker-end="url(#arr)"/>
+        <line class="edge" x1="820" y1="68"  x2="860" y2="140" marker-end="url(#arr)"/>
+        <line class="edge" x1="820" y1="148" x2="860" y2="148" marker-end="url(#arr)"/>
+        <line class="edge" x1="820" y1="224" x2="860" y2="160" marker-end="url(#arr)"/>
+      </svg>
+    </div>
+
+    <ul class="notes">
+      <li><b>The handoff is the product</b>. Everything else — the model choice, the prompts, the agent topology — exists to
+        produce three durable artifacts a build agent can read deterministically. Optimize for that handoff.</li>
+      <li><b>Design at the level of intent</b>. The agent emits sections, copy, hierarchy, state coverage, navigation. It
+        does <em>not</em> emit components, framework code, or implementation details — those are the build agent's job.
+        This split keeps the design agent honest and the build agent free to choose components.</li>
+      <li><b>Grounding beats freedom</b>. An agent grounded in an existing design system reuses components and produces
+        higher-quality code; ungrounded, it wastes effort searching and tends to invent duplicates.
+        <cite>(Figma MCP)</cite></li>
+    </ul>
+  </section>
+
+  <!-- ===================== PHASES ===================== -->
+  <section id="phases">
+    <h2><span class="n">1</span> The phases — what a designer does, agent-restricted</h2>
+    <p class="lead">A strong product designer's workflow has eight phases. An AI design agent can own four of them well,
+    can partially own two, and should stay out of two altogether. Below: each phase mapped to the agent slice, what's
+    produced, and what gates it.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Phase</th><th>What the designer does</th><th>Agent ownership</th><th>Artifact produced</th></tr></thead>
+      <tbody>
+        <tr><td><b>1. Brief intake</b></td><td>Capture domain, audience, brand, constraints.</td>
+            <td>Partial — agent extracts what it can from the brief; ambiguous brand/taste choices stay human.</td>
+            <td><code>brief.md</code> + structured intent</td></tr>
+        <tr><td><b>2. Research</b></td><td>User interviews, surveys, competitive analysis.</td>
+            <td><b>Human-only</b>. Real users, real interviews.</td>
+            <td>(out of scope for the agent)</td></tr>
+        <tr><td><b>3. IA</b></td><td>What pages exist, how they nest, how users navigate.</td>
+            <td><b>Agent</b>. The agent excels at decomposing a domain into pages, sections, and a nav shell.</td>
+            <td>Sitemap (pages · sections · navigation · flows)</td></tr>
+        <tr><td><b>4. Visual language</b></td><td>Pick colors, fonts, radius, density. Pick or author a theme.</td>
+            <td><b>Agent</b>, with human taste gate. Picks from a preset library; can author from a tokens spec.</td>
+            <td>Design tokens (colors · fonts · radius · spacing · semantic states)</td></tr>
+        <tr><td><b>5. Wireframe / mock</b></td><td>Sketch per-page sections, real copy, layout intent.</td>
+            <td><b>Agent</b>. Produces multimodal per-page mockups (structured + visual).</td>
+            <td>Per-page mockups (text · html · image)</td></tr>
+        <tr><td><b>6. Critique</b></td><td>Self-review and peer review against heuristics.</td>
+            <td><b>Agent</b>, as an LLM-as-judge loop grounded in named guideline sets.</td>
+            <td>Critique findings + revision proposals</td></tr>
+        <tr><td><b>7. Usability testing</b></td><td>Watch real users complete tasks; iterate.</td>
+            <td><b>Human-only</b>. Real users, real tasks. Synthetic critique is not a substitute.</td>
+            <td>(out of scope)</td></tr>
+        <tr><td><b>8. Dev handoff</b></td><td>Annotate components, states, spacing for engineers.</td>
+            <td><b>Agent</b>. Produces structured artifacts a build agent reads.</td>
+            <td>Component / section specs + handoff bundle</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b>The four phases the agent owns well</b> — IA, visual language, wireframing, dev handoff — share one property:
+      the output is <em>structured, machine-writable, and verifiable against the inputs</em>. Where the output requires
+      taste signals (brand voice) or real-user signals (usability), defer.
+    </div>
+  </section>
+
+  <!-- ===================== ARTIFACTS ===================== -->
+  <section id="artifacts">
+    <h2><span class="n">2</span> The three durable artifacts</h2>
+    <p class="lead">A design agent is defined by what it writes. Three artifacts — and their schemas — are the spine of
+    the whole system. Choose them carefully; everything else is plumbing.</p>
+
+    <h3>2.1 · Design tokens — the visual language</h3>
+    <p>The W3C Design Tokens Community Group format (DTCG) is the de-facto interoperability standard. Tokens are stored
+    as JSON; the minimal token is a JSON object containing a reserved <code>$value</code> property, with optional
+    <code>$type</code> and <code>$description</code>. The spec's explicit goal is to eliminate bespoke glue between
+    design and build tooling — which is exactly the agent-to-build-agent problem.
+    <cite>(<a href="https://www.designtokens.org/tr/drafts/format/">designtokens.org spec</a>)</cite></p>
+
+    <pre class="snippet"><span class="c">// tokens.json — DTCG shape (any object with $value IS a token)</span>
+{
+  <span class="k">"color"</span>: {
+    <span class="k">"brand"</span>: {
+      <span class="k">"primary"</span>:    { <span class="k">"$value"</span>: <span class="s">"#6366f1"</span>, <span class="k">"$type"</span>: <span class="s">"color"</span> },
+      <span class="k">"on-primary"</span>: { <span class="k">"$value"</span>: <span class="s">"#ffffff"</span>, <span class="k">"$type"</span>: <span class="s">"color"</span> }
+    }
+  },
+  <span class="k">"size"</span>: {
+    <span class="k">"radius"</span>: { <span class="k">"md"</span>: { <span class="k">"$value"</span>: <span class="s">"0.5rem"</span> } },
+    <span class="k">"font"</span>:   { <span class="k">"body"</span>: { <span class="k">"$value"</span>: <span class="s">"1rem"</span>, <span class="k">"$description"</span>: <span class="s">"default body text"</span> } }
+  }
+}</pre>
+
+    <p>Tool ecosystems like Style Dictionary already compile a single token source into platform-specific style
+    definitions (CSS/SCSS/iOS/Android), so picking DTCG as the output format means the agent's tokens are immediately
+    consumable across stacks. <cite>(<a href="https://github.com/style-dictionary/style-dictionary">Style Dictionary</a>)</cite></p>
+
+    <h3>2.2 · Sitemap — the information architecture</h3>
+    <p>A structural contract: every page that will exist, in the order the navigation surfaces them, with the sections
+    and intent baked in. The build agent reads this to know what pages to build.</p>
+
+    <pre class="snippet"><span class="c">// sitemap.json — structural, zod-validatable</span>
+{
+  <span class="k">"pages"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"dashboard"</span>,
+      <span class="k">"name"</span>: <span class="s">"Today"</span>,
+      <span class="k">"purpose"</span>: <span class="s">"At-a-glance: what's due today and recent activity."</span>,
+      <span class="k">"primaryEntity"</span>: <span class="s">"Task"</span>,
+      <span class="k">"sections"</span>: [<span class="s">"Header with greeting"</span>, <span class="s">"Today's tasks"</span>, <span class="s">"Recent activity"</span>],
+      <span class="k">"icon"</span>: <span class="s">"layout-dashboard"</span>
+    }
+  ],
+  <span class="k">"home"</span>: <span class="s">"dashboard"</span>,
+  <span class="k">"shellLayout"</span>: <span class="s">"sidebar"</span>,
+  <span class="k">"navigation"</span>: [<span class="s">"dashboard"</span>, <span class="s">"tasks"</span>, <span class="s">"settings"</span>],
+  <span class="k">"flows"</span>: [<span class="s">"Create task: header → '+ New' → form → back to dashboard"</span>]
+}</pre>
+
+    <h3>2.3 · Per-page mockups — multimodal</h3>
+    <p>Per-page wireframes / mockups, one per sitemap page, in the representations the build agent can actually parse.
+    The mockup is <em>content only</em>, never the nav chrome — the shell is rendered by the runtime from the sitemap.
+    Trade-offs between text, structured, and image representations are detailed in <a href="#mockup">§5</a>.</p>
+
+    <div class="callout purple">
+      <b>Why these three.</b> Tokens own the visual language, the sitemap owns the structure, and the mockups own
+      per-page intent. Together they're the minimal complete contract: visual + structural + content. Everything else
+      a designer makes (annotations, redlines, specs) is derivable from these three.
+    </div>
+  </section>
+
+  <!-- ===================== DECOMPOSITION ===================== -->
+  <section id="decomposition">
+    <h2><span class="n">3</span> Agent decomposition — single, planner+executor, or multi-agent</h2>
+    <p class="lead">Three topologies are viable. Pick by task parallelism, not by ambition.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1080 360" role="img" aria-label="Three topologies">
+        <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <!-- A: Single -->
+        <text class="title" x="60" y="30">A · Single agent</text>
+        <rect class="box agent" x="40" y="50" width="280" height="80" rx="10"/>
+        <text class="t" x="180" y="80" text-anchor="middle">One agent, all tools</text>
+        <text class="s" x="180" y="100" text-anchor="middle">applyTokens · saveSitemap · saveMockup</text>
+        <text class="s" x="180" y="120" text-anchor="middle">simple · shared context · slow on N pages</text>
+
+        <!-- B: Plan + execute -->
+        <text class="title" x="60" y="170">B · Plan + execute (recommended baseline)</text>
+        <rect class="box agent" x="40" y="190" width="120" height="56" rx="9"/>
+        <text class="t" x="100" y="216" text-anchor="middle">Planner</text>
+        <text class="s" x="100" y="234" text-anchor="middle">multi-step plan</text>
+
+        <rect class="box agent" x="200" y="190" width="120" height="56" rx="9"/>
+        <text class="t" x="260" y="216" text-anchor="middle">Executor</text>
+        <text class="s" x="260" y="234" text-anchor="middle">tools per step</text>
+
+        <rect class="box agent" x="360" y="190" width="140" height="56" rx="9"/>
+        <text class="t" x="430" y="216" text-anchor="middle">Re-planner</text>
+        <text class="s" x="430" y="234" text-anchor="middle">finish or follow-up</text>
+
+        <line class="edge" x1="160" y1="218" x2="200" y2="218" marker-end="url(#arr2)"/>
+        <line class="edge" x1="320" y1="218" x2="360" y2="218" marker-end="url(#arr2)"/>
+        <path class="edge-dash" d="M430,246 Q430,290 260,290 T260,246" marker-end="url(#arr2)"/>
+
+        <!-- C: Multi-agent -->
+        <text class="title" x="560" y="30">C · Multi-agent (only if parallelizable)</text>
+        <rect class="box agent" x="540" y="50" width="160" height="56" rx="9"/>
+        <text class="t" x="620" y="76" text-anchor="middle">Orchestrator</text>
+        <text class="s" x="620" y="94" text-anchor="middle">intent → subtasks</text>
+
+        <rect class="box agent" x="740" y="14" width="160" height="44" rx="9"/>
+        <text class="t" x="820" y="40" text-anchor="middle">IA specialist</text>
+
+        <rect class="box agent" x="740" y="64" width="160" height="44" rx="9"/>
+        <text class="t" x="820" y="90" text-anchor="middle">Visual specialist</text>
+
+        <rect class="box agent" x="740" y="114" width="160" height="44" rx="9"/>
+        <text class="t" x="820" y="140" text-anchor="middle">Page mockup × N</text>
+
+        <rect class="box agent" x="740" y="164" width="160" height="44" rx="9"/>
+        <text class="t" x="820" y="190" text-anchor="middle">Critic</text>
+
+        <line class="edge" x1="700" y1="78" x2="740" y2="36" marker-end="url(#arr2)"/>
+        <line class="edge" x1="700" y1="78" x2="740" y2="86" marker-end="url(#arr2)"/>
+        <line class="edge" x1="700" y1="78" x2="740" y2="136" marker-end="url(#arr2)"/>
+        <line class="edge" x1="700" y1="78" x2="740" y2="186" marker-end="url(#arr2)"/>
+
+        <rect class="box rt" x="540" y="230" width="360" height="56" rx="9"/>
+        <text class="t" x="720" y="256" text-anchor="middle">Three artifacts (consolidated)</text>
+        <text class="s" x="720" y="274" text-anchor="middle">tokens · sitemap · mockups</text>
+
+        <line class="edge" x1="820" y1="208" x2="720" y2="230" marker-end="url(#arr2)"/>
+      </svg>
+    </div>
+
+    <h3>The recommended baseline: <em>plan + execute</em></h3>
+    <p>A planner LLM produces a multi-step plan up front; an executor LLM runs each step with the agent's tools; a
+    re-planner decides after execution whether to finish or generate a follow-up plan. This is a stronger default than
+    reactive (ReAct) because (1) the planner reasons about the whole task instead of one sub-problem at a time, and (2)
+    it doesn't need a new LLM call per tool invocation. <cite>(<a href="https://www.langchain.com/blog/planning-agents">LangChain · planning agents</a>)</cite></p>
+
+    <h3>When to escalate to multi-agent</h3>
+    <p>Multi-agent decomposition (orchestrator + parallel specialist subagents) is a real win — Anthropic measured a
+    90.2% improvement over a single-agent baseline on research-style tasks
+    <cite>(<a href="https://www.anthropic.com/engineering/multi-agent-research-system">Anthropic multi-agent</a>)</cite> — but only when (a) the work is genuinely parallelizable and (b) the
+    subagents don't need to share each other's context. Most design phases share context (a visual choice in §4
+    constrains the mockups in §5), so the natural multi-agent split is <em>per-page mockup generation</em>, not
+    cross-phase.</p>
+
+    <div class="callout">
+      <b>Subagent contract.</b> When you do spawn subagents, each one must be given a concrete contract: <em>objective,
+      output format, tool/source guidance, and explicit task boundaries</em>. Skipping any of these is the dominant
+      cause of subagent failure and duplicated work. <cite>(Anthropic multi-agent)</cite>
+    </div>
+
+    <h3>Practical recipe</h3>
+    <ul class="notes">
+      <li><b>For 1-3 pages</b>: single agent with the three tools. Latency wins.</li>
+      <li><b>For 4+ pages</b>: plan + execute, with per-page mockup generation fanned out in parallel. (Mockups are
+        embarrassingly parallel — each page only needs the sitemap + tokens, not other pages' mockups.)</li>
+      <li><b>For larger work (deep IA, design audit, redesign)</b>: orchestrator + specialist subagents (IA, visual,
+        per-page mockup, critic). Use the subagent contract above.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== TOOLS ===================== -->
+  <section id="tools">
+    <h2><span class="n">4</span> The tool surface — minimum viable</h2>
+    <p class="lead">A small, sharp tool set. Each tool writes exactly one of the three artifacts (or a slice of one), so
+    the agent's blast radius is always knowable.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Tool</th><th>Writes</th><th>Input shape</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>applyTokens</code></td>
+          <td>tokens.json</td>
+          <td>Either a <code>preset</code> id (pick) or a full <code>{ colors, fonts, radius, ... }</code> token set (author)</td>
+          <td>Two-mode tool. Pick is preferred — leans on a curated library. Author is the escape hatch when no preset fits.</td>
+        </tr>
+        <tr>
+          <td><code>saveSitemap</code></td>
+          <td>sitemap.json</td>
+          <td>Pages array + nav + home + shellLayout + flows</td>
+          <td>Schema-validated. Rejects orphan refs (e.g. a flow referencing a non-existent page).</td>
+        </tr>
+        <tr>
+          <td><code>saveMockup</code></td>
+          <td>mockups/&lt;pageId&gt;.{text,html,image}</td>
+          <td><code>{ pageId, mode, content }</code> — pageId must match a sitemap page</td>
+          <td>One mode at a time; multiple modes coexist. See <a href="#mockup">§5</a> for representations.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Tools the design agent should NOT have</h3>
+    <ul class="notes">
+      <li><b>No <code>searchComponents</code> / fragment library access</b>. If the agent sees the existing component
+        library, it designs <em>toward</em> what exists — every app drifts toward the same handful of layouts. The agent
+        designs at the level of intent; the build agent picks components. (This isn't ideological — it's an explicit
+        information-architecture choice that produces more diverse designs and surfaces gaps in the component library
+        as actionable signal.)</li>
+      <li><b>No <code>savePage</code> / codegen tools</b>. The design agent does not write framework code. If you can't
+        cleanly separate this from the build agent's surface, your boundary is wrong.</li>
+      <li><b>No write access to data / business logic</b>. The data model lives upstream; the design agent reads it.</li>
+    </ul>
+
+    <div class="callout purple">
+      <b>The fewer tools the better.</b> Three tools, three artifacts. Resist the temptation to add tools for
+      &ldquo;a designer would do that&rdquo; — most of those tasks reduce to the existing artifacts. Adding tools
+      expands the agent's blast radius without expanding its capability.
+    </div>
+  </section>
+
+  <!-- ===================== MOCKUP REPRESENTATION ===================== -->
+  <section id="mockup">
+    <h2><span class="n">5</span> Mockup representation — the central trade-off</h2>
+    <p class="lead">How do you represent a mockup so a downstream build agent can reproduce it? The choice between text,
+    structured JSON, and image dominates handoff quality. The honest answer is <b>multimodal: structured + image
+    together</b>.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Representation</th><th>Carries</th><th>Strengths</th><th>Blind spots</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Text</b> (markdown)</td>
+          <td>Section order, real copy, state coverage</td>
+          <td>Cheap to generate, easy to diff/edit, build agent can quote copy verbatim</td>
+          <td>No spatial signal — relative widths, alignment, density are invisible</td>
+        </tr>
+        <tr>
+          <td><b>Structured JSON</b><br>(condensed scene graph)</td>
+          <td>Semantic <em>(text · element type · group name)</em> + visual <em>(x, y, w, h, color, font)</em> per node</td>
+          <td>Parseable, queryable, fits in context (~3-5k tokens per UI); precise positions</td>
+          <td>Cannot represent &ldquo;does this element actually overlap that one?&rdquo; or center-alignment of differently-sized elements without rendering it.
+            <cite>(<a href="https://arxiv.org/html/2403.13139v1">Duan et al. 2024</a>)</cite></td>
+        </tr>
+        <tr>
+          <td><b>Image</b> (screenshot)</td>
+          <td>The actual rendered visual — color, density, balance, rhythm</td>
+          <td>Captures everything the structured representation misses; a vision-capable build agent reads it natively</td>
+          <td>Not queryable; text is OCR-lossy; large in tokens; can't reliably extract copy verbatim</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>The multimodal recommendation</h3>
+    <p>Combining a screenshot with structured metadata produces better code than either alone — this is the central
+    empirical finding from the design-to-code literature. <cite>(<a href="https://www.figma.com/blog/introducing-figma-mcp-server/">Figma MCP</a>)</cite>
+    A design agent should produce <em>both</em> a structured representation (for queryability + copy fidelity) and a
+    rendered image (for spatial fidelity), then hand both to the build agent.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1080 220" role="img" aria-label="Multimodal mockup">
+        <defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <rect class="box agent" x="40" y="80" width="200" height="60" rx="10"/>
+        <text class="t" x="140" y="106" text-anchor="middle">Design agent</text>
+        <text class="s" x="140" y="124" text-anchor="middle">saveMockup(...)</text>
+
+        <rect class="box store" x="320" y="20" width="220" height="56" rx="10"/>
+        <text class="t" x="430" y="46" text-anchor="middle">Structured JSON</text>
+        <text class="s" x="430" y="64" text-anchor="middle">copy · positions · types</text>
+
+        <rect class="box store" x="320" y="100" width="220" height="56" rx="10"/>
+        <text class="t" x="430" y="126" text-anchor="middle">Rendered image</text>
+        <text class="s" x="430" y="144" text-anchor="middle">visual ground truth</text>
+
+        <rect class="box rt" x="620" y="60" width="200" height="60" rx="10"/>
+        <text class="t" x="720" y="86" text-anchor="middle">Build agent</text>
+        <text class="s" x="720" y="104" text-anchor="middle">multimodal input</text>
+
+        <line class="edge" x1="240" y1="100" x2="320" y2="48" marker-end="url(#arr3)"/>
+        <line class="edge" x1="240" y1="120" x2="320" y2="128" marker-end="url(#arr3)"/>
+        <line class="edge" x1="540" y1="48"  x2="620" y2="84" marker-end="url(#arr3)"/>
+        <line class="edge" x1="540" y1="128" x2="620" y2="96" marker-end="url(#arr3)"/>
+
+        <text class="lbl" x="900" y="70">structured</text>
+        <text class="lbl" x="900" y="92">+ image →</text>
+        <text class="lbl" x="900" y="114">better than either</text>
+        <text class="lbl" x="900" y="136">alone (Figma 2025)</text>
+      </svg>
+    </div>
+
+    <h3>The dominant failure mode in design-to-code</h3>
+    <p>Empirical work on design-to-code benchmarks finds the dominant failure isn't styling — it's <em>recalling which
+    visual elements exist in the input and reproducing correct layout</em>. The implication for a design agent: the
+    handoff artifact should <em>explicitly enumerate elements</em> (the structured representation's job) rather than
+    trust the build agent to infer them from an image alone. <cite>(<a href="https://arxiv.org/pdf/2403.03163">Si et al. Design2Code</a>)</cite></p>
+
+    <h3>What goes in the structured representation</h3>
+    <p>Each node should carry <em>both semantic and visual</em> data. The condensed JSON scene-graph approach from
+    Duan et al. is the canonical shape: <code>{ type, name, text, x, y, w, h, color, bg, opacity, font, children }</code>.
+    Trimmed of decorative noise, a complete page fits in ~3-5k tokens. <cite>(Duan et al. 2024)</cite></p>
+
+    <div class="callout">
+      <b>Practical posture.</b> Default to <code>structured JSON + image</code> as a pair. Drop the image (cost) only
+      when the design is genuinely spatial-trivial — a one-section form, a settings list. Drop the structured (no
+      copy fidelity) only when the agent literally cannot produce machine-readable output.
+    </div>
+  </section>
+
+  <!-- ===================== LOOPS ===================== -->
+  <section id="loops">
+    <h2><span class="n">6</span> The three loops — plan, critique, validate</h2>
+    <p class="lead">A design agent is not one-shot. It runs three nested loops at different granularities.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1080 280" role="img" aria-label="Three loops">
+        <defs><marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <rect class="box agent" x="40" y="40" width="220" height="200" rx="14"/>
+        <text class="title" x="150" y="64" text-anchor="middle">Outer · plan + re-plan</text>
+        <text class="s" x="150" y="86" text-anchor="middle">plan(brief) → execute → re-plan</text>
+
+        <rect class="box neu" x="280" y="50" width="200" height="180" rx="12"/>
+        <text class="title" x="380" y="74" text-anchor="middle">Middle · critique loop</text>
+        <text class="s" x="380" y="96" text-anchor="middle">draft → critique → revise</text>
+
+        <rect class="box rt" x="500" y="60" width="180" height="160" rx="10"/>
+        <text class="title" x="590" y="84" text-anchor="middle">Inner · validate</text>
+        <text class="s" x="590" y="104" text-anchor="middle">schema · refs · contrast</text>
+
+        <line class="edge" x1="260" y1="140" x2="280" y2="140" marker-end="url(#arr4)"/>
+        <line class="edge" x1="480" y1="140" x2="500" y2="140" marker-end="url(#arr4)"/>
+
+        <rect class="box gate" x="740" y="100" width="180" height="80" rx="10"/>
+        <text class="t" x="830" y="130" text-anchor="middle">Approval gate</text>
+        <text class="s" x="830" y="150" text-anchor="middle">human signs off</text>
+
+        <line class="edge" x1="680" y1="140" x2="740" y2="140" marker-end="url(#arr4)"/>
+      </svg>
+    </div>
+
+    <h3>6.1 · Outer loop — plan / execute / re-plan</h3>
+    <p>The plan-and-execute pattern from §3. The outer loop owns the decision &ldquo;am I done, or do I need another
+    plan?&rdquo; — and is the natural place to attach token budgets and step caps.</p>
+
+    <h3>6.2 · Middle loop — self-critique (reflection)</h3>
+    <p>For each artifact draft, run a critique pass before saving. The critic LLM (same agent in self-critique, or a
+    separate &ldquo;critic&rdquo; subagent) reviews the draft against a fixed rubric and emits revision proposals; the
+    drafter incorporates them. Two-pass minimum: <em>draft → critique → revise</em>.</p>
+
+    <p>The critical insight from the literature: <b>grounding the critic in specific, named guideline sets</b> — Nielsen's
+    10 Heuristics, accessibility checklists, named visual design principles — yields higher-quality and more diverse
+    feedback than asking for &ldquo;general UI feedback&rdquo;. <cite>(<a href="https://arxiv.org/html/2403.13139v1">Duan et al. 2024</a>)</cite></p>
+
+    <h3>6.3 · Inner loop — validators (deterministic)</h3>
+    <p>Before the agent ever sees a draft as &ldquo;done,&rdquo; deterministic validators reject malformed output:</p>
+    <ul class="notes">
+      <li><b>Schema validation</b> on tokens.json (DTCG conformance), sitemap.json (zod), mockup metadata.</li>
+      <li><b>Referential integrity</b>: every flow references real pages; every <code>navigation</code> entry exists;
+        every <code>primaryEntity</code> exists in the data model; every icon name is in the icon library.</li>
+      <li><b>Accessibility primitives</b>: contrast ratios on token pairs (WCAG AA/AAA), font-size minimums, target-size
+        minimums.</li>
+      <li><b>Cross-artifact consistency</b>: every mockup's <code>pageId</code> matches the sitemap; every section
+        referenced in a mockup is declared in the sitemap.</li>
+    </ul>
+
+    <div class="callout">
+      <b>Order matters.</b> Validators run first (cheap, deterministic). If they fail, the agent retries that artifact
+      without burning critique tokens. Critique runs only against validator-passing drafts.
+    </div>
+  </section>
+
+  <!-- ===================== DESIGN QA ===================== -->
+  <section id="qa">
+    <h2><span class="n">7</span> Design QA — the critic's rubric</h2>
+    <p class="lead">The middle loop's critic is only as good as its rubric. Five dimensions, each grounded in a named
+    guideline set rather than a vague &ldquo;is this good UI?&rdquo; prompt.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Dimension</th><th>Grounded in</th><th>What the critic checks</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Usability</b></td>
+          <td>Nielsen's 10 Usability Heuristics</td>
+          <td>Visibility of system status · match real-world language · user control · consistency · error prevention · recognition over recall · flexibility · aesthetic-minimalist · error recovery · help.</td>
+        </tr>
+        <tr>
+          <td><b>Visual hierarchy</b></td>
+          <td>Named visual design principles (e.g. CrowdCrit)</td>
+          <td>Is the primary action visually dominant? Are sections clearly separated? Does the eye follow the intended path?</td>
+        </tr>
+        <tr>
+          <td><b>Semantic grouping</b></td>
+          <td>Named semantic-grouping guidelines (e.g. Duan et al.)</td>
+          <td>Are related elements visually grouped? Do labels sit near their controls? Are sections coherent?</td>
+        </tr>
+        <tr>
+          <td><b>State coverage</b></td>
+          <td>Loading / empty / error / partial state checklists</td>
+          <td>Does every list have an empty state? Every async surface a loading state? Every form an error path?</td>
+        </tr>
+        <tr>
+          <td><b>Accessibility</b></td>
+          <td>WCAG 2.1 AA</td>
+          <td>Color contrast on token pairs · target sizes · semantic structure · keyboard reachability hints in mockup.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>How the critique step is structured</h3>
+    <pre class="snippet"><span class="c">// Critique prompt — grounded in a NAMED rubric (not "general feedback")</span>
+You are a UX critic. Review this mockup against <b>Nielsen's 10 Usability Heuristics</b>
+ONLY. For each heuristic that applies, return:
+  - heuristic: &lt;name&gt;
+  - violation: &lt;concrete description&gt;
+  - severity: critical | major | minor
+  - revision: &lt;specific change to make&gt;
+
+If a heuristic doesn't apply to this artifact, omit it.</pre>
+
+    <div class="callout purple">
+      <b>Why named rubrics matter.</b> The Duan et al. result is concrete: specific guidance produces higher-quality and
+      more diverse critique than open-ended &ldquo;tell me what's wrong.&rdquo; Pick a rubric, name it, and instruct
+      against it. If you want multi-dimensional critique, run the critic <em>multiple times</em> with different rubrics,
+      not one omnibus pass.
+    </div>
+  </section>
+
+  <!-- ===================== GATES ===================== -->
+  <section id="gates">
+    <h2><span class="n">8</span> Approval gates — where the human signs off</h2>
+    <p class="lead">An agent that ships without human review is a tool, not a colleague. Three explicit gates, between
+    phases. Each gate is small (review one artifact, approve / request changes); the agent never advances past a gate
+    on its own.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1080 220" role="img" aria-label="Approval gates">
+        <defs><marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+
+        <rect class="box agent" x="20" y="80" width="140" height="60" rx="9"/>
+        <text class="t" x="90" y="106" text-anchor="middle">Brief intake</text>
+        <text class="s" x="90" y="124" text-anchor="middle">structured intent</text>
+
+        <rect class="box gate" x="180" y="80" width="100" height="60" rx="9"/>
+        <text class="t" x="230" y="106" text-anchor="middle">Gate 1</text>
+        <text class="s" x="230" y="124" text-anchor="middle">scope OK?</text>
+
+        <rect class="box agent" x="300" y="80" width="160" height="60" rx="9"/>
+        <text class="t" x="380" y="106" text-anchor="middle">IA + visual</text>
+        <text class="s" x="380" y="124" text-anchor="middle">sitemap + tokens</text>
+
+        <rect class="box gate" x="480" y="80" width="100" height="60" rx="9"/>
+        <text class="t" x="530" y="106" text-anchor="middle">Gate 2</text>
+        <text class="s" x="530" y="124" text-anchor="middle">structure OK?</text>
+
+        <rect class="box agent" x="600" y="80" width="160" height="60" rx="9"/>
+        <text class="t" x="680" y="106" text-anchor="middle">Mockups</text>
+        <text class="s" x="680" y="124" text-anchor="middle">per page</text>
+
+        <rect class="box gate" x="780" y="80" width="100" height="60" rx="9"/>
+        <text class="t" x="830" y="106" text-anchor="middle">Gate 3</text>
+        <text class="s" x="830" y="124" text-anchor="middle">design OK?</text>
+
+        <rect class="box rt" x="900" y="80" width="160" height="60" rx="9"/>
+        <text class="t" x="980" y="106" text-anchor="middle">Build agent</text>
+        <text class="s" x="980" y="124" text-anchor="middle">handoff</text>
+
+        <line class="edge" x1="160" y1="110" x2="180" y2="110" marker-end="url(#arr5)"/>
+        <line class="edge" x1="280" y1="110" x2="300" y2="110" marker-end="url(#arr5)"/>
+        <line class="edge" x1="460" y1="110" x2="480" y2="110" marker-end="url(#arr5)"/>
+        <line class="edge" x1="580" y1="110" x2="600" y2="110" marker-end="url(#arr5)"/>
+        <line class="edge" x1="760" y1="110" x2="780" y2="110" marker-end="url(#arr5)"/>
+        <line class="edge" x1="880" y1="110" x2="900" y2="110" marker-end="url(#arr5)"/>
+      </svg>
+    </div>
+
+    <h3>The three gates</h3>
+    <ul class="notes">
+      <li><b>Gate 1 — Brief approval</b>: did the agent capture intent correctly? Catches misunderstandings before they
+        compound through three artifacts.</li>
+      <li><b>Gate 2 — Structure approval</b>: tokens + sitemap. Visual language and IA are the architectural decisions;
+        wait to spend mockup tokens until the human has signed off.</li>
+      <li><b>Gate 3 — Design approval</b>: per-page mockups. Last point before handoff to the build agent.</li>
+    </ul>
+
+    <h3>Gate UX</h3>
+    <p>Each gate has three actions: <b>approve</b> (advance), <b>request changes</b> (specify what), <b>reset</b> (start
+    the phase over). The agent does not advance the run state without an explicit approve. Critique can be auto-run by
+    the agent before presenting at the gate, but the gate itself is human.</p>
+
+    <div class="callout pink">
+      <b>Why gates, not just review-and-trust.</b> Even with strong critique loops, the literature on automated UI
+      design quality is honest: synthetic critique cannot substitute for real human taste on brand/voice and cannot
+      substitute for real users on usability. Gates exist to keep humans authoring the parts they should still author.
+    </div>
+  </section>
+
+  <!-- ===================== HUMAN-ONLY ===================== -->
+  <section id="human-only">
+    <h2><span class="n">9</span> What stays human — the explicit out-of-scope</h2>
+    <p class="lead">The scope discipline that makes this whole architecture honest. Five responsibilities a strong
+    designer owns that an autonomous AI design agent should <em>not</em> attempt to own.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Responsibility</th><th>Why it stays human</th><th>Where the agent helps anyway</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>User research</b></td>
+          <td>Requires real users, real interviews, real ethnographic observation. Synthetic personas drift from real ones.</td>
+          <td>Agent can summarize known research artifacts as context; can flag where data is missing.</td>
+        </tr>
+        <tr>
+          <td><b>Product strategy</b></td>
+          <td>What to build, for whom, against which alternatives. Requires market judgement and stakeholder alignment.</td>
+          <td>Agent can produce options matrices and consequence analyses; the call stays with humans.</td>
+        </tr>
+        <tr>
+          <td><b>Brand &amp; taste sign-off</b></td>
+          <td>Brand voice and aesthetic judgement are taste calls — culturally and temporally specific.</td>
+          <td>Agent picks from a brand-curated preset library and proposes; the human approves at Gate 2.</td>
+        </tr>
+        <tr>
+          <td><b>Usability testing</b></td>
+          <td>Real users completing real tasks. Synthetic LLM-as-judge is not a substitute for observation.</td>
+          <td>Agent runs pre-flight heuristic checks (§7); humans run the actual sessions.</td>
+        </tr>
+        <tr>
+          <td><b>Final accessibility audit</b></td>
+          <td>Automated checks catch ~30-40% of WCAG issues; the rest needs trained human auditing and assistive-tech testing.</td>
+          <td>Agent enforces token-level contrast, target sizes, and semantic structure as validators; humans audit before ship.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout pink">
+      <b>The point.</b> A design agent that respects these five boundaries is a sharp colleague. One that doesn't is a
+      liability. The boundary is not about capability — it's about what humans should own because the consequences are
+      theirs.
+    </div>
+  </section>
+
+  <!-- ===================== EVAL ===================== -->
+  <section id="eval">
+    <h2><span class="n">10</span> Evaluation — how you know the agent is good</h2>
+    <p class="lead">An agent without an eval loop is a guess. Four evaluation methods, ordered from cheap-to-run to
+    high-signal. Use them in combination.</p>
+
+    <h3>10.1 · Schema + invariant checks (cheap, deterministic)</h3>
+    <p>Every artifact has a schema. Every cross-artifact relationship has a referential-integrity check (every flow
+    points at a real page, every mockup matches a sitemap pageId, every token is DTCG-valid). These are pass/fail and
+    run in milliseconds. The cheapest possible signal: <em>is the output structurally well-formed?</em></p>
+
+    <h3>10.2 · LLM-as-judge against a named rubric (medium cost, high diversity)</h3>
+    <p>The critique-loop rubrics from §7, run as standalone evals. Score each artifact 1-5 per heuristic; aggregate
+    across runs. Two practical notes: (a) judges grounded in named rubrics (Nielsen, WCAG) are far more reliable than
+    open-ended &ldquo;is this good?&rdquo;; (b) self-judge bias is real — use a different model for the judge than for
+    the drafter.</p>
+
+    <h3>10.3 · Visual diff &amp; design-to-code fidelity (high cost, high specificity)</h3>
+    <p>Render the agent's mockup, render the build agent's implementation, diff them. The design-to-code literature
+    decomposes this into specific sub-metrics: <b>high-level visual similarity</b> (CLIP image embedding distance) +
+    <b>low-level element matching</b> (block-match, text-OCR match, position match, color match). This is the metric
+    suite a faithful handoff should optimize. <cite>(<a href="https://arxiv.org/pdf/2403.03163">Si et al. Design2Code</a>)</cite></p>
+
+    <h3>10.4 · Real users (highest cost, ground truth)</h3>
+    <p>Methods 10.1–10.3 are proxies. Real-user testing is the ground truth and stays human-owned (§9). Use the cheaper
+    methods to filter aggressively before spending real-user time.</p>
+
+    <div class="callout">
+      <b>The eval triangle.</b> Schema invariants catch broken output. LLM-as-judge catches obvious craft issues. Visual
+      diff catches handoff fidelity. Real users catch the rest. Each layer assumes the layer below has already filtered
+      out its class of failure; without this stratification, evals are noisy and slow.
+    </div>
+  </section>
+
+  <!-- ===================== REFERENCES ===================== -->
+  <section id="refs">
+    <h2><span class="n">11</span> References &amp; reading</h2>
+    <p class="lead">Sources cited inline above, plus the broader reading the architecture draws on.</p>
+
+    <h3>Practitioner / process</h3>
+    <ul class="refs">
+      <li><a href="https://atomicdesign.bradfrost.com/chapter-2/">Brad Frost — <cite>Atomic Design</cite>, Chapter 2 (atoms, molecules, organisms, templates, pages)</a></li>
+      <li><a href="https://ixdf.org/literature/topics/heuristic-evaluation">Interaction Design Foundation — <cite>Heuristic Evaluation</cite></a></li>
+      <li><a href="https://blog.zeplin.io/design-delivery/design-handoff-101-how-to-handoff-designs-to-developers/">Zeplin — <cite>Design Handoff 101</cite></a></li>
+      <li><a href="https://www.uxpin.com/studio/blog/10-annotation-examples-for-clear-developer-handoff/">UXPin — <cite>10 Annotation Examples for Developer Handoff</cite></a></li>
+    </ul>
+
+    <h3>Design systems &amp; tokens</h3>
+    <ul class="refs">
+      <li><a href="https://www.designtokens.org/tr/drafts/format/">DTCG — <cite>Design Tokens Format Module (draft spec)</cite></a></li>
+      <li><a href="https://github.com/style-dictionary/style-dictionary">Style Dictionary — token build system for multi-platform output</a></li>
+      <li><a href="https://www.contentful.com/blog/design-token-system/">Contentful — <cite>Design Token System</cite></a></li>
+    </ul>
+
+    <h3>Mockup representation &amp; design-to-code</h3>
+    <ul class="refs">
+      <li><a href="https://arxiv.org/html/2403.13139v1">Duan et al. (2024) — <cite>UICrit: Enhancing Automated Design Critique with a UICritique Dataset</cite> (condensed JSON scene-graph; named-rubric critique)</a></li>
+      <li><a href="https://arxiv.org/pdf/2403.03163">Si et al. (2024) — <cite>Design2Code: How Far Are We From Automating Front-End Engineering?</cite> (image-as-input handoff + decomposed fidelity metric)</a></li>
+      <li><a href="https://www.figma.com/blog/introducing-figma-mcp-server/">Figma — <cite>Introducing the Figma MCP Server</cite> (multimodal beats single-modal; grounding in design systems)</a></li>
+      <li><a href="https://www.builder.io/blog/figma-mcp-server">Builder.io — <cite>Figma MCP server walkthrough</cite></a></li>
+    </ul>
+
+    <h3>Agent architecture</h3>
+    <ul class="refs">
+      <li><a href="https://www.anthropic.com/engineering/multi-agent-research-system">Anthropic — <cite>How we built our multi-agent research system</cite> (orchestrator + parallel specialists; subagent contract)</a></li>
+      <li><a href="https://www.langchain.com/blog/planning-agents">LangChain — <cite>Planning agents</cite> (plan / execute / re-plan pattern)</a></li>
+      <li><a href="https://www.langchain.com/blog/reflection-agents">LangChain — <cite>Reflection agents</cite> (self-critique loop)</a></li>
+      <li><a href="https://towardsdatascience.com/single-agent-vs-multi-agent-when-to-build-a-multi-agent-system/">TDS — <cite>Single-agent vs Multi-agent</cite></a></li>
+      <li><a href="https://dasroot.net/posts/2026/04/agent-architectures-react-plan-execute-graph-agents/">dasroot — <cite>Agent architectures: ReAct, plan-and-execute, graph agents</cite></a></li>
+    </ul>
+
+    <h3>Design quality &amp; evaluation</h3>
+    <ul class="refs">
+      <li><a href="https://arxiv.org/html/2509.16779">Designer feedback modalities &amp; learnable preference signal (2025)</a></li>
+      <li><a href="https://arxiv.org/abs/2507.22827">Multimodal UI evaluation &amp; reward models (2025)</a></li>
+      <li><a href="https://arxiv.org/html/2506.06251v3">UI design generation with learned reward (2025)</a></li>
+      <li><a href="https://arxiv.org/pdf/2510.15306">Design-to-code fidelity rubrics (2025)</a></li>
+      <li><a href="https://arxiv.org/html/2510.08783v1">UI-quality evaluation methods (2025)</a></li>
+      <li><a href="https://arxiv.org/pdf/2407.08850">LLM-as-judge for design critique</a></li>
+      <li><a href="https://arxiv.org/html/2404.12500v1">Automated heuristic evaluation literature</a></li>
+      <li><a href="https://dl.acm.org/doi/fullHtml/10.1145/3586182.3615810">ACM — CHI/UIST design-critique literature</a></li>
+      <li><a href="https://testparty.ai/blog/automated-accessibility-testing-guide">TestParty — automated accessibility testing</a></li>
+    </ul>
+
+    <h3>Human-in-the-loop &amp; limitations</h3>
+    <ul class="refs">
+      <li><a href="https://www.stackai.com/insights/human-in-the-loop-ai-agents-how-to-design-approval-workflows-for-safe-and-scalable-automation">StackAI — <cite>Human-in-the-loop AI agents: approval workflows</cite></a></li>
+      <li><a href="https://hashbyt.com/blog/ai-ui-design-limitations-human-designers">Hashbyt — <cite>AI UI design limitations vs human designers</cite></a></li>
+      <li><a href="https://arxiv.org/pdf/2503.03924">Limits of autonomous AI design (2025)</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>This is a generic reference, not a product spec. It describes the agentic design agent in its ideal form;
+    specific implementations will trade off depending on stack, latency budgets, and human-team capacity. Companion docs
+    in this folder describe one specific implementation
+    (<a href="design-agent.html">design-agent.html</a>) and the broader system it sits in
+    (<a href="understanding_v1.html">understanding_v1.html</a>).</p>
+  </footer>
+
+</div>
+</body>
+</html>

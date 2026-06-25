@@ -20,6 +20,7 @@ import { buildShowcaseEntries } from "@/showcase/components/catalogMeta";
 const TABS = [
   { href: "/showcase/components", label: "Components" },
   { href: "/showcase/blocks", label: "Blocks" },
+  { href: "/showcase/shells", label: "Shells" },
 ] as const;
 
 const THEME_KEY = "patchwork-showcase-theme";

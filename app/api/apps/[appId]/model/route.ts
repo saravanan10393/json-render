@@ -2,6 +2,7 @@ import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { listPageIds } from "@/lib/server/apps";
+import { readLatestBuildMeta } from "@/lib/server/builds";
 import { readMockups, readSitemap } from "@/lib/server/design-artifacts";
 import { getAppThemeOrDefault } from "@/lib/server/design-md";
 import { countRecords, listEntities, queryRecords } from "@/lib/server/entity-store";
@@ -49,6 +50,9 @@ export async function GET(
     theme: getAppThemeOrDefault(appId),
     sitemap: readSitemap(appId),
     mockups: readMockups(appId),
+    // Freshest build snapshot's meta — drives the "Built from <mode>" badge.
+    // Null when no builds have run yet (or all are pre-meta legacy snapshots).
+    lastBuild: readLatestBuildMeta(appId),
     pagesStale,
   });
 }

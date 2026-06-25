@@ -49,6 +49,9 @@ export interface BuildSnapshot {
   dirSlug: string;
   savedAt: string;
   pages: string[];
+  /** Mockup mode the agent was handed during this build (text/html/image).
+   *  Surfaced as an app-level "Built from <mode>" badge above the runtime. */
+  mockupMode?: string;
 }
 
 /**
@@ -56,7 +59,11 @@ export interface BuildSnapshot {
  * any prior snapshot for the same model. Returns null when there's nothing to
  * snapshot (no build files at root yet).
  */
-export function snapshotBuild(appId: string, modelSlug: string): BuildSnapshot | null {
+export function snapshotBuild(
+  appId: string,
+  modelSlug: string,
+  mockupMode?: string,
+): BuildSnapshot | null {
   const root = appDir(appId);
   if (!existsSync(root)) return null;
   const files = readdirSync(root).filter(isBuildFile);
@@ -68,10 +75,16 @@ export function snapshotBuild(appId: string, modelSlug: string): BuildSnapshot |
   mkdirSync(dst, { recursive: true });
   for (const f of files) cpSync(path.join(root, f), path.join(dst, f));
 
-  const meta = { modelSlug, savedAt: new Date().toISOString(), pages: files };
+  const meta = { modelSlug, savedAt: new Date().toISOString(), pages: files, mockupMode };
   // Persist meta separately from the page JSONs (it's not a page file).
   writeFileSync(path.join(dst, "meta.json"), JSON.stringify(meta, null, 2));
-  return { modelSlug, dirSlug, savedAt: meta.savedAt, pages: files };
+  return { modelSlug, dirSlug, savedAt: meta.savedAt, pages: files, mockupMode };
+}
+
+/** The freshest snapshot's meta, or null when no builds have run yet — drives
+ *  the "Built from <mode> · <model> · <time>" badge in the Build view. */
+export function readLatestBuildMeta(appId: string): BuildSnapshot | null {
+  return listBuilds(appId)[0] ?? null;
 }
 
 /** Every snapshot under builds/, newest first. */
@@ -83,7 +96,7 @@ export function listBuilds(appId: string): BuildSnapshot[] {
     const dir = path.join(buildsRoot, entry);
     if (!statSync(dir).isDirectory()) continue;
     const metaPath = path.join(dir, "meta.json");
-    let meta: { modelSlug?: string; savedAt?: string; pages?: string[] } = {};
+    let meta: { modelSlug?: string; savedAt?: string; pages?: string[]; mockupMode?: string } = {};
     if (existsSync(metaPath)) {
       try {
         meta = JSON.parse(readFileSync(metaPath, "utf8")) as typeof meta;
@@ -97,6 +110,7 @@ export function listBuilds(appId: string): BuildSnapshot[] {
       dirSlug: entry,
       savedAt: meta.savedAt ?? statSync(dir).mtime.toISOString(),
       pages,
+      mockupMode: meta.mockupMode,
     });
   }
   return out.sort((a, b) => b.savedAt.localeCompare(a.savedAt));

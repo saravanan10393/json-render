@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { RequestContext } from "@mastra/core/request-context";
 import type { UIMessage } from "ai";
 import { deletePage, listPageIds, readAllPages, readAppIndex, readSourceAudit } from "@/lib/server/apps";
@@ -17,6 +18,7 @@ import { computeFragmentCoverage, coverageToPrompt } from "@/lib/server/fragment
 import { getAppTheme, getAppThemeOrDefault } from "@/lib/server/design-md";
 import { installDesignTiming } from "@/lib/server/design-timing";
 import { listEntities } from "@/lib/server/entity-store";
+import { readCachedScreenshotPath } from "@/lib/server/html-renderer";
 import { generateMockupImage } from "@/lib/server/image-gen";
 import { agentForStage, type RunConfig, type Stage } from "@/lib/server/runs";
 import {
@@ -34,9 +36,15 @@ import {
  *  format carries — text is concise markdown (5KB ample), HTML is a styled
  *  document the agent needs to reproduce structurally (20KB). Within Sonnet
  *  4.5's 200K context for any realistic app size. */
+// Per-page truncation budget in the frontend agent's system prompt. text is
+// concise markdown (5KB ample); html is a full styled document the agent must
+// reproduce structurally, so it needs headroom — real-world html mockups land
+// at 18–25KB and the prior 20KB cap silently clipped the bottom of pages with
+// rich sections. 40KB leaves room for 5 pages + the rest of the prompt while
+// staying well under Sonnet 4.5's 200K context window.
 const MOCKUP_PER_PAGE_BUDGET: Record<"text" | "html", number> = {
   text: 5000,
-  html: 20000,
+  html: 40000,
 };
 /** Compact `ENTITIES:` block — shared across backend / design / app contexts. */
 function formatEntities(entities: ReturnType<typeof listEntities>): string {
@@ -50,6 +58,77 @@ function formatEntities(entities: ReturnType<typeof listEntities>): string {
     .join("\n");
 }
 
+/** Build the multimodal vision message handed to the frontend agent during
+ *  rebuild. Two modes carry vision input today:
+ *
+ *  - `image` mode: the mockup IS a generated bitmap (Gemini Nano Banana etc.) —
+ *    attach the data URL directly.
+ *  - `html` mode: text content is already inlined via formatMockups for copy
+ *    fidelity; ALSO attach the cached rendered PNG (from cacheHtmlScreenshot
+ *    after each saveDesignArtifact) for spatial truth. Multimodal beats either
+ *    alone — text alone misses layout; image alone OCRs copy badly.
+ *
+ *  Returns null when the selected mode is text-only or no vision input is
+ *  available (e.g. screenshots not cached yet for a brand-new html mockup).
+ *  Sonnet 4.5 (frontend default) reads file parts natively. Shared by the
+ *  chat-path (runStageTurn) and the system-action rebuild path (runRebuild). */
+function buildImageMockupMessage(appId: string, sel: ReturnType<typeof selectedMockups>) {
+  if (!sel) return null;
+
+  const parts: Array<Record<string, unknown>> = [];
+  if (sel.mode === "image") {
+    parts.push({
+      type: "text",
+      text: `Approved design mockups — ${sel.pages.length} images follow (page id labels each). Build each page's content area to match the mockup faithfully in real components.`,
+    });
+    for (const p of sel.pages) {
+      if (!p.content.startsWith("data:image/")) continue;
+      const mt = /^data:(image\/[a-zA-Z0-9.+-]+)/.exec(p.content)?.[1] ?? "image/png";
+      parts.push({ type: "text", text: `--- page: ${p.pageId} ---` });
+      parts.push({ type: "file", mediaType: mt, url: p.content });
+    }
+  } else if (sel.mode === "html") {
+    // The html source is in the system context (formatMockups); the screenshot
+    // here is the spatial-truth companion. Iterate pages, attach where cached.
+    const withScreenshots: Array<{ pageId: string; path: string }> = [];
+    for (const p of sel.pages) {
+      const screenshot = readCachedScreenshotPath(appId, p.pageId);
+      if (screenshot) withScreenshots.push({ pageId: p.pageId, path: screenshot });
+    }
+    if (withScreenshots.length === 0) return null;
+    parts.push({
+      type: "text",
+      text: `Rendered screenshots of each html mockup follow (${withScreenshots.length} of ${sel.pages.length} page${sel.pages.length === 1 ? "" : "s"} have a cached screenshot). Use them ALONGSIDE the inlined html in the system prompt: html for copy + structure, screenshot for spatial layout / visual hierarchy / proportion. Build each page's content area to match.`,
+    });
+    for (const s of withScreenshots) {
+      const buf = readScreenshotBuffer(s.path);
+      if (!buf) continue;
+      parts.push({ type: "text", text: `--- page: ${s.pageId} ---` });
+      parts.push({
+        type: "file",
+        mediaType: "image/png",
+        url: `data:image/png;base64,${buf.toString("base64")}`,
+      });
+    }
+  } else {
+    return null;
+  }
+
+  // No usable vision parts after filtering — caller treats as null (text-only).
+  if (parts.length <= 1) return null;
+  return { id: "design-mockup-images", role: "user", parts } as unknown as UIMessage;
+}
+
+/** Read a cached PNG screenshot into a Buffer. Returns null on read error so
+ *  the caller can fall back to text-only handoff. */
+function readScreenshotBuffer(filePath: string): Buffer | null {
+  try {
+    return readFileSync(filePath);
+  } catch {
+    return null;
+  }
+}
+
 function formatMockups(sel: ReturnType<typeof selectedMockups>): string {
   if (!sel) return "";
   if (sel.mode === "image") {
@@ -59,7 +138,15 @@ function formatMockups(sel: ReturnType<typeof selectedMockups>): string {
   const body = sel.pages
     .map((p) => `\n### Page: ${p.pageId}\n${p.content.slice(0, perPage)}`)
     .join("\n");
-  return `\nAPPROVED DESIGN MOCKUPS (${sel.mode}, one per page) — build each faithfully in real components:\n${body}`;
+  // For html, a rendered screenshot of each page is also attached on the next
+  // user message — multimodal: html for copy + structure, screenshot for
+  // spatial truth. The screenshot may be missing for very recent saves; in
+  // that case the agent still has the html text.
+  const visionNote =
+    sel.mode === "html"
+      ? " A RENDERED SCREENSHOT of each page is ALSO attached as a vision input on the next user message — use the html text for copy + structure and the screenshot for spatial layout (proportions, alignment, visual hierarchy)."
+      : "";
+  return `\nAPPROVED DESIGN MOCKUPS (${sel.mode}, one per page) — build each faithfully in real components:${visionNote}\n${body}`;
 }
 
 /** Snapshot of what exists so edit requests modify instead of recreate. */
@@ -299,7 +386,7 @@ export async function generateMockupRepresentation(
       }
 
       const agent = makeDesignAgent({ model: modelOverride });
-      const sysContent = `${buildDesignContext(appId, appName)}\n\nSYSTEM TASK: produce ONLY the '${mode}' representation of the layout mockup for ONE page: "${page.name}" (pageId="${page.id}"). Mockup ONLY the page CONTENT AREA — the body of the screen inside the nav shell. Do NOT draw the navigation chrome (sidebar / topnav / nav links); the runtime renders that from app.json + shellLayout. Call saveDesignArtifact({ pageId: "${page.id}", mode: "${mode}", content }) exactly once, covering this page's sections + states with real copy. Do NOT touch other pages, applyDesignSystem, or saveSitemap. Reply with one short sentence when done.`;
+      const sysContent = `${buildDesignContext(appId, appName)}\n\nSYSTEM TASK: produce ONLY the '${mode}' representation of the layout mockup for ONE page: "${page.name}" (pageId="${page.id}"). Mockup ONLY the page CONTENT AREA — the body of the screen inside the nav shell. Do NOT draw the navigation chrome (sidebar / topnav / nav links); the runtime renders that from app.json + shellLayout. Call saveDesignArtifact({ pageId: "${page.id}", mode: "${mode}", content }) exactly once, covering this page's sections with real copy. Do NOT touch other pages, applyDesignSystem, or saveSitemap. Reply with one short sentence when done.`;
       // installDesignTiming → saveDesignArtifact's execute stamps durationMs
       // on the slot at the moment it fires.
       const requestContext = new RequestContext([["appId", appId]]);
@@ -335,14 +422,13 @@ function buildImageMockupPrompt(
   theme: import("@/lib/server/design-md").AppTheme,
 ): string {
   const sections = page.sections.length > 0 ? page.sections.map((s) => `  - ${s}`).join("\n") : "  - (single hero section)";
-  const states = page.states.length > 0 ? `\nStates to include hints for: ${page.states.join(", ")}.` : "";
   return [
     `Low-fidelity UI wireframe of the "${page.name}" CONTENT AREA of a desktop web app called "${appName}".`,
     "",
     `Page purpose: ${page.purpose}`,
     "",
     "Sections from top to bottom:",
-    sections + states,
+    sections,
     "",
     "Visual style:",
     `- Theme: ${theme.name}`,
@@ -361,7 +447,7 @@ export type DesignScope = "all" | "theme" | "sitemap" | "mockups";
 // The per-scope agent task (the "mockups" scope is handled by the per-page
 // generator, not by these one-shot tasks).
 const SCOPE_TASK: Record<Exclude<DesignScope, "mockups">, string> = {
-  all: `redesign this app FROM SCRATCH. In order: (1) call applyDesignSystem to pick the theme afresh from the app's domain; (2) call saveSitemap with the full information architecture (every page + navigation); (3) call saveDesignArtifact ONCE PER PAGE with mode "text", covering that page's sections + states in real copy, using the sitemap page ids.`,
+  all: `redesign this app FROM SCRATCH. In order: (1) call applyDesignSystem to pick the theme afresh from the app's domain; (2) call saveSitemap with the full information architecture (every page + navigation); (3) call saveDesignArtifact ONCE PER PAGE with mode "text", covering that page's sections in real copy, using the sitemap page ids.`,
   theme: `regenerate the THEME only. Call applyDesignSystem once — pick the best preset for the app's domain, or author one from scratch if none fits. Do NOT call saveSitemap or saveDesignArtifact.`,
   sitemap: `regenerate the SITEMAP only. Call saveSitemap once with the full information architecture (every page + navigation). Do NOT call applyDesignSystem or saveDesignArtifact.`,
 };
@@ -508,13 +594,18 @@ export async function runRebuild(
 
   const content = `${buildAppContext(appId, appName, { fresh: true })}\n\nSYSTEM TASK: rebuild the app's pages and navigation from scratch to match the APPROVED SITEMAP and DESIGN MOCKUPS above. Call savePage ONCE per sitemap page (use the sitemap page ids) and saveAppIndex once with the full nav. Do not ask questions. Reply with one short sentence when done.`;
 
+  // For image-mode mockups, the buildAppContext block above announces that
+  // images follow on the next user message — attach them here. Without this,
+  // a Rebuild on image mode hands the agent a promise of images that never
+  // arrive (chat-path runStageTurn does the same dance).
+  const messages: Array<Record<string, unknown>> = [
+    { role: "user", content: `Rebuild "${appName}" now.` },
+  ];
+  const imageMessage = buildImageMockupMessage(appId, selectedMockups(appId));
+  if (imageMessage) messages.push(imageMessage as unknown as Record<string, unknown>);
+
   await agent.generate(
-    [
-      {
-        role: "user",
-        content: `Rebuild "${appName}" now.`,
-      },
-    ] as unknown as Parameters<typeof agent.generate>[0],
+    messages as unknown as Parameters<typeof agent.generate>[0],
     {
       maxSteps: 60,
       requestContext: new RequestContext([["appId", appId]]),
@@ -580,25 +671,8 @@ export async function runStageTurn({
   // (the frontend default) is vision-native — no model swap, no rasterising.
   let turnMessages = messages;
   if (which === "frontend") {
-    const sel = selectedMockups(appId);
-    if (sel?.mode === "image" && sel.pages.length > 0) {
-      const parts: Array<Record<string, unknown>> = [
-        {
-          type: "text",
-          text: `Approved design mockups — ${sel.pages.length} images follow (page id labels each). Build each page's content area to match the mockup faithfully in real components.`,
-        },
-      ];
-      for (const p of sel.pages) {
-        if (!p.content.startsWith("data:image/")) continue;
-        const mt = /^data:(image\/[a-zA-Z0-9.+-]+)/.exec(p.content)?.[1] ?? "image/png";
-        parts.push({ type: "text", text: `--- page: ${p.pageId} ---` });
-        parts.push({ type: "file", mediaType: mt, url: p.content });
-      }
-      turnMessages = [
-        ...messages,
-        { id: "design-mockup-images", role: "user", parts } as unknown as UIMessage,
-      ];
-    }
+    const imageMessage = buildImageMockupMessage(appId, selectedMockups(appId));
+    if (imageMessage) turnMessages = [...messages, imageMessage];
   }
 
   // Design-stage chat turns: install the tool-timing ref so each design tool

@@ -35,6 +35,9 @@ interface AppModel {
   theme: ThemeInfo | null;
   sitemap: SitemapInfo | null;
   mockups: MockupsInfo | null;
+  /** Freshest build snapshot's meta — drives the "Built from <mode>" badge.
+   *  Null when no build has run yet. */
+  lastBuild?: { modelSlug: string; savedAt: string; mockupMode?: string } | null;
   /** Design artifacts are newer than the built pages → offer a rebuild. */
   pagesStale?: boolean;
 }
@@ -439,6 +442,7 @@ export function AppBuilder({ app, initialMessages }: AppBuilderProps) {
                     </button>
                   </div>
                 )}
+                {model?.lastBuild && <BuildSourceBadge build={model.lastBuild} />}
                 <div className="canvas-grid min-h-0 flex-1">
                   <div className="mx-auto h-full overflow-hidden bg-background shadow-[0_24px_60px_-24px_rgb(0_0_0/0.35)]">
                     <AppRuntime
@@ -479,6 +483,44 @@ export function AppBuilder({ app, initialMessages }: AppBuilderProps) {
       )}
     </div>
   );
+}
+
+/** Small ribbon above the Build canvas: what mockup the agent was handed,
+ *  which model produced this build, and how long ago. App-level (not per-page)
+ *  because Rebuild always rewrites the whole app from one selected mockup. */
+function BuildSourceBadge({
+  build,
+}: {
+  build: { modelSlug: string; savedAt: string; mockupMode?: string };
+}) {
+  const ageText = formatBuildAge(build.savedAt);
+  const modelLabel = build.modelSlug.split("/").pop() ?? build.modelSlug;
+  return (
+    <div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+      <span>Built from</span>
+      {build.mockupMode ? (
+        <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-foreground">
+          {build.mockupMode} mockup
+        </span>
+      ) : (
+        <span className="opacity-60">(pre-tracking build)</span>
+      )}
+      <span className="opacity-50">·</span>
+      <span>{modelLabel}</span>
+      <span className="opacity-50">·</span>
+      <span>{ageText}</span>
+    </div>
+  );
+}
+
+function formatBuildAge(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return "just now";
+  const mins = Math.round(ms / 60_000);
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
 }
 
 function EmptyCanvas({ building }: { building: boolean }) {

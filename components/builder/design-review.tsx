@@ -29,7 +29,6 @@ export interface SitemapInfo {
     purpose: string;
     primaryEntity: string | null;
     sections: string[];
-    states: string[];
   }[];
   navigation: { label: string; icon: string | null; page: string }[];
   home: string;
@@ -242,14 +241,6 @@ function SitemapCard({ sitemap, action }: { sitemap: SitemapInfo; action?: React
                   Sections
                 </div>
                 <Chips items={p.sections} />
-              </div>
-            )}
-            {p.states.length > 0 && (
-              <div className="mt-1.5">
-                <div className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  States
-                </div>
-                <Chips items={p.states} />
               </div>
             )}
           </div>
